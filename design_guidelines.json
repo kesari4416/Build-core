@@ -1,0 +1,95 @@
+{
+  "theme": "Dark Theme Industrial Construction Dashboard",
+  "archetype": "Performance Pro / Industrial Brutalist",
+  "colors": {
+    "background": "#09090b",
+    "surface": "#18181b",
+    "border": "#27272a",
+    "primary_accent": "#f97316",
+    "primary_hover": "#ea580c",
+    "text_primary": "#ffffff",
+    "text_secondary": "#a1a1aa",
+    "status_on_track": "#22c55e",
+    "status_delayed": "#eab308",
+    "status_blocked": "#ef4444"
+  },
+  "typography": {
+    "headings": "Barlow Condensed",
+    "body": "IBM Plex Sans",
+    "rules": [
+      "Use uppercase with wide tracking for small labels (tracking-[0.2em]).",
+      "Do not use generic fonts for headings (like Inter or Roboto).",
+      "Tight line height for headings (leading-none).",
+      "Body text should use leading-relaxed for readability."
+    ]
+  },
+  "visual_enhancers": {
+    "borders": "Grid borders. Use 1px solid strokes to expose the skeleton. Avoid soft shadows.",
+    "shadows": "Minimal to no soft shadows. Use 'Inner Glow' highlights (1px border) or sharp geometric drop-shadows.",
+    "radii": "Sharp edges. Max border radius is 4px (rounded-sm) for inputs/buttons, mostly rounded-none for cards and large containers.",
+    "textures": "Use subtle grain textures or subtle scanlines for empty states or login backgrounds to avoid 'digital flatness'."
+  },
+  "layouts": {
+    "spacing": "Dense but structured. Use bento grids with tight gaps (gap-4 or gap-6) for dashboards.",
+    "dashboard_cards": "Flat solid background, 1px subtle border, no shadow.",
+    "navigation": "Sidebar or top nav with solid dark background. No transparent headers over content."
+  },
+  "components": {
+    "buttons": "Sharp corners, high contrast hover states. Use Safety Orange for primary CTAs.",
+    "tables": "Dense, high contrast headers, 1px border between rows. Left-align text.",
+    "tabs": "Industrial style. Active tab has a sharp safety-orange bottom border or sharp background highlight.",
+    "cards": "Rectangular dense styles. Avoid heavy card styling. Use borders to separate content instead of elevated cards.",
+    "modals": "Backdrop blur, dark solid surface, 1px border. Do not use rounded corners.",
+    "stepper": "Horizontal stepper for 'Phases' tab. Color-coded. Connected by straight 1px lines."
+  },
+  "motion": {
+    "interactions": "Hover states must increase contrast. Buttons scale slightly (-translate-y-0.5).",
+    "transitions": "Specific properties only (transition-colors, transition-transform). No transition-all."
+  },
+  "image_urls": [
+    {
+      "url": "https://images.unsplash.com/photo-1664662566501-73a7e41d8c19?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwzfHxjb25zdHJ1Y3Rpb24lMjBzaXRlJTIwZGFyayUyMG1vb2R5fGVufDB8fHx8MTc4NTk1Mzc1Nnww&ixlib=rb-4.1.0&q=85",
+      "category": "Login Page Background",
+      "description": "Moody building under construction. Use with heavy dark overlay (bg-zinc-950/80) so the login form pops out."
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1609867271967-a82f85c48531?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwxfHxjb25zdHJ1Y3Rpb24lMjBzaXRlJTIwZGFyayUyMG1vb2R5fGVufDB8fHx8MTc4NTk1Mzc1Nnww&ixlib=rb-4.1.0&q=85",
+      "category": "Project Tracking Photo",
+      "description": "Sample photo for construction progress feed."
+    },
+    {
+      "url": "https://images.pexels.com/photos/11827689/pexels-photo-11827689.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "category": "Project Tracking Photo",
+      "description": "Sample photo for scaffolding/structural progress update."
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1721244654346-9be0c0129e36?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwzfHxhcmNoaXRlY3R1cmFsJTIwYmx1ZXByaW50JTIwZGFya3xlbnwwfHx8fDE3ODU5NTM3NTd8MA&ixlib=rb-4.1.0&q=85",
+      "category": "Empty State / Dashboard Visual",
+      "description": "Dark architectural blueprint. Great for empty states or subtle background patterns."
+    }
+  ],
+  "accessibility": {
+    "contrast": "Ensure text over orange is black or dark zinc. Ensure body text against dark background is high contrast white/zinc-300.",
+    "testing": "All interactive and key informational elements MUST include a data-testid attribute.",
+    "focus": "Focus states must have HIGHER contrast than default state with ring-2 and ring-orange-500."
+  },
+  "instructions_to_main_agent": [
+    "Use Shadcn UI for standard components but override radii to be rounded-none or rounded-sm.",
+    "Do NOT use pure #000000. Use Tailwind zinc palette (zinc-950, zinc-900) for backgrounds.",
+    "Add Recharts for Dashboard stats with industrial colors (orange, zinc-400, white).",
+    "Install lucide-react for icons.",
+    "Install sonner for toasts.",
+    "Ensure the Phases tab has a distinct horizontal timeline/stepper, color-coded by status.",
+    "Tracking tab should look like a chronological feed (vertical line connecting cards).",
+    "The entire application MUST be built using .js/.jsx, NOT .tsx. All configurations must be tailored for a JavaScript codebase.",
+    "Use lucide-react with bold strokes (e.g., strokeWidth={2.5}) to match the industrial typography."
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "Do not use generic centered layouts or simplistic gradients.",
+    "Do not use transparent backgrounds under dropdowns or modals.",
+    "Always use crisp edges via semi-transparent borders.",
+    "Add 'transition: transform 0.2s ease, opacity 0.2s ease' to buttons. Never use 'transition: all'.",
+    "Never use AI emoji characters.",
+    "Prioritize optical alignment over geometric alignment."
+  ]
+}
