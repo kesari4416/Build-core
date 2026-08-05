@@ -1,0 +1,141 @@
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { Button } from "../../../components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
+import { formatApiErrorDetail } from "../../../api/client";
+import { useAddPhase, useUpdatePhase, useDeletePhase } from "../hooks/useProjects";
+
+const STATUSES = ["NotStarted", "InProgress", "Completed", "Delayed"];
+const empty = { name: "", sequence_order: "", planned_start: "", planned_end: "", status: "NotStarted", percent_complete: 0 };
+
+export const PhaseFormModal = ({ open, onOpenChange, projectId, phase, nextOrder }) => {
+  const [form, setForm] = useState(empty);
+  const [errors, setErrors] = useState({});
+  const add = useAddPhase();
+  const update = useUpdatePhase();
+  const del = useDeletePhase();
+
+  useEffect(() => {
+    if (open) {
+      setErrors({});
+      setForm(phase ? {
+        name: phase.name, sequence_order: phase.sequence_order,
+        planned_start: phase.planned_start || "", planned_end: phase.planned_end || "",
+        status: phase.status, percent_complete: phase.percent_complete,
+      } : { ...empty, sequence_order: nextOrder || 1 });
+    }
+  }, [open, phase, nextOrder]);
+
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const validate = () => {
+    const e = {};
+    if (!form.name.trim()) e.name = "Phase name is required";
+    if (!form.sequence_order || Number(form.sequence_order) < 1) e.sequence_order = "Order must be ≥ 1";
+    const pct = Number(form.percent_complete);
+    if (pct < 0 || pct > 100) e.percent_complete = "Must be 0–100";
+    if (form.planned_start && form.planned_end && form.planned_end < form.planned_start)
+      e.planned_end = "End must be after start";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const submit = async (ev) => {
+    ev.preventDefault();
+    if (!validate()) return;
+    const payload = {
+      name: form.name.trim(), sequence_order: Number(form.sequence_order),
+      planned_start: form.planned_start || null, planned_end: form.planned_end || null,
+      status: form.status, percent_complete: Number(form.percent_complete),
+    };
+    try {
+      if (phase) {
+        await update.mutateAsync({ phaseId: phase.id, projectId, data: payload });
+        toast.success("Phase updated");
+      } else {
+        await add.mutateAsync({ projectId, data: payload });
+        toast.success("Phase added");
+      }
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(formatApiErrorDetail(err.response?.data?.detail) || err.message);
+    }
+  };
+
+  const remove = async () => {
+    try {
+      await del.mutateAsync({ phaseId: phase.id, projectId });
+      toast.success("Phase removed");
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(formatApiErrorDetail(err.response?.data?.detail) || err.message);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-zinc-900 border-zinc-700 rounded-none max-w-md" data-testid="phase-form-modal">
+        <DialogHeader>
+          <DialogTitle className="font-heading text-2xl uppercase tracking-wide">
+            {phase ? "Edit Phase" : "Add Phase"}
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={submit} className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-2">
+              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Phase Name *</Label>
+              <Input data-testid="phase-name-input" value={form.name} onChange={(e) => set("name", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+              {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Order *</Label>
+              <Input data-testid="phase-order-input" type="number" value={form.sequence_order} onChange={(e) => set("sequence_order", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+              {errors.sequence_order && <p className="text-red-400 text-xs mt-1">{errors.sequence_order}</p>}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Planned Start</Label>
+              <Input data-testid="phase-start-input" type="date" value={form.planned_start} onChange={(e) => set("planned_start", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Planned End</Label>
+              <Input data-testid="phase-end-input" type="date" value={form.planned_end} onChange={(e) => set("planned_end", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+              {errors.planned_end && <p className="text-red-400 text-xs mt-1">{errors.planned_end}</p>}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Status</Label>
+              <Select value={form.status} onValueChange={(v) => set("status", v)}>
+                <SelectTrigger data-testid="phase-status-select" className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-700">
+                  {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">% Complete</Label>
+              <Input data-testid="phase-percent-input" type="number" min="0" max="100" value={form.percent_complete} onChange={(e) => set("percent_complete", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+              {errors.percent_complete && <p className="text-red-400 text-xs mt-1">{errors.percent_complete}</p>}
+            </div>
+          </div>
+          <div className="flex justify-between pt-2">
+            {phase ? (
+              <Button type="button" variant="destructive" onClick={remove} className="rounded-none" data-testid="phase-delete-button">Delete</Button>
+            ) : <span />}
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-none border-zinc-700">Cancel</Button>
+              <Button type="submit" disabled={add.isPending || update.isPending} data-testid="phase-form-submit" className="rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-semibold uppercase tracking-wide">
+                {phase ? "Save" : "Add Phase"}
+              </Button>
+            </div>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};

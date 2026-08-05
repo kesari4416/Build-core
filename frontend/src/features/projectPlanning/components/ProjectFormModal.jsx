@@ -1,0 +1,160 @@
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { Button } from "../../../components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
+import { formatApiErrorDetail } from "../../../api/client";
+import { useCreateProject, useUpdateProject, useClients, useEngineers } from "../hooks/useProjects";
+
+const STATUSES = ["Planning", "Ongoing", "OnHold", "Completed", "Cancelled"];
+const empty = { name: "", client_id: "", site_engineer_id: "", location: "", budget: "", start_date_planned: "", end_date_planned: "", status: "Planning" };
+
+export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId }) => {
+  const [form, setForm] = useState(empty);
+  const [errors, setErrors] = useState({});
+  const { data: clients } = useClients(open);
+  const { data: engineers } = useEngineers(open);
+  const create = useCreateProject();
+  const update = useUpdateProject();
+
+  useEffect(() => {
+    if (open) {
+      setErrors({});
+      setForm(project ? {
+        name: project.name || "",
+        client_id: String(project.client_id || ""),
+        site_engineer_id: project.site_engineer_id ? String(project.site_engineer_id) : "",
+        location: project.location || "",
+        budget: project.budget ?? "",
+        start_date_planned: project.start_date_planned || "",
+        end_date_planned: project.end_date_planned || "",
+        status: project.status || "Planning",
+      } : { ...empty, client_id: defaultClientId ? String(defaultClientId) : "" });
+    }
+  }, [open, project, defaultClientId]);
+
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const validate = () => {
+    const e = {};
+    if (!form.name.trim()) e.name = "Project name is required";
+    if (!form.client_id) e.client_id = "Client is required";
+    if (form.start_date_planned && form.end_date_planned && form.end_date_planned < form.start_date_planned)
+      e.end_date_planned = "End date must be after start date";
+    if (form.budget !== "" && Number(form.budget) < 0) e.budget = "Budget must be positive";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const submit = async (ev) => {
+    ev.preventDefault();
+    if (!validate()) return;
+    const payload = {
+      name: form.name.trim(),
+      client_id: Number(form.client_id),
+      site_engineer_id: form.site_engineer_id ? Number(form.site_engineer_id) : null,
+      location: form.location || null,
+      budget: form.budget !== "" ? Number(form.budget) : null,
+      start_date_planned: form.start_date_planned || null,
+      end_date_planned: form.end_date_planned || null,
+      status: form.status,
+    };
+    try {
+      if (project) {
+        await update.mutateAsync({ id: project.id, data: payload });
+        toast.success("Project updated");
+      } else {
+        await create.mutateAsync(payload);
+        toast.success("Project created");
+      }
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(formatApiErrorDetail(err.response?.data?.detail) || err.message);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-zinc-900 border-zinc-700 rounded-none max-w-lg" data-testid="project-form-modal">
+        <DialogHeader>
+          <DialogTitle className="font-heading text-2xl uppercase tracking-wide">
+            {project ? "Edit Project" : "New Project"}
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Project Name *</Label>
+            <Input data-testid="project-name-input" value={form.name} onChange={(e) => set("name", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+            {errors.name && <p className="text-red-400 text-xs mt-1" data-testid="project-name-error">{errors.name}</p>}
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Client *</Label>
+              <Select value={form.client_id} onValueChange={(v) => set("client_id", v)}>
+                <SelectTrigger data-testid="project-client-select" className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none">
+                  <SelectValue placeholder="Select client" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-700">
+                  {clients?.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {errors.client_id && <p className="text-red-400 text-xs mt-1">{errors.client_id}</p>}
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Site Engineer</Label>
+              <Select value={form.site_engineer_id} onValueChange={(v) => set("site_engineer_id", v)}>
+                <SelectTrigger data-testid="project-engineer-select" className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none">
+                  <SelectValue placeholder="Assign engineer" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-700">
+                  {engineers?.map((e) => <SelectItem key={e.id} value={String(e.id)}>{e.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Location</Label>
+              <Input data-testid="project-location-input" value={form.location} onChange={(e) => set("location", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Budget (₹)</Label>
+              <Input data-testid="project-budget-input" type="number" value={form.budget} onChange={(e) => set("budget", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+              {errors.budget && <p className="text-red-400 text-xs mt-1">{errors.budget}</p>}
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Planned Start</Label>
+              <Input data-testid="project-start-input" type="date" value={form.start_date_planned} onChange={(e) => set("start_date_planned", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Planned End</Label>
+              <Input data-testid="project-end-input" type="date" value={form.end_date_planned} onChange={(e) => set("end_date_planned", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+              {errors.end_date_planned && <p className="text-red-400 text-xs mt-1" data-testid="project-date-error">{errors.end_date_planned}</p>}
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Status</Label>
+              <Select value={form.status} onValueChange={(v) => set("status", v)}>
+                <SelectTrigger data-testid="project-status-select" className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-700">
+                  {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-none border-zinc-700" data-testid="project-form-cancel">Cancel</Button>
+            <Button type="submit" disabled={create.isPending || update.isPending} data-testid="project-form-submit" className="rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-semibold uppercase tracking-wide">
+              {project ? "Save Changes" : "Create Project"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
