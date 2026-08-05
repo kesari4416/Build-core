@@ -26,9 +26,10 @@ const InfoCell = ({ icon: Icon, label, value, testId }) => (
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
+  const projectId = Number(id);
   const { user, canWrite: roleCanWrite, isAdmin } = useAuth();
-  const { data: project, isLoading, isError } = useProject(id);
-  const { data: feed, isLoading: feedLoading } = useUpdatesFeed(id);
+  const { data: project, isLoading, isError } = useProject(projectId);
+  const { data: feed, isLoading: feedLoading } = useUpdatesFeed(projectId);
   const [phaseModal, setPhaseModal] = useState({ open: false, phase: null });
   const [updateModal, setUpdateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
@@ -130,9 +131,9 @@ export default function ProjectDetailPage() {
       </Tabs>
 
       <PhaseFormModal open={phaseModal.open} onOpenChange={(o) => setPhaseModal({ open: o, phase: o ? phaseModal.phase : null })}
-        projectId={Number(id)} phase={phaseModal.phase}
+        projectId={projectId} phase={phaseModal.phase}
         nextOrder={(project.phases?.reduce((m, p) => Math.max(m, p.sequence_order), 0) || 0) + 1} />
-      <ProgressUpdateFormModal open={updateModal} onOpenChange={setUpdateModal} projectId={Number(id)} phases={project.phases} />
+      <ProgressUpdateFormModal open={updateModal} onOpenChange={setUpdateModal} projectId={projectId} phases={project.phases} />
       <ProjectFormModal open={editModal} onOpenChange={setEditModal} project={project} />
     </div>
   );

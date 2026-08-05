@@ -10,7 +10,7 @@ export const useProjects = (filters = {}) =>
 
 export const useProject = (id) =>
   useQuery({
-    queryKey: ["project", id],
+    queryKey: ["project", Number(id)],
     queryFn: () => api.get(`/projects/${id}`).then((r) => r.data),
     enabled: !!id,
   });
@@ -51,7 +51,7 @@ export const useStats = () =>
 
 export const useUpdatesFeed = (projectId) =>
   useQuery({
-    queryKey: ["updates", projectId],
+    queryKey: ["updates", Number(projectId)],
     queryFn: () => api.get(`/projects/${projectId}/updates`).then((r) => r.data),
     enabled: !!projectId,
   });
