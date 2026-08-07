@@ -1,10 +1,12 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Building2, Activity, AlertTriangle, IndianRupee } from "lucide-react";
 import debounce from "lodash/debounce";
-import { useProjects, useClients, useEngineers } from "../hooks/useProjects";
+import { useProjects, useClients, useEngineers, useDashboardSummary, useBudgetBreakdown } from "../hooks/useProjects";
 import { ProjectTable } from "../components/ProjectTable";
 import { ProjectFormModal } from "../components/ProjectFormModal";
+import { DashboardStatCard } from "../components/DashboardStatCard";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import { Button } from "../../../components/ui/button";
@@ -12,12 +14,16 @@ import { useAuth } from "../../../context/AuthContext";
 
 const STATUSES = ["Planning", "Ongoing", "OnHold", "Completed", "Cancelled"];
 const PAGE_SIZE = 10;
+const fmtCr = (b) => `₹${((b || 0) / 10000000).toFixed(2)} Cr`;
 
 export default function ProjectListPage() {
   const { isAdmin, canWrite, user } = useAuth();
   const [params, setParams] = useSearchParams();
   const [search, setSearch] = useState(params.get("search") || "");
   const [modalOpen, setModalOpen] = useState(false);
+  const [budgetOpen, setBudgetOpen] = useState(false);
+  const { data: summary } = useDashboardSummary();
+  const { data: budgetProjects } = useBudgetBreakdown(budgetOpen);
 
   const filters = {
     limit: PAGE_SIZE,
@@ -27,6 +33,7 @@ export default function ProjectListPage() {
   if (params.get("status")) filters.status = params.get("status");
   if (params.get("site_engineer_id")) filters.site_engineer_id = params.get("site_engineer_id");
   if (params.get("search")) filters.search = params.get("search");
+  if (params.get("has_issues")) filters.has_issues = params.get("has_issues");
 
   const { data, isLoading, isError } = useProjects(filters);
   const { data: clients } = useClients(canWrite);
@@ -44,6 +51,24 @@ export default function ProjectListPage() {
   const total = data?.total || 0;
   const offset = filters.offset;
 
+  const ongoingActive = params.get("status") === "Ongoing" && !params.get("has_issues");
+  const issuesActive = params.get("has_issues") === "true";
+  const totalActive = !params.get("status") && !params.get("has_issues") && !params.get("client_id") && !params.get("site_engineer_id") && !params.get("search");
+
+  const clickTotal = () => { setSearch(""); setParams(new URLSearchParams()); };
+  const clickOngoing = () => {
+    const n = new URLSearchParams(params);
+    n.delete("has_issues"); n.delete("offset");
+    if (ongoingActive) n.delete("status"); else n.set("status", "Ongoing");
+    setParams(n);
+  };
+  const clickIssues = () => {
+    const n = new URLSearchParams(params);
+    n.delete("status"); n.delete("offset");
+    if (issuesActive) n.delete("has_issues"); else n.set("has_issues", "true");
+    setParams(n);
+  };
+
   return (
     <div className="p-8" data-testid="project-list-page">
       <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
@@ -57,6 +82,17 @@ export default function ProjectListPage() {
             <Plus size={16} strokeWidth={3} /> New Project
           </Button>
         )}
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6" data-testid="dashboard-stat-cards">
+        <DashboardStatCard label="Total Projects" value={summary?.total_projects ?? "—"} icon={Building2}
+          isActive={totalActive} onClick={clickTotal} variant="default" testId="stat-card-total" />
+        <DashboardStatCard label="Ongoing" value={summary?.ongoing ?? "—"} icon={Activity}
+          isActive={ongoingActive} onClick={clickOngoing} variant="success" testId="stat-card-ongoing" />
+        <DashboardStatCard label="With Issues" value={summary?.with_issues ?? "—"} icon={AlertTriangle}
+          isActive={issuesActive} onClick={clickIssues} variant="warning" testId="stat-card-issues" />
+        <DashboardStatCard label="Total Budget" value={summary ? fmtCr(summary.total_budget) : "—"} icon={IndianRupee}
+          isActive={budgetOpen} onClick={() => setBudgetOpen(true)} variant="info" testId="stat-card-budget" />
       </div>
 
       <div className="flex flex-wrap gap-3 mb-5">
@@ -129,6 +165,41 @@ export default function ProjectListPage() {
         </>
       )}
       <ProjectFormModal open={modalOpen} onOpenChange={setModalOpen} />
+      <Dialog open={budgetOpen} onOpenChange={setBudgetOpen}>
+        <DialogContent className="bg-zinc-900 border-zinc-700 rounded-none max-w-lg" data-testid="budget-breakdown-dialog">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-2xl uppercase tracking-wide">Budget Breakdown</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-96 overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[11px] uppercase tracking-[0.15em] text-zinc-500 border-b border-zinc-700">
+                  <th className="py-2 font-semibold">Project</th>
+                  <th className="py-2 font-semibold">Client</th>
+                  <th className="py-2 font-semibold text-right">Budget</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(budgetProjects || []).map((p) => (
+                  <tr key={p.id} className="border-b border-zinc-800" data-testid={`budget-row-${p.id}`}>
+                    <td className="py-2.5 text-white font-medium">{p.name}</td>
+                    <td className="py-2.5 text-zinc-400">{p.client_name}</td>
+                    <td className="py-2.5 text-right text-zinc-300">{p.budget != null ? fmtCr(p.budget) : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan={2} className="py-3 text-[11px] uppercase tracking-[0.15em] text-zinc-500 font-semibold">Total</td>
+                  <td className="py-3 text-right font-heading font-bold text-xl text-orange-500" data-testid="budget-total">
+                    {summary ? fmtCr(summary.total_budget) : "—"}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

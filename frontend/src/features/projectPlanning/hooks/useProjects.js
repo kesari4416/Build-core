@@ -49,6 +49,26 @@ export const useStats = () =>
     queryFn: () => api.get("/stats").then((r) => r.data),
   });
 
+export const useDashboardSummary = () =>
+  useQuery({
+    queryKey: ["dashboardSummary"],
+    queryFn: () => api.get("/projects/dashboard-summary").then((r) => r.data),
+  });
+
+export const useBudgetBreakdown = (enabled) =>
+  useQuery({
+    queryKey: ["budgetBreakdown"],
+    queryFn: () => api.get("/projects", { params: { limit: 200 } }).then((r) => r.data.items),
+    enabled,
+  });
+
+export const useDocuments = (projectId) =>
+  useQuery({
+    queryKey: ["documents", Number(projectId)],
+    queryFn: () => api.get(`/projects/${projectId}/documents`).then((r) => r.data),
+    enabled: !!projectId,
+  });
+
 export const useUpdatesFeed = (projectId) =>
   useQuery({
     queryKey: ["updates", Number(projectId)],
@@ -60,6 +80,8 @@ const invalidateProject = (qc, projectId) => {
   qc.invalidateQueries({ queryKey: ["project", projectId] });
   qc.invalidateQueries({ queryKey: ["projects"] });
   qc.invalidateQueries({ queryKey: ["stats"] });
+  qc.invalidateQueries({ queryKey: ["dashboardSummary"] });
+  qc.invalidateQueries({ queryKey: ["budgetBreakdown"] });
 };
 
 export const useCreateProject = () => {
@@ -69,6 +91,8 @@ export const useCreateProject = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["projects"] });
       qc.invalidateQueries({ queryKey: ["stats"] });
+      qc.invalidateQueries({ queryKey: ["dashboardSummary"] });
+      qc.invalidateQueries({ queryKey: ["budgetBreakdown"] });
     },
   });
 };
@@ -150,5 +174,34 @@ export const usePostUpdate = () => {
       qc.invalidateQueries({ queryKey: ["updates", projectId] });
       invalidateProject(qc, projectId);
     },
+  });
+};
+
+export const useUploadDocument = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ projectId, formData }) =>
+      api.post(`/projects/${projectId}/documents`, formData).then((r) => r.data),
+    onSuccess: (_, { projectId }) =>
+      qc.invalidateQueries({ queryKey: ["documents", Number(projectId)] }),
+  });
+};
+
+export const usePatchDocument = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ documentId, data }) =>
+      api.patch(`/documents/${documentId}`, data).then((r) => r.data),
+    onSuccess: (_, { projectId }) =>
+      qc.invalidateQueries({ queryKey: ["documents", Number(projectId)] }),
+  });
+};
+
+export const useDeleteDocument = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ documentId }) => api.delete(`/documents/${documentId}`),
+    onSuccess: (_, { projectId }) =>
+      qc.invalidateQueries({ queryKey: ["documents", Number(projectId)] }),
   });
 };

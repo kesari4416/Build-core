@@ -4,8 +4,9 @@ from typing import Optional, List, Literal
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
 ProjectStatus = Literal["Planning", "Ongoing", "OnHold", "Completed", "Cancelled"]
-PhaseStatus = Literal["NotStarted", "InProgress", "Completed", "Delayed"]
+PhaseStatus = Literal["NotStarted", "InProgress", "Completed", "Delayed", "Blocked"]
 StatusFlag = Literal["OnTrack", "Delayed", "Blocked"]
+DOC_CATEGORIES = ["Drawing", "Contract", "Invoice", "Approval", "Other"]
 
 
 class LoginIn(BaseModel):
@@ -26,7 +27,9 @@ class ProjectCreate(BaseModel):
     client_id: int
     site_engineer_id: Optional[int] = None
     location: Optional[str] = None
+    project_type: Optional[str] = None
     budget: Optional[Decimal] = None
+    currency: str = "INR"
     start_date_planned: Optional[date] = None
     end_date_planned: Optional[date] = None
     start_date_actual: Optional[date] = None
@@ -45,7 +48,9 @@ class ProjectUpdate(BaseModel):
     client_id: Optional[int] = None
     site_engineer_id: Optional[int] = None
     location: Optional[str] = None
+    project_type: Optional[str] = None
     budget: Optional[Decimal] = None
+    currency: Optional[str] = None
     start_date_planned: Optional[date] = None
     end_date_planned: Optional[date] = None
     start_date_actual: Optional[date] = None
@@ -95,3 +100,29 @@ class ProgressUpdateCreate(BaseModel):
     status_flag: StatusFlag = "OnTrack"
     attachments: List[str] = []
     visible_to_client: bool = True
+
+
+class PhaseReorder(BaseModel):
+    phase_ids: List[int] = Field(min_length=1)
+
+
+class MilestoneCreate(BaseModel):
+    title: str = Field(min_length=1)
+    description: Optional[str] = None
+    due_date: Optional[date] = None
+    sequence_order: int = Field(default=1, ge=1)
+    status: Literal["Pending", "Done", "Skipped"] = "Pending"
+
+
+class MilestoneUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    due_date: Optional[date] = None
+    sequence_order: Optional[int] = Field(default=None, ge=1)
+    status: Optional[Literal["Pending", "Done", "Skipped"]] = None
+
+
+class DocumentPatch(BaseModel):
+    document_name: Optional[str] = Field(default=None, min_length=1)
+    category: Optional[str] = None
+    is_client_visible: Optional[bool] = None

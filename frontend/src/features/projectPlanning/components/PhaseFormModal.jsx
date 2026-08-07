@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { formatApiErrorDetail } from "../../../api/client";
 import { useAddPhase, useUpdatePhase, useDeletePhase } from "../hooks/useProjects";
 
-const STATUSES = ["NotStarted", "InProgress", "Completed", "Delayed"];
+const STATUSES = ["NotStarted", "InProgress", "Completed", "Delayed", "Blocked"];
 const empty = { name: "", sequence_order: "", planned_start: "", planned_end: "", status: "NotStarted", percent_complete: 0 };
 
 export const PhaseFormModal = ({ open, onOpenChange, projectId, phase, nextOrder }) => {

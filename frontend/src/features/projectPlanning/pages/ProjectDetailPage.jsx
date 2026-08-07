@@ -11,6 +11,7 @@ import { PhaseFormModal } from "../components/PhaseFormModal";
 import { ProgressUpdateFeed } from "../components/ProgressUpdateFeed";
 import { ProgressUpdateFormModal } from "../components/ProgressUpdateFormModal";
 import { ProjectFormModal } from "../components/ProjectFormModal";
+import { DocumentsPanel } from "../components/DocumentsPanel";
 import { useAuth } from "../../../context/AuthContext";
 
 const fmtBudget = (b) => (b == null ? "—" : `₹${(b / 10000000).toFixed(2)} Cr`);
@@ -113,20 +114,25 @@ export default function ProjectDetailPage() {
         </TabsContent>
 
         <TabsContent value="tracking" className="mt-6" data-testid="tracking-tab-content">
-          <div className="flex items-center justify-between mb-6">
-            <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 font-semibold">Progress Feed · {feed?.total ?? 0} updates</div>
-            {canWrite && (
-              <Button data-testid="post-update-button" onClick={() => setUpdateModal(true)} size="sm"
-                className="rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-bold uppercase tracking-[0.12em]">
-                <Plus size={14} strokeWidth={3} /> Post Update
-              </Button>
-            )}
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <div className="flex items-center justify-between mb-6">
+                <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 font-semibold">Progress Feed · {feed?.total ?? 0} updates</div>
+                {canWrite && (
+                  <Button data-testid="post-update-button" onClick={() => setUpdateModal(true)} size="sm"
+                    className="rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-bold uppercase tracking-[0.12em]">
+                    <Plus size={14} strokeWidth={3} /> Post Update
+                  </Button>
+                )}
+              </div>
+              {feedLoading ? (
+                <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-28 bg-zinc-900 rounded-none" />)}</div>
+              ) : (
+                <ProgressUpdateFeed updates={feed?.items} />
+              )}
+            </div>
+            <DocumentsPanel projectId={projectId} canWrite={canWrite} isAdmin={isAdmin} />
           </div>
-          {feedLoading ? (
-            <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-28 bg-zinc-900 rounded-none" />)}</div>
-          ) : (
-            <ProgressUpdateFeed updates={feed?.items} />
-          )}
         </TabsContent>
       </Tabs>
 

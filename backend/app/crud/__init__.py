@@ -15,13 +15,14 @@ def compute_percent(project: Project) -> int:
 
 
 def has_active_issues(db: Session, project_id: int) -> bool:
-    flagged = db.query(exists().where(
-        ProgressUpdate.project_id == project_id,
-        ProgressUpdate.status_flag.in_(["Blocked", "Delayed"]))).scalar()
-    if flagged:
+    phase_issue = db.query(exists().where(
+        Phase.project_id == project_id, Phase.status.in_(["Delayed", "Blocked"]))).scalar()
+    if phase_issue:
         return True
-    return db.query(exists().where(
-        Phase.project_id == project_id, Phase.status == "Delayed")).scalar()
+    latest = (db.query(ProgressUpdate).filter(ProgressUpdate.project_id == project_id)
+              .order_by(ProgressUpdate.update_date.desc(), ProgressUpdate.created_at.desc())
+              .first())
+    return bool(latest and latest.status_flag in ("Delayed", "Blocked"))
 
 
 def phase_out(p: Phase) -> dict:
@@ -56,7 +57,9 @@ def project_out(db: Session, p: Project, detail: bool = False) -> dict:
         "site_engineer_id": p.site_engineer_id,
         "site_engineer_name": p.site_engineer.name if p.site_engineer else None,
         "location": p.location,
+        "project_type": p.project_type,
         "budget": float(p.budget) if p.budget is not None else None,
+        "currency": p.currency or "INR",
         "start_date_planned": d(p.start_date_planned), "end_date_planned": d(p.end_date_planned),
         "start_date_actual": d(p.start_date_actual), "end_date_actual": d(p.end_date_actual),
         "status": p.status, "is_archived": p.is_archived,
@@ -80,3 +83,21 @@ def client_out(c, project_count: int = None) -> dict:
     if project_count is not None:
         out["project_count"] = project_count
     return out
+
+
+def milestone_out(m) -> dict:
+    return {"id": m.id, "phase_id": m.phase_id, "title": m.title,
+            "description": m.description, "due_date": d(m.due_date),
+            "completed_at": d(m.completed_at), "status": m.status,
+            "sequence_order": m.sequence_order, "created_at": d(m.created_at)}
+
+
+def document_out(doc) -> dict:
+    return {"id": doc.id, "project_id": doc.project_id,
+            "document_name": doc.document_name, "file_url": doc.file_url,
+            "file_type": doc.file_type, "file_size": doc.file_size,
+            "uploaded_by": doc.uploaded_by,
+            "uploader_name": doc.uploader.name if doc.uploader else None,
+            "category": doc.category or "Other",
+            "is_client_visible": doc.is_client_visible,
+            "uploaded_at": d(doc.uploaded_at)}

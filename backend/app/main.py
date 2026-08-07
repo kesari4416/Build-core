@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
 from app.database import engine, Base, SessionLocal
-from app.routers import auth, projects, clients, uploads
+from app.routers import auth, projects, clients, uploads, documents
 from app.routers.uploads import UPLOAD_DIR
 from app.seed import seed_admin, seed_demo_data
 
@@ -24,6 +24,7 @@ api_router.include_router(auth.router)
 api_router.include_router(projects.router)
 api_router.include_router(clients.router)
 api_router.include_router(uploads.router)
+api_router.include_router(documents.router)
 
 
 @api_router.get("/")
@@ -46,6 +47,10 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     Base.metadata.create_all(bind=engine)
+    from sqlalchemy import text
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_type VARCHAR"))
+        conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS currency VARCHAR DEFAULT 'INR'"))
     db = SessionLocal()
     try:
         seed_admin(db)

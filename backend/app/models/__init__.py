@@ -39,6 +39,8 @@ class Project(Base):
     site_engineer_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     location = Column(String)
     budget = Column(Numeric(14, 2))
+    currency = Column(String, default="INR")
+    project_type = Column(String, nullable=True)
     start_date_planned = Column(Date)
     end_date_planned = Column(Date)
     start_date_actual = Column(Date, nullable=True)
@@ -91,3 +93,35 @@ class ProgressUpdate(Base):
     project = relationship("Project", back_populates="updates")
     phase = relationship("Phase")
     author = relationship("User", foreign_keys=[updated_by])
+
+
+class Milestone(Base):
+    __tablename__ = "milestones"
+    id = Column(Integer, primary_key=True)
+    phase_id = Column(Integer, ForeignKey("phases.id"), nullable=False, index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    due_date = Column(Date, nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    status = Column(String, nullable=False, default="Pending")
+    sequence_order = Column(Integer, nullable=False, default=1)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+    phase = relationship("Phase")
+
+
+class ProjectDocument(Base):
+    __tablename__ = "project_documents"
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    document_name = Column(String, nullable=False)
+    file_url = Column(String, nullable=False)
+    file_type = Column(String)
+    file_size = Column(Integer)
+    uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    category = Column(String, default="Other")
+    is_client_visible = Column(Boolean, default=True, nullable=False)
+    uploaded_at = Column(DateTime(timezone=True), default=utcnow)
+
+    project = relationship("Project")
+    uploader = relationship("User", foreign_keys=[uploaded_by])

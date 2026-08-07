@@ -16,7 +16,8 @@ export const PHASE_COLORS = {
   NotStarted: { dot: "bg-zinc-600 border-zinc-500", text: "text-zinc-400" },
   InProgress: { dot: "bg-orange-500 border-orange-400", text: "text-orange-400" },
   Completed: { dot: "bg-green-500 border-green-400", text: "text-green-400" },
-  Delayed: { dot: "bg-red-500 border-red-400", text: "text-red-400" },
+  Delayed: { dot: "bg-yellow-500 border-yellow-400", text: "text-yellow-400" },
+  Blocked: { dot: "bg-red-500 border-red-400", text: "text-red-400" },
 };
 
 export const ProjectStatusBadge = ({ status }) => (

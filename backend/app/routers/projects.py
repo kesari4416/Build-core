@@ -3,12 +3,12 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User, Client, Project, Phase, ProgressUpdate
+from app.models import User, Client, Project, Phase, ProgressUpdate, Milestone
 from app.schemas import (ProjectCreate, ProjectUpdate, PhaseCreate, PhaseUpdate,
-                         ProgressUpdateCreate)
+                         ProgressUpdateCreate, PhaseReorder, MilestoneCreate, MilestoneUpdate)
 from app.core.security import get_current_user, require_roles
-from app.crud import project_out, phase_out, update_out
-from datetime import date
+from app.crud import project_out, phase_out, update_out, milestone_out, has_active_issues
+from datetime import date, datetime, timezone
 
 router = APIRouter(tags=["projects"])
 
@@ -48,7 +48,8 @@ def create_project(body: ProjectCreate, db: Session = Depends(get_db),
 @router.get("/projects")
 def list_projects(db: Session = Depends(get_db), user: User = Depends(get_current_user),
                   client_id: int = None, status: str = None, site_engineer_id: int = None,
-                  search: str = None,
+                  search: str = None, has_issues: bool = None,
+                  start_date: date = None, end_date: date = None,
                   limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0)):
     q = db.query(Project).filter(Project.is_archived == False)  # noqa: E712
     if user.role == "Client":
@@ -61,10 +62,34 @@ def list_projects(db: Session = Depends(get_db), user: User = Depends(get_curren
         q = q.filter(Project.site_engineer_id == site_engineer_id)
     if search:
         q = q.filter(or_(Project.name.ilike(f"%{search}%"), Project.location.ilike(f"%{search}%")))
-    total = q.count()
-    items = q.order_by(Project.created_at.desc()).offset(offset).limit(limit).all()
+    if start_date:
+        q = q.filter(Project.start_date_planned >= start_date)
+    if end_date:
+        q = q.filter(Project.end_date_planned <= end_date)
+    q = q.order_by(Project.created_at.desc())
+    if has_issues is not None:
+        matched = [p for p in q.all() if has_active_issues(db, p.id) == has_issues]
+        total = len(matched)
+        items = matched[offset:offset + limit]
+    else:
+        total = q.count()
+        items = q.offset(offset).limit(limit).all()
     return {"items": [project_out(db, p) for p in items],
             "total": total, "limit": limit, "offset": offset}
+
+
+@router.get("/projects/dashboard-summary")
+def dashboard_summary(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    q = db.query(Project).filter(Project.is_archived == False)  # noqa: E712
+    if user.role == "Client":
+        q = q.filter(Project.client_id == user.client_id)
+    projects = q.all()
+    return {
+        "total_projects": len(projects),
+        "ongoing": sum(1 for p in projects if p.status == "Ongoing"),
+        "with_issues": sum(1 for p in projects if has_active_issues(db, p.id)),
+        "total_budget": float(sum(p.budget or 0 for p in projects)),
+    }
 
 
 @router.get("/projects/{project_id}")
@@ -75,6 +100,7 @@ def get_project(project_id: int, db: Session = Depends(get_db),
     return project_out(db, project, detail=True)
 
 
+@router.patch("/projects/{project_id}")
 @router.put("/projects/{project_id}")
 def update_project(project_id: int, body: ProjectUpdate, db: Session = Depends(get_db),
                    user: User = Depends(get_current_user)):
@@ -93,6 +119,33 @@ def archive_project(project_id: int, db: Session = Depends(get_db),
     project = get_project_or_404(db, project_id)
     project.is_archived = True
     db.commit()
+
+
+@router.post("/projects/{project_id}/archive")
+def archive_project_post(project_id: int, db: Session = Depends(get_db),
+                         user: User = Depends(require_roles("Admin"))):
+    project = get_project_or_404(db, project_id)
+    project.is_archived = True
+    db.commit()
+    db.refresh(project)
+    return project_out(db, project)
+
+
+@router.post("/projects/{project_id}/phases/reorder")
+def reorder_phases(project_id: int, body: PhaseReorder, db: Session = Depends(get_db),
+                   user: User = Depends(get_current_user)):
+    project = get_project_or_404(db, project_id)
+    check_write_access(user, project)
+    phases = {p.id: p for p in project.phases}
+    if set(body.phase_ids) != set(phases.keys()):
+        raise HTTPException(status_code=422, detail="phase_ids must include every phase of this project exactly once")
+    for i, pid in enumerate(body.phase_ids):
+        phases[pid].sequence_order = 1000 + i
+    db.flush()
+    for i, pid in enumerate(body.phase_ids):
+        phases[pid].sequence_order = i + 1
+    db.commit()
+    return [phase_out(phases[pid]) for pid in body.phase_ids]
 
 
 @router.post("/projects/{project_id}/phases", status_code=201)
@@ -121,6 +174,7 @@ def list_phases(project_id: int, db: Session = Depends(get_db),
     return [phase_out(p) for p in phases]
 
 
+@router.patch("/phases/{phase_id}")
 @router.put("/phases/{phase_id}")
 def update_phase(phase_id: int, body: PhaseUpdate, db: Session = Depends(get_db),
                  user: User = Depends(get_current_user)):
@@ -192,3 +246,59 @@ def list_updates(project_id: int, db: Session = Depends(get_db),
              .offset(offset).limit(limit).all())
     return {"items": [update_out(u) for u in items],
             "total": total, "limit": limit, "offset": offset}
+
+
+@router.delete("/updates/{update_id}", status_code=204)
+def delete_update(update_id: int, db: Session = Depends(get_db),
+                  user: User = Depends(get_current_user)):
+    upd = db.get(ProgressUpdate, update_id)
+    if not upd:
+        raise HTTPException(status_code=404, detail="Update not found")
+    check_write_access(user, upd.project)
+    db.delete(upd)
+    db.commit()
+
+
+@router.get("/phases/{phase_id}/milestones")
+def list_milestones(phase_id: int, db: Session = Depends(get_db),
+                    user: User = Depends(get_current_user)):
+    phase = db.get(Phase, phase_id)
+    if not phase:
+        raise HTTPException(status_code=404, detail="Phase not found")
+    check_read_access(user, phase.project)
+    ms = (db.query(Milestone).filter(Milestone.phase_id == phase_id)
+          .order_by(Milestone.sequence_order.asc()).all())
+    return [milestone_out(m) for m in ms]
+
+
+@router.post("/phases/{phase_id}/milestones", status_code=201)
+def add_milestone(phase_id: int, body: MilestoneCreate, db: Session = Depends(get_db),
+                  user: User = Depends(get_current_user)):
+    phase = db.get(Phase, phase_id)
+    if not phase:
+        raise HTTPException(status_code=404, detail="Phase not found")
+    check_write_access(user, phase.project)
+    m = Milestone(phase_id=phase_id, **body.model_dump())
+    if m.status == "Done":
+        m.completed_at = datetime.now(timezone.utc)
+    db.add(m)
+    db.commit()
+    db.refresh(m)
+    return milestone_out(m)
+
+
+@router.patch("/milestones/{milestone_id}")
+def update_milestone(milestone_id: int, body: MilestoneUpdate, db: Session = Depends(get_db),
+                     user: User = Depends(get_current_user)):
+    m = db.get(Milestone, milestone_id)
+    if not m:
+        raise HTTPException(status_code=404, detail="Milestone not found")
+    check_write_access(user, m.phase.project)
+    data = body.model_dump(exclude_unset=True)
+    for k, v in data.items():
+        setattr(m, k, v)
+    if "status" in data:
+        m.completed_at = datetime.now(timezone.utc) if data["status"] == "Done" else None
+    db.commit()
+    db.refresh(m)
+    return milestone_out(m)
