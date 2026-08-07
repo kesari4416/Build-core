@@ -187,6 +187,7 @@ def update_phase(phase_id: int, body: PhaseUpdate, db: Session = Depends(get_db)
         raise HTTPException(status_code=404, detail="Phase not found")
     check_write_access(user, phase.project)
     data = body.model_dump(exclude_unset=True)
+    old_status = phase.status
     if "sequence_order" in data and data["sequence_order"] != phase.sequence_order:
         dup = db.query(Phase).filter(Phase.project_id == phase.project_id,
                                      Phase.sequence_order == data["sequence_order"],
@@ -197,6 +198,12 @@ def update_phase(phase_id: int, body: PhaseUpdate, db: Session = Depends(get_db)
         setattr(phase, k, v)
     db.commit()
     db.refresh(phase)
+    if phase.status in ("Blocked", "Delayed") and phase.status != old_status:
+        from app.routers.notifications import notify_flag
+        notify_flag(db, phase.project, user, f"Phase{phase.status}",
+                    f"Phase {phase.status}: {phase.name}",
+                    f"{user.name} set phase '{phase.name}' to {phase.status} on {phase.project.name}.",
+                    phase_id=phase.id)
     return phase_out(phase)
 
 
@@ -233,6 +240,17 @@ def post_update(project_id: int, body: ProgressUpdateCreate, db: Session = Depen
             phase.status = "Completed"
     db.commit()
     db.refresh(upd)
+    if upd.status_flag in ("Blocked", "Delayed"):
+        from app.routers.notifications import notify_flag
+        phase_name = None
+        if upd.phase_id:
+            ph = db.get(Phase, upd.phase_id)
+            phase_name = ph.name if ph else None
+        where = f" ({phase_name})" if phase_name else ""
+        notify_flag(db, project, user, f"Update{upd.status_flag}",
+                    f"{upd.status_flag} update on {project.name}",
+                    f"{user.name} flagged progress as {upd.status_flag}{where}: {(upd.description or '')[:120]}",
+                    phase_id=upd.phase_id)
     return update_out(upd)
 
 

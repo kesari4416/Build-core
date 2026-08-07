@@ -104,6 +104,19 @@ class ProgressUpdate(Base):
     author = relationship("User", foreign_keys=[updated_by])
 
 
+class Notification(Base):
+    __tablename__ = "notifications"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    type = Column(String, nullable=False)
+    title = Column(String, nullable=False)
+    message = Column(Text, nullable=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
+    phase_id = Column(Integer, nullable=True)
+    is_read = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
 class Milestone(Base):
     __tablename__ = "milestones"
     id = Column(Integer, primary_key=True)

@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Building2, Users, LogOut, HardHat, IndianRupee, Truck, UserCog, FileText } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { NotificationBell } from "./NotificationBell";
 
 const STAFF = ["Admin", "SiteEngineer", "Accountant", "ProcurementOfficer"];
 const navItems = [
@@ -50,6 +51,11 @@ export default function Layout({ children }) {
               </NavLink>
             ))}
         </nav>
+        {["Admin", "SiteEngineer"].includes(user?.role) && (
+          <div className="px-3 pb-2">
+            <NotificationBell />
+          </div>
+        )}
         <div className="border-t border-zinc-800 p-4">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 bg-zinc-800 border border-zinc-700 flex items-center justify-center font-heading font-bold text-orange-500">
