@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Button } from "../../../components/ui/button";
@@ -76,6 +76,9 @@ export const UserFormModal = ({ open, onOpenChange, user }) => {
           <DialogTitle className="font-heading text-2xl uppercase tracking-wide">
             {user ? "Edit User" : "New User"}
           </DialogTitle>
+          <DialogDescription className="text-xs text-zinc-500">
+            {user ? "Update user details and role." : "Create an account — extra fields appear based on the selected role."}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">

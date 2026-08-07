@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Button } from "../../../components/ui/button";
@@ -47,6 +47,9 @@ export const ClientFormModal = ({ open, onOpenChange, client }) => {
           <DialogTitle className="font-heading text-2xl uppercase tracking-wide">
             {client ? "Edit Client" : "New Client"}
           </DialogTitle>
+          <DialogDescription className="text-xs text-zinc-500">
+            {client ? "Update client details." : "Add a new client to the directory."}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div>
