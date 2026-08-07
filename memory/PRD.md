@@ -23,6 +23,7 @@
 - Client: read-only, own projects only, no internal updates
 
 ## Implemented (2026-06)
+- Procurement module (2026-06): Vendors (+documents, insurance expiry tracking, expiring_insurance filter), Bid Packages/Invitations/Bids/Award→creates draft PO or Subcontract, Purchase Orders (+line items, approve gated on current vendor insurance → 422, cancel), Subcontracts (retainage_pct, approve/execute both insurance-gated), Change Orders (Admin approve recomputes revised_amount/committed_amount), Pay Applications (retainage auto = amount × retainage_pct, submit/approve/mark-paid, G702/G703 line items w/ pct_complete, lien waivers), Material Deliveries, Procurement Documents (default internal, client-scoped route), CostCodeBudget table for over_budget + variance breakdown. Dashboard: GET /projects/{id}/procurement/dashboard-summary + /commitments (filters: type, status['open'], vendor_id, cost_code, pending_approval, over_budget) + /budget-breakdown. Frontend: ProcurementDashboardPage (4 filter stat cards, URL params, variance dialog red-if-negative, commitments table w/ pending & over-budget flags), CommitmentDetailPage (Overview w/ approve/execute/cancel, Change Orders tab, Pay Apps tab w/ full lifecycle + line items + waivers, Documents tab). Components: CommitmentStatusBadge, ChangeOrderCard, LineItemTable, LienWaiverRow, ProcurementDocumentsPanel. Statuses kept CamelCase.
 - Full CRUD: projects (soft-delete/archive via DELETE + POST /archive), phases (unique sequence_order → 409, reorder endpoint), progress updates (phase-scoped or project-level, DELETE endpoint), milestones (per-phase CRUD, Done sets completed_at — backend only, no UI yet)
 - Business rules: computed percent_complete (avg of phases), has_active_issues (phase Delayed/Blocked OR latest update flag Delayed/Blocked), role-based write access, client data isolation, visible_to_client filtering
 - Filters (client/status/engineer/search/has_issues/start_date/end_date) + limit/offset pagination on projects & updates
@@ -31,7 +32,7 @@
 - Dashboard stat cards (2026-06): 4 clickable filter cards on /admin/projects (Total/Ongoing/With Issues/Total Budget) from GET /projects/dashboard-summary; URL-reflected filters (?status=Ongoing, ?has_issues=true), budget breakdown dialog, live count updates via React Query invalidation; DashboardStatCard component
 - Project model: added project_type + currency columns; Phase status now includes Blocked
 - Frontend: Login (split-screen, demo account buttons), Dashboard (stat cards + recharts), Project List (filters, debounced search, pagination, New Project modal w/ validation), Project Detail (Overview/Phases stepper timeline/Tracking feed w/ optimistic updates + photo upload + documents panel), Clients page, Client Projects page, role-based UI hiding
-- Tests: 16 core + 20 new-feature backend pytest passing (/app/backend/tests/); testing agent iteration_1 & iteration_2 all green
+- Tests: 16 core + 20 planning + 17 procurement backend pytest passing (/app/backend/tests/); testing agent iterations 1-3 all green
 - Deployment guide PDF: /app/BUILDCORE_Ubuntu24_Nginx_Installation_Guide.pdf (also served at frontend /public), paths use /var/www/buildcore
 
 ## Backlog / Next

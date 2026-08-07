@@ -353,10 +353,8 @@ def patch_co(co_id: int, body: COPatch, db: Session = Depends(get_db), user: Use
     if data.get("status") == "Approved":
         co.approved_by = user.id
         co.approved_at = now()
-    c = get_commitment(db, co.commitment_type, co.commitment_id)
-    c.revised_amount = f(c.original_amount) + co_total(db, co.commitment_type, co.commitment_id) + (
-        f(co.amount) if data.get("status") == "Approved" and co.status != "Approved" else 0)
     db.commit()
+    c = get_commitment(db, co.commitment_type, co.commitment_id)
     c.revised_amount = committed_amount(db, co.commitment_type, c)
     db.commit(); db.refresh(co)
     return co_out(co)
