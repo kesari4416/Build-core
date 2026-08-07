@@ -152,6 +152,8 @@ def award_bid(bp_id: int, body: AwardIn, db: Session = Depends(get_db), user: Us
         raise HTTPException(status_code=404, detail="Bid package or bid not found")
     bid.status = "Awarded"
     bp.status = "Awarded"
+    from app.models.finance import BidLineItemQuote
+    quotes = db.query(BidLineItemQuote).filter_by(bid_id=bid.id).all()
     if body.commitment_type == "po":
         count = db.query(PurchaseOrder).filter_by(project_id=bp.project_id).count()
         c = PurchaseOrder(project_id=bp.project_id, vendor_id=bid.vendor_id,
@@ -167,6 +169,16 @@ def award_bid(bp_id: int, body: AwardIn, db: Session = Depends(get_db), user: Us
                         original_amount=bid.amount, revised_amount=bid.amount,
                         created_by=user.id)
     db.add(c); db.commit(); db.refresh(c)
+    if body.commitment_type == "po" and quotes:
+        from app.models.finance import BidLineItem
+        for q in quotes:
+            li = db.get(BidLineItem, q.bid_line_item_id)
+            db.add(POLineItem(purchase_order_id=c.id,
+                              item_description=li.item_description if li else "Item",
+                              unit=li.unit if li else None,
+                              quantity=q.quantity_offered, unit_price=q.unit_price,
+                              line_total=q.line_total))
+        db.commit()
     return po_out(db, c) if body.commitment_type == "po" else sub_out(db, c)
 
 

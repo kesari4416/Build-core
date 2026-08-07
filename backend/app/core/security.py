@@ -75,4 +75,6 @@ def require_roles(*roles):
 
 def user_out(user: User) -> dict:
     return {"id": user.id, "email": user.email, "name": user.name,
-            "role": user.role, "client_id": user.client_id}
+            "role": user.role, "client_id": user.client_id,
+            "linked_vendor_id": getattr(user, "linked_vendor_id", None),
+            "status": getattr(user, "status", "Active")}

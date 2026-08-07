@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
 from app.database import engine, Base, SessionLocal
-from app.routers import auth, projects, clients, uploads, documents, vendors, procurement
+from app.routers import auth, projects, clients, uploads, documents, vendors, procurement, finance, users_admin, quotation
 from app.routers.uploads import UPLOAD_DIR
 from app.seed import seed_admin, seed_demo_data
 from app.seed_procurement import seed_procurement
@@ -28,6 +28,9 @@ api_router.include_router(uploads.router)
 api_router.include_router(documents.router)
 api_router.include_router(vendors.router)
 api_router.include_router(procurement.router)
+api_router.include_router(finance.router)
+api_router.include_router(users_admin.router)
+api_router.include_router(quotation.router)
 
 
 @api_router.get("/")
@@ -54,10 +57,22 @@ def startup():
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_type VARCHAR"))
         conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS currency VARCHAR DEFAULT 'INR'"))
+        for stmt in ["ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR",
+                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'Active'",
+                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS linked_vendor_id INTEGER",
+                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS base_salary NUMERIC(14,2)",
+                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ",
+                     "ALTER TABLE clients ADD COLUMN IF NOT EXISTS address VARCHAR",
+                     "ALTER TABLE clients ADD COLUMN IF NOT EXISTS tax_id VARCHAR",
+                     "ALTER TABLE clients ADD COLUMN IF NOT EXISTS notes TEXT",
+                     "ALTER TABLE clients ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE"]:
+            conn.execute(text(stmt))
     db = SessionLocal()
     try:
         seed_admin(db)
         seed_demo_data(db)
         seed_procurement(db)
+        from app.seed_finance import seed_finance
+        seed_finance(db)
     finally:
         db.close()

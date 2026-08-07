@@ -64,6 +64,11 @@ export default function ProjectDetailPage() {
         </div>
         {canWrite && (
           <div className="flex gap-3">
+            <Link to={`/admin/projects/${id}/finance`} data-testid="project-finance-link">
+              <Button variant="outline" className="rounded-none border-zinc-700 hover:border-orange-500">
+                Finance
+              </Button>
+            </Link>
             <Link to={`/admin/projects/${id}/procurement`} data-testid="procurement-link">
               <Button variant="outline" className="rounded-none border-zinc-700 hover:border-orange-500">
                 Procurement

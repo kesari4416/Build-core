@@ -17,6 +17,11 @@ def login(body: LoginIn, response: Response, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == email).first()
     if not user or not verify_password(body.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
+    if getattr(user, "status", "Active") == "Disabled":
+        raise HTTPException(status_code=403, detail="Account disabled. Contact your administrator.")
+    from datetime import datetime, timezone
+    user.last_login_at = datetime.now(timezone.utc)
+    db.commit()
     access = create_access_token(user.id, user.email)
     refresh = create_refresh_token(user.id)
     set_auth_cookies(response, access, refresh)

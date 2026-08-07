@@ -79,7 +79,10 @@ def project_out(db: Session, p: Project, detail: bool = False) -> dict:
 
 def client_out(c, project_count: int = None) -> dict:
     out = {"id": c.id, "name": c.name, "company": c.company,
-           "email": c.email, "phone": c.phone, "created_at": d(c.created_at)}
+           "email": c.email, "phone": c.phone,
+           "address": getattr(c, "address", None), "tax_id": getattr(c, "tax_id", None),
+           "notes": getattr(c, "notes", None),
+           "is_active": getattr(c, "is_active", True), "created_at": d(c.created_at)}
     if project_count is not None:
         out["project_count"] = project_count
     return out

@@ -16,14 +16,76 @@ def check_client_access(user: User, client_id: int):
 
 @router.get("/clients")
 def list_clients(db: Session = Depends(get_db),
-                 user: User = Depends(require_roles("Admin", "SiteEngineer"))):
+                 user: User = Depends(require_roles("Admin", "SiteEngineer", "Accountant"))):
+    from sqlalchemy import func
+    from app.models.finance import Invoice
+    billed = dict(db.query(Invoice.client_id,
+                           func.sum(Invoice.amount + func.coalesce(Invoice.tax_amount, 0)))
+                  .group_by(Invoice.client_id).all())
     clients = db.query(Client).order_by(Client.name).all()
     result = []
     for c in clients:
         count = db.query(Project).filter(Project.client_id == c.id,
                                          Project.is_archived == False).count()  # noqa: E712
-        result.append(client_out(c, count))
+        o = client_out(c, count)
+        o["total_billed"] = float(billed.get(c.id) or 0)
+        result.append(o)
     return result
+
+
+@router.post("/clients", status_code=201)
+def create_client(body: dict, db: Session = Depends(get_db),
+                  user: User = Depends(require_roles("Admin"))):
+    name = (body.get("name") or "").strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Client name is required")
+    c = Client(name=name, company=body.get("company"), email=body.get("email"),
+               phone=body.get("phone"), address=body.get("address"),
+               tax_id=body.get("tax_id"), notes=body.get("notes"))
+    db.add(c); db.commit(); db.refresh(c)
+    return client_out(c)
+
+
+@router.patch("/clients/{client_id}")
+def patch_client(client_id: int, body: dict, db: Session = Depends(get_db),
+                 user: User = Depends(require_roles("Admin"))):
+    c = db.get(Client, client_id)
+    if not c:
+        raise HTTPException(status_code=404, detail="Client not found")
+    for k in ("name", "company", "email", "phone", "address", "tax_id", "notes", "is_active"):
+        if k in body:
+            setattr(c, k, body[k])
+    db.commit(); db.refresh(c)
+    return client_out(c)
+
+
+@router.delete("/clients/{client_id}")
+def deactivate_client(client_id: int, db: Session = Depends(get_db),
+                      user: User = Depends(require_roles("Admin"))):
+    c = db.get(Client, client_id)
+    if not c:
+        raise HTTPException(status_code=404, detail="Client not found")
+    active = db.query(Project).filter(Project.client_id == client_id,
+                                      Project.is_archived == False,  # noqa: E712
+                                      Project.status.in_(["Planning", "Ongoing", "OnHold"])).count()
+    if active:
+        raise HTTPException(status_code=409, detail=f"Client has {active} active project(s) — archive them first")
+    c.is_active = False
+    db.commit()
+    return client_out(c)
+
+
+@router.get("/clients/{client_id}/documents")
+def client_all_documents(client_id: int, db: Session = Depends(get_db),
+                         user: User = Depends(get_current_user)):
+    check_client_access(user, client_id)
+    from app.models import ProjectDocument
+    from app.crud import document_out
+    project_ids = [p.id for p in db.query(Project).filter(Project.client_id == client_id).all()]
+    q = db.query(ProjectDocument).filter(ProjectDocument.project_id.in_(project_ids or [0]))
+    if user.role == "Client":
+        q = q.filter(ProjectDocument.is_client_visible == True)  # noqa: E712
+    return [document_out(doc) for doc in q.order_by(ProjectDocument.uploaded_at.desc()).all()]
 
 
 @router.get("/clients/{client_id}")

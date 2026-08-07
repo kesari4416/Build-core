@@ -1,11 +1,16 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, LogOut, HardHat } from "lucide-react";
+import { LayoutDashboard, Building2, Users, LogOut, HardHat, IndianRupee, Truck, UserCog, FileText } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
+const STAFF = ["Admin", "SiteEngineer", "Accountant", "ProcurementOfficer"];
 const navItems = [
-  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/admin/projects", label: "Projects", icon: Building2 },
-  { to: "/admin/clients", label: "Clients", icon: Users, adminOnly: true },
+  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true, roles: [...STAFF, "Client"] },
+  { to: "/admin/projects", label: "Projects", icon: Building2, roles: [...STAFF, "Client"] },
+  { to: "/admin/clients", label: "Clients", icon: Users, roles: ["Admin", "SiteEngineer", "Accountant"] },
+  { to: "/admin/finance", label: "Finance", icon: IndianRupee, roles: ["Admin", "Accountant"] },
+  { to: "/admin/procurement/vendors", label: "Vendors", icon: Truck, roles: ["Admin", "SiteEngineer", "ProcurementOfficer"] },
+  { to: "/admin/users", label: "Users", icon: UserCog, roles: ["Admin"] },
+  { to: "/portal/vendor/bid-packages", label: "Bid Invites", icon: FileText, roles: ["Vendor"] },
 ];
 
 export default function Layout({ children }) {
@@ -25,7 +30,7 @@ export default function Layout({ children }) {
         </div>
         <nav className="flex-1 py-6 px-3 space-y-1">
           {navItems
-            .filter((i) => !i.adminOnly || user?.role !== "Client")
+            .filter((i) => i.roles.includes(user?.role))
             .map(({ to, label, icon: Icon, end }) => (
               <NavLink
                 key={to}

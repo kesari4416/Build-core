@@ -54,6 +54,10 @@ def list_projects(db: Session = Depends(get_db), user: User = Depends(get_curren
     q = db.query(Project).filter(Project.is_archived == False)  # noqa: E712
     if user.role == "Client":
         q = q.filter(Project.client_id == user.client_id)
+    if user.role == "SiteEngineer":
+        from app.models.finance import ProjectAssignment
+        assigned = [a.project_id for a in db.query(ProjectAssignment).filter_by(user_id=user.id).all()]
+        q = q.filter(or_(Project.site_engineer_id == user.id, Project.id.in_(assigned or [0])))
     if client_id is not None:
         q = q.filter(Project.client_id == client_id)
     if status:

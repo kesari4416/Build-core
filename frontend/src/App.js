@@ -10,9 +10,18 @@ import DashboardPage from "./features/projectPlanning/pages/DashboardPage";
 import ProjectListPage from "./features/projectPlanning/pages/ProjectListPage";
 import ProjectDetailPage from "./features/projectPlanning/pages/ProjectDetailPage";
 import ClientsPage from "./features/projectPlanning/pages/ClientsPage";
+import ClientDetailPage from "./features/projectPlanning/pages/ClientDetailPage";
 import ClientProjectsPage from "./features/projectPlanning/pages/ClientProjectsPage";
 import ProcurementDashboardPage from "./features/projectPlanning/pages/ProcurementDashboardPage";
 import CommitmentDetailPage from "./features/projectPlanning/pages/CommitmentDetailPage";
+import FinancePage from "./features/projectPlanning/pages/FinancePage";
+import PayrollPage from "./features/projectPlanning/pages/PayrollPage";
+import ProjectFinancePage from "./features/projectPlanning/pages/ProjectFinancePage";
+import UsersPage from "./features/projectPlanning/pages/UsersPage";
+import VendorsPage from "./features/projectPlanning/pages/VendorsPage";
+import BidComparisonPage from "./features/projectPlanning/pages/BidComparisonPage";
+import VendorPortalPage from "./features/projectPlanning/pages/VendorPortalPage";
+import VendorBidPackagePage from "./features/projectPlanning/pages/VendorBidPackagePage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -30,6 +39,12 @@ const ProtectedRoute = ({ children }) => {
   return <Layout>{children}</Layout>;
 };
 
+const AdminHome = () => {
+  const { user } = useAuth();
+  if (user?.role === "Vendor") return <Navigate to="/portal/vendor/bid-packages" replace />;
+  return <DashboardPage />;
+};
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -37,13 +52,22 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/admin" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminHome /></ProtectedRoute>} />
             <Route path="/admin/projects" element={<ProtectedRoute><ProjectListPage /></ProtectedRoute>} />
             <Route path="/admin/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
+            <Route path="/admin/projects/:id/finance" element={<ProtectedRoute><ProjectFinancePage /></ProtectedRoute>} />
             <Route path="/admin/projects/:id/procurement" element={<ProtectedRoute><ProcurementDashboardPage /></ProtectedRoute>} />
             <Route path="/admin/projects/:id/procurement/:type/:commitmentId" element={<ProtectedRoute><CommitmentDetailPage /></ProtectedRoute>} />
             <Route path="/admin/clients" element={<ProtectedRoute><ClientsPage /></ProtectedRoute>} />
+            <Route path="/admin/clients/:id" element={<ProtectedRoute><ClientDetailPage /></ProtectedRoute>} />
             <Route path="/admin/clients/:id/projects" element={<ProtectedRoute><ClientProjectsPage /></ProtectedRoute>} />
+            <Route path="/admin/finance" element={<ProtectedRoute><FinancePage /></ProtectedRoute>} />
+            <Route path="/admin/finance/payroll" element={<ProtectedRoute><PayrollPage /></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
+            <Route path="/admin/procurement/vendors" element={<ProtectedRoute><VendorsPage /></ProtectedRoute>} />
+            <Route path="/admin/procurement/bid-packages/:id/comparison" element={<ProtectedRoute><BidComparisonPage /></ProtectedRoute>} />
+            <Route path="/portal/vendor/bid-packages" element={<ProtectedRoute><VendorPortalPage /></ProtectedRoute>} />
+            <Route path="/portal/vendor/bid-packages/:id" element={<ProtectedRoute><VendorBidPackagePage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
         </BrowserRouter>

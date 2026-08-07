@@ -17,6 +17,11 @@ class User(Base):
     name = Column(String, nullable=False)
     role = Column(String, nullable=False, default="Client")
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
+    phone = Column(String, nullable=True)
+    status = Column(String, default="Active", nullable=False)
+    linked_vendor_id = Column(Integer, nullable=True)
+    base_salary = Column(Numeric(14, 2), nullable=True)
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utcnow)
 
 
@@ -27,6 +32,10 @@ class Client(Base):
     company = Column(String)
     email = Column(String)
     phone = Column(String)
+    address = Column(String)
+    tax_id = Column(String)
+    notes = Column(Text)
+    is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utcnow)
     projects = relationship("Project", back_populates="client")
 
