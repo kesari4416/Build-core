@@ -63,9 +63,16 @@ export default function ProjectDetailPage() {
           </div>
         </div>
         {canWrite && (
-          <Button data-testid="edit-project-button" onClick={() => setEditModal(true)} variant="outline" className="rounded-none border-zinc-700 hover:border-orange-500">
-            <Pencil size={14} strokeWidth={2.5} /> Edit Project
-          </Button>
+          <div className="flex gap-3">
+            <Link to={`/admin/projects/${id}/procurement`} data-testid="procurement-link">
+              <Button variant="outline" className="rounded-none border-zinc-700 hover:border-orange-500">
+                Procurement
+              </Button>
+            </Link>
+            <Button data-testid="edit-project-button" onClick={() => setEditModal(true)} variant="outline" className="rounded-none border-zinc-700 hover:border-orange-500">
+              <Pencil size={14} strokeWidth={2.5} /> Edit Project
+            </Button>
+          </div>
         )}
       </div>
 

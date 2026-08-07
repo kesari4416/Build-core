@@ -1,0 +1,225 @@
+from sqlalchemy import (Column, Integer, String, Text, Date, DateTime, Boolean,
+                        Numeric, ForeignKey)
+from sqlalchemy.orm import relationship
+from app.database import Base
+from app.models import utcnow
+
+
+class Vendor(Base):
+    __tablename__ = "vendors"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    vendor_type = Column(String, default="Supplier")
+    trade = Column(String)
+    contact_name = Column(String)
+    email = Column(String)
+    phone = Column(String)
+    address = Column(String)
+    tax_id = Column(String)
+    license_number = Column(String)
+    insurance_expiry = Column(Date, nullable=True)
+    status = Column(String, default="Active", nullable=False)
+    prequalified = Column(Boolean, default=False, nullable=False)
+    rating = Column(Numeric(3, 1), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+    updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
+class VendorDocument(Base):
+    __tablename__ = "vendor_documents"
+    id = Column(Integer, primary_key=True)
+    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False, index=True)
+    document_name = Column(String, nullable=False)
+    file_url = Column(String, nullable=False)
+    file_type = Column(String)
+    category = Column(String, default="Other")
+    expiry_date = Column(Date, nullable=True)
+    uploaded_by = Column(Integer, ForeignKey("users.id"))
+    uploaded_at = Column(DateTime(timezone=True), default=utcnow)
+    vendor = relationship("Vendor")
+
+
+class CostCodeBudget(Base):
+    __tablename__ = "cost_code_budgets"
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    cost_code = Column(String, nullable=False)
+    allocated_amount = Column(Numeric(14, 2), default=0)
+
+
+class BidPackage(Base):
+    __tablename__ = "bid_packages"
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    title = Column(String, nullable=False)
+    scope_description = Column(Text)
+    cost_code = Column(String)
+    status = Column(String, default="Draft", nullable=False)
+    bid_due_date = Column(Date, nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
+class BidInvitation(Base):
+    __tablename__ = "bid_invitations"
+    id = Column(Integer, primary_key=True)
+    bid_package_id = Column(Integer, ForeignKey("bid_packages.id"), nullable=False, index=True)
+    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False)
+    invited_at = Column(DateTime(timezone=True), default=utcnow)
+    response_status = Column(String, default="Invited")
+    vendor = relationship("Vendor")
+
+
+class Bid(Base):
+    __tablename__ = "bids"
+    id = Column(Integer, primary_key=True)
+    bid_package_id = Column(Integer, ForeignKey("bid_packages.id"), nullable=False, index=True)
+    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False)
+    amount = Column(Numeric(14, 2), nullable=False)
+    submitted_at = Column(DateTime(timezone=True), default=utcnow)
+    notes = Column(Text)
+    is_leveled = Column(Boolean, default=False)
+    status = Column(String, default="Submitted", nullable=False)
+    vendor = relationship("Vendor")
+
+
+class PurchaseOrder(Base):
+    __tablename__ = "purchase_orders"
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False)
+    po_number = Column(String, nullable=False)
+    cost_code = Column(String)
+    description = Column(Text)
+    status = Column(String, default="Draft", nullable=False)
+    issue_date = Column(Date, nullable=True)
+    expected_delivery_date = Column(Date, nullable=True)
+    original_amount = Column(Numeric(14, 2), default=0)
+    revised_amount = Column(Numeric(14, 2), default=0)
+    created_by = Column(Integer, ForeignKey("users.id"))
+    approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+    updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+    vendor = relationship("Vendor")
+    line_items = relationship("POLineItem", cascade="all, delete-orphan")
+
+
+class POLineItem(Base):
+    __tablename__ = "po_line_items"
+    id = Column(Integer, primary_key=True)
+    purchase_order_id = Column(Integer, ForeignKey("purchase_orders.id"), nullable=False, index=True)
+    item_description = Column(String, nullable=False)
+    unit = Column(String)
+    quantity = Column(Numeric(12, 2), default=0)
+    unit_price = Column(Numeric(14, 2), default=0)
+    line_total = Column(Numeric(14, 2), default=0)
+    received_quantity = Column(Numeric(12, 2), default=0)
+
+
+class Subcontract(Base):
+    __tablename__ = "subcontracts"
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False)
+    contract_number = Column(String, nullable=False)
+    scope_of_work = Column(Text)
+    cost_code = Column(String)
+    status = Column(String, default="Draft", nullable=False)
+    original_amount = Column(Numeric(14, 2), default=0)
+    revised_amount = Column(Numeric(14, 2), default=0)
+    retainage_pct = Column(Numeric(5, 2), default=0)
+    start_date = Column(Date, nullable=True)
+    end_date = Column(Date, nullable=True)
+    executed_at = Column(DateTime(timezone=True), nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"))
+    approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+    updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+    vendor = relationship("Vendor")
+
+
+class ChangeOrder(Base):
+    __tablename__ = "change_orders"
+    id = Column(Integer, primary_key=True)
+    commitment_type = Column(String, nullable=False)
+    commitment_id = Column(Integer, nullable=False, index=True)
+    co_number = Column(String, nullable=False)
+    reason = Column(Text)
+    amount = Column(Numeric(14, 2), nullable=False)
+    status = Column(String, default="Pending", nullable=False)
+    requested_by = Column(Integer, ForeignKey("users.id"))
+    approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    requested_at = Column(DateTime(timezone=True), default=utcnow)
+    approved_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class PayApplication(Base):
+    __tablename__ = "pay_applications"
+    id = Column(Integer, primary_key=True)
+    commitment_type = Column(String, nullable=False)
+    commitment_id = Column(Integer, nullable=False, index=True)
+    application_number = Column(Integer, default=1)
+    period_start = Column(Date, nullable=True)
+    period_end = Column(Date, nullable=True)
+    amount_this_period = Column(Numeric(14, 2), default=0)
+    retainage_held = Column(Numeric(14, 2), default=0)
+    amount_due = Column(Numeric(14, 2), default=0)
+    status = Column(String, default="Draft", nullable=False)
+    submitted_at = Column(DateTime(timezone=True), nullable=True)
+    approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    approved_at = Column(DateTime(timezone=True), nullable=True)
+    paid_at = Column(DateTime(timezone=True), nullable=True)
+    line_items = relationship("PayApplicationLineItem", cascade="all, delete-orphan")
+    lien_waivers = relationship("LienWaiver", cascade="all, delete-orphan")
+
+
+class PayApplicationLineItem(Base):
+    __tablename__ = "pay_application_line_items"
+    id = Column(Integer, primary_key=True)
+    pay_application_id = Column(Integer, ForeignKey("pay_applications.id"), nullable=False, index=True)
+    description = Column(String, nullable=False)
+    scheduled_value = Column(Numeric(14, 2), default=0)
+    previous_completed = Column(Numeric(14, 2), default=0)
+    this_period = Column(Numeric(14, 2), default=0)
+    materials_stored = Column(Numeric(14, 2), default=0)
+    pct_complete = Column(Numeric(5, 2), default=0)
+
+
+class LienWaiver(Base):
+    __tablename__ = "lien_waivers"
+    id = Column(Integer, primary_key=True)
+    pay_application_id = Column(Integer, ForeignKey("pay_applications.id"), nullable=False, index=True)
+    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False)
+    waiver_type = Column(String, default="ConditionalProgress")
+    file_url = Column(String, nullable=True)
+    amount = Column(Numeric(14, 2), default=0)
+    signed_date = Column(Date, nullable=True)
+    status = Column(String, default="Pending", nullable=False)
+
+
+class MaterialDelivery(Base):
+    __tablename__ = "material_deliveries"
+    id = Column(Integer, primary_key=True)
+    purchase_order_id = Column(Integer, ForeignKey("purchase_orders.id"), nullable=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    item_description = Column(String, nullable=False)
+    quantity_delivered = Column(Numeric(12, 2), default=0)
+    delivery_date = Column(Date, nullable=True)
+    received_by = Column(Integer, ForeignKey("users.id"))
+    condition_notes = Column(Text)
+    status = Column(String, default="Pending", nullable=False)
+
+
+class ProcurementDocument(Base):
+    __tablename__ = "procurement_documents"
+    id = Column(Integer, primary_key=True)
+    related_type = Column(String, nullable=False)
+    related_id = Column(Integer, nullable=False, index=True)
+    document_name = Column(String, nullable=False)
+    file_url = Column(String, nullable=False)
+    file_type = Column(String)
+    category = Column(String, default="Other")
+    uploaded_by = Column(Integer, ForeignKey("users.id"))
+    uploaded_at = Column(DateTime(timezone=True), default=utcnow)
+    is_client_visible = Column(Boolean, default=False, nullable=False)
+    uploader = relationship("User", foreign_keys=[uploaded_by])

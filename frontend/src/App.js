@@ -11,6 +11,8 @@ import ProjectListPage from "./features/projectPlanning/pages/ProjectListPage";
 import ProjectDetailPage from "./features/projectPlanning/pages/ProjectDetailPage";
 import ClientsPage from "./features/projectPlanning/pages/ClientsPage";
 import ClientProjectsPage from "./features/projectPlanning/pages/ClientProjectsPage";
+import ProcurementDashboardPage from "./features/projectPlanning/pages/ProcurementDashboardPage";
+import CommitmentDetailPage from "./features/projectPlanning/pages/CommitmentDetailPage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -38,6 +40,8 @@ function App() {
             <Route path="/admin" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
             <Route path="/admin/projects" element={<ProtectedRoute><ProjectListPage /></ProtectedRoute>} />
             <Route path="/admin/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
+            <Route path="/admin/projects/:id/procurement" element={<ProtectedRoute><ProcurementDashboardPage /></ProtectedRoute>} />
+            <Route path="/admin/projects/:id/procurement/:type/:commitmentId" element={<ProtectedRoute><CommitmentDetailPage /></ProtectedRoute>} />
             <Route path="/admin/clients" element={<ProtectedRoute><ClientsPage /></ProtectedRoute>} />
             <Route path="/admin/clients/:id/projects" element={<ProtectedRoute><ClientProjectsPage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
