@@ -23,14 +23,18 @@
 - Client: read-only, own projects only, no internal updates
 
 ## Implemented (2026-06)
-- Full CRUD: projects (soft-delete/archive), phases (unique sequence_order → 409), progress updates (phase-scoped or project-level)
-- Business rules: computed percent_complete (avg of phases), has_active_issues (Blocked/Delayed update or Delayed phase), role-based write access, client data isolation, visible_to_client filtering
-- Filters (client/status/engineer/search) + limit/offset pagination on projects & updates
-- Endpoints: /api/auth/*, /api/projects*, /api/phases/*, /api/clients/{id}/projects(/updates), /api/users, /api/stats, /api/upload
-- Frontend: Login (split-screen, demo account buttons), Dashboard (stat cards + recharts), Project List (filters, debounced search, pagination, New Project modal w/ validation), Project Detail (Overview/Phases stepper timeline/Tracking feed w/ optimistic updates + photo upload), Clients page, Client Projects page, role-based UI hiding
-- 16/16 backend pytest passing (/app/backend/tests/test_api.py); frontend testing agent 18/18 after query-key fix (iteration_1)
+- Full CRUD: projects (soft-delete/archive via DELETE + POST /archive), phases (unique sequence_order → 409, reorder endpoint), progress updates (phase-scoped or project-level, DELETE endpoint), milestones (per-phase CRUD, Done sets completed_at — backend only, no UI yet)
+- Business rules: computed percent_complete (avg of phases), has_active_issues (phase Delayed/Blocked OR latest update flag Delayed/Blocked), role-based write access, client data isolation, visible_to_client filtering
+- Filters (client/status/engineer/search/has_issues/start_date/end_date) + limit/offset pagination on projects & updates
+- Endpoints: /api/auth/*, /api/projects* (+dashboard-summary), /api/phases/* (+milestones), /api/clients/{id}/projects(/updates)(/documents), /api/documents/*, /api/users, /api/stats, /api/upload
+- Documents module (2026-06): multipart upload w/ custom display name + category (Drawing/Contract/Invoice/Approval/Other) + client-visibility flag; list/search/filter, rename/change-category (PATCH), delete (admin only), client-scoped hiding; UI panel in Tracking tab (DocumentUploadCard, DocumentListItem, DocumentsPanel)
+- Dashboard stat cards (2026-06): 4 clickable filter cards on /admin/projects (Total/Ongoing/With Issues/Total Budget) from GET /projects/dashboard-summary; URL-reflected filters (?status=Ongoing, ?has_issues=true), budget breakdown dialog, live count updates via React Query invalidation; DashboardStatCard component
+- Project model: added project_type + currency columns; Phase status now includes Blocked
+- Frontend: Login (split-screen, demo account buttons), Dashboard (stat cards + recharts), Project List (filters, debounced search, pagination, New Project modal w/ validation), Project Detail (Overview/Phases stepper timeline/Tracking feed w/ optimistic updates + photo upload + documents panel), Clients page, Client Projects page, role-based UI hiding
+- Tests: 16 core + 20 new-feature backend pytest passing (/app/backend/tests/); testing agent iteration_1 & iteration_2 all green
+- Deployment guide PDF: /app/BUILDCORE_Ubuntu24_Nginx_Installation_Guide.pdf (also served at frontend /public), paths use /var/www/buildcore
 
 ## Backlog / Next
-- P1: Vendor role flows (no UI yet); edit/delete progress updates; phase actual dates auto-set
-- P2: User management UI for Admin (register endpoint exists, admin-only); email notifications on Blocked updates; Gantt view; export reports
-- Note: PostgreSQL is locally installed in the container — Emergent deployment officially supports MongoDB; deployment persistence of Postgres data is a known risk.
+- P1: Milestones UI (backend ready); Vendor role flows; edit progress updates
+- P2: User management UI for Admin; Notification model + email alerts on Blocked updates; Gantt view; export reports
+- Note: PostgreSQL is locally installed in the container (reinstalled after container reset on 2026-06 — apt packages/data do not persist across resets; server.py auto-starts postgres and waits via pg_isready, seed repopulates). Emergent deployment officially supports MongoDB; Postgres persistence is a known risk.
