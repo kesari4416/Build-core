@@ -27,6 +27,8 @@ export const EmployeeCategoryFormModal = ({ open, onOpenChange, onCreated }) => 
         name: form.name.trim(), default_wage_type: form.default_wage_type,
       });
       toast.success(`Category "${data.name}" added`);
+      qc.setQueryData(["employeeCategories"], (old = []) =>
+        [...old, data].sort((a, b) => a.name.localeCompare(b.name)));
       qc.invalidateQueries({ queryKey: ["employeeCategories"] });
       onCreated?.(data);
       onOpenChange(false);
