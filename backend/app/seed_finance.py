@@ -65,3 +65,34 @@ def seed_finance(db: Session):
             ])
             bp_bid.amount = 26520000
     db.commit()
+
+
+def seed_employees(db: Session):
+    from app.models.finance import Employee, Attendance
+    if db.query(Employee).count() > 0:
+        return
+    admin = db.query(User).filter(User.role == "Admin").first()
+    today = date.today()
+    workers = [
+        (1, "Ramesh Kumar", "Mason", 900), (1, "Suresh Yadav", "Electrician", 1100),
+        (1, "Deepak Singh", "Helper", 600), (1, "Manoj Pal", "Carpenter", 950),
+        (2, "Ganesh Rao", "Mason", 850), (2, "Iqbal Khan", "Plumber", 1000),
+    ]
+    emps = []
+    for pid, name, role, wage in workers:
+        e = Employee(project_id=pid, name=name, role_title=role, daily_wage=wage,
+                     wage_type="daily", joining_date=today - timedelta(days=90),
+                     status="active", created_by=admin.id if admin else None)
+        db.add(e)
+        emps.append(e)
+    db.flush()
+    statuses = ["present", "present", "half_day", "present", "absent", "present"]
+    for e in emps:
+        if e.project_id != 1:
+            continue
+        for i in range(1, 4):
+            db.add(Attendance(employee_id=e.id, project_id=e.project_id,
+                              attendance_date=today - timedelta(days=i),
+                              status=statuses[(e.id + i) % len(statuses)],
+                              marked_by=admin.id if admin else None))
+    db.commit()

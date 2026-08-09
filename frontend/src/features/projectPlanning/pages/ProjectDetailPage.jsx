@@ -12,6 +12,7 @@ import { ProgressUpdateFeed } from "../components/ProgressUpdateFeed";
 import { ProgressUpdateFormModal } from "../components/ProgressUpdateFormModal";
 import { ProjectFormModal } from "../components/ProjectFormModal";
 import { DocumentsPanel } from "../components/DocumentsPanel";
+import { EmployeesTab } from "../components/EmployeesTab";
 import { useAuth } from "../../../context/AuthContext";
 
 const fmtBudget = (b) => (b == null ? "—" : `₹${(b / 10000000).toFixed(2)} Cr`);
@@ -93,7 +94,7 @@ export default function ProjectDetailPage() {
 
       <Tabs defaultValue="overview">
         <TabsList className="bg-transparent border-b border-zinc-800 rounded-none w-full justify-start h-auto p-0 gap-1">
-          {["overview", "phases", "tracking"].map((t) => (
+          {["overview", "phases", "tracking", ...(user?.role !== "Client" && user?.role !== "Vendor" ? ["employees"] : [])].map((t) => (
             <TabsTrigger key={t} value={t} data-testid={`tab-${t}`}
               className="rounded-none px-5 py-2.5 text-xs uppercase tracking-[0.15em] font-semibold data-[state=active]:bg-zinc-900 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-orange-500 data-[state=active]:shadow-none text-zinc-500 border-b-2 border-transparent">
               {t}
@@ -146,6 +147,12 @@ export default function ProjectDetailPage() {
             <DocumentsPanel projectId={projectId} canWrite={canWrite} isAdmin={isAdmin} />
           </div>
         </TabsContent>
+
+        {user?.role !== "Client" && user?.role !== "Vendor" && (
+          <TabsContent value="employees" className="mt-6">
+            <EmployeesTab projectId={projectId} />
+          </TabsContent>
+        )}
       </Tabs>
 
       <PhaseFormModal open={phaseModal.open} onOpenChange={(o) => setPhaseModal({ open: o, phase: o ? phaseModal.phase : null })}

@@ -1,4 +1,5 @@
-from sqlalchemy import (Column, Integer, String, Text, Date, DateTime, Numeric, ForeignKey)
+from sqlalchemy import (Column, Integer, String, Text, Date, DateTime, Numeric, ForeignKey,
+                        UniqueConstraint)
 from sqlalchemy.orm import relationship
 from app.database import Base
 from app.models import utcnow
@@ -107,3 +108,36 @@ class BidLineItemQuote(Base):
     line_total = Column(Numeric(14, 2), default=0)
     lead_time_days = Column(Integer, nullable=True)
     notes = Column(Text)
+
+
+class Employee(Base):
+    __tablename__ = "employees"
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    name = Column(String, nullable=False)
+    role_title = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
+    id_proof_type = Column(String, nullable=True)
+    id_proof_number = Column(String, nullable=True)
+    daily_wage = Column(Numeric(12, 2), nullable=True)
+    wage_type = Column(String, default="daily", nullable=False)
+    joining_date = Column(Date, nullable=True)
+    status = Column(String, default="active", nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+    updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
+class Attendance(Base):
+    __tablename__ = "attendance"
+    __table_args__ = (UniqueConstraint("employee_id", "attendance_date", name="uq_attendance_emp_date"),)
+    id = Column(Integer, primary_key=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    attendance_date = Column(Date, nullable=False)
+    status = Column(String, nullable=False, default="present")
+    check_in_time = Column(String, nullable=True)
+    check_out_time = Column(String, nullable=True)
+    marked_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    marked_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+    notes = Column(Text, nullable=True)

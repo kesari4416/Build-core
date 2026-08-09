@@ -86,3 +86,15 @@ body {
 .fade-up {
   animation: fade-up 0.45s ease both;
 }
+
+/* Dark theme: make native date/time picker indicators visible + clickable */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.75);
+  opacity: 0.9;
+  cursor: pointer;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
