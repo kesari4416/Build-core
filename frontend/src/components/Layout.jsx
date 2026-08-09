@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, LogOut, HardHat, IndianRupee, Truck, UserCog, FileText } from "lucide-react";
+import { LayoutDashboard, Building2, Users, LogOut, HardHat, IndianRupee, Truck, UserCog, FileText, ClipboardCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { NotificationBell } from "./NotificationBell";
 
@@ -7,6 +7,7 @@ const STAFF = ["Admin", "SiteEngineer", "Accountant", "ProcurementOfficer"];
 const navItems = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true, roles: [...STAFF, "Client"] },
   { to: "/admin/projects", label: "Projects", icon: Building2, roles: [...STAFF, "Client"] },
+  { to: "/portal/site-engineer", label: "Field Ops", icon: ClipboardCheck, roles: ["Admin", "SiteEngineer"] },
   { to: "/admin/clients", label: "Clients", icon: Users, roles: ["Admin", "SiteEngineer", "Accountant"] },
   { to: "/admin/finance", label: "Finance", icon: IndianRupee, roles: ["Admin", "Accountant"] },
   { to: "/admin/procurement/vendors", label: "Vendors", icon: Truck, roles: ["Admin", "SiteEngineer", "ProcurementOfficer"] },

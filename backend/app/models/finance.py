@@ -1,5 +1,5 @@
 from sqlalchemy import (Column, Integer, String, Text, Date, DateTime, Numeric, ForeignKey,
-                        UniqueConstraint)
+                        UniqueConstraint, Boolean)
 from sqlalchemy.orm import relationship
 from app.database import Base
 from app.models import utcnow
@@ -110,12 +110,23 @@ class BidLineItemQuote(Base):
     notes = Column(Text)
 
 
+class EmployeeCategory(Base):
+    __tablename__ = "employee_categories"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    default_wage_type = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
 class Employee(Base):
     __tablename__ = "employees"
     id = Column(Integer, primary_key=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
     name = Column(String, nullable=False)
     role_title = Column(String, nullable=True)
+    category_id = Column(Integer, ForeignKey("employee_categories.id"), nullable=True)
     phone = Column(String, nullable=True)
     id_proof_type = Column(String, nullable=True)
     id_proof_number = Column(String, nullable=True)
@@ -126,6 +137,8 @@ class Employee(Base):
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utcnow)
     updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+    category = relationship("EmployeeCategory")
 
 
 class Attendance(Base):

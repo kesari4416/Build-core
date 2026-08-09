@@ -57,6 +57,10 @@ def startup():
     Base.metadata.create_all(bind=engine)
     from sqlalchemy import text
     with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS category_id "
+                          "INTEGER REFERENCES employee_categories(id)"))
+    from sqlalchemy import text
+    with engine.begin() as conn:
         conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_type VARCHAR"))
         conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS currency VARCHAR DEFAULT 'INR'"))
         for stmt in ["ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR",
@@ -76,7 +80,8 @@ def startup():
         seed_procurement(db)
         from app.seed_finance import seed_finance
         seed_finance(db)
-        from app.seed_finance import seed_employees
+        from app.seed_finance import seed_employees, seed_categories
         seed_employees(db)
+        seed_categories(db)
     finally:
         db.close()

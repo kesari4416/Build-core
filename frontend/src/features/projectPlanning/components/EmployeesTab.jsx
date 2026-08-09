@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Pencil, UserX, HardHat, IndianRupee } from "lucide-react";
 import api, { formatApiErrorDetail } from "../../../api/client";
+import { useAuth } from "../../../context/AuthContext";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { EmployeeFormModal } from "./EmployeeFormModal";
@@ -25,6 +26,8 @@ const monthStart = () => { const d = new Date(); d.setDate(1); return iso(d); };
 
 export const EmployeesTab = ({ projectId }) => {
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const canManageWage = ["Admin", "Accountant"].includes(user?.role);
   const [modal, setModal] = useState({ open: false, employee: null });
   const [range, setRange] = useState({ from: monthStart(), to: todayIso() });
   const dates = lastNDays(7);
@@ -125,7 +128,7 @@ export const EmployeesTab = ({ projectId }) => {
                     <div className="flex items-center justify-end gap-1">
                       <button data-testid={`edit-employee-${e.id}`} title="Edit" onClick={() => setModal({ open: true, employee: e })}
                         className="p-1.5 text-zinc-500 hover:text-orange-500 transition-colors"><Pencil size={15} strokeWidth={2.5} /></button>
-                      {e.status === "active" && (
+                      {e.status === "active" && canManageWage && (
                         <button data-testid={`deactivate-employee-${e.id}`} title="Deactivate" onClick={() => deactivate(e)}
                           className="p-1.5 text-zinc-500 hover:text-red-400 transition-colors"><UserX size={15} strokeWidth={2.5} /></button>
                       )}

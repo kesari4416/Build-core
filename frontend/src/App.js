@@ -22,6 +22,7 @@ import VendorsPage from "./features/projectPlanning/pages/VendorsPage";
 import BidComparisonPage from "./features/projectPlanning/pages/BidComparisonPage";
 import VendorPortalPage from "./features/projectPlanning/pages/VendorPortalPage";
 import VendorBidPackagePage from "./features/projectPlanning/pages/VendorBidPackagePage";
+import SiteEngineerPortalPage from "./features/projectPlanning/pages/SiteEngineerPortalPage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -68,6 +69,7 @@ function App() {
             <Route path="/admin/procurement/bid-packages/:id/comparison" element={<ProtectedRoute><BidComparisonPage /></ProtectedRoute>} />
             <Route path="/portal/vendor/bid-packages" element={<ProtectedRoute><VendorPortalPage /></ProtectedRoute>} />
             <Route path="/portal/vendor/bid-packages/:id" element={<ProtectedRoute><VendorBidPackagePage /></ProtectedRoute>} />
+            <Route path="/portal/site-engineer" element={<ProtectedRoute><SiteEngineerPortalPage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
         </BrowserRouter>

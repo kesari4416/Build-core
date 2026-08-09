@@ -96,3 +96,19 @@ def seed_employees(db: Session):
                               status=statuses[(e.id + i) % len(statuses)],
                               marked_by=admin.id if admin else None))
     db.commit()
+
+
+def seed_categories(db: Session):
+    from app.models.finance import Employee, EmployeeCategory
+    defaults = ["Mason", "Electrician", "Helper", "Plumber", "Carpenter", "Supervisor"]
+    admin = db.query(User).filter(User.role == "Admin").first()
+    for name in defaults:
+        if not db.query(EmployeeCategory).filter(EmployeeCategory.name.ilike(name)).first():
+            db.add(EmployeeCategory(name=name, default_wage_type="daily",
+                                    created_by=admin.id if admin else None))
+    db.commit()
+    cats = {c.name.lower(): c.id for c in db.query(EmployeeCategory).all()}
+    for e in db.query(Employee).filter(Employee.category_id.is_(None)).all():
+        if e.role_title and e.role_title.lower() in cats:
+            e.category_id = cats[e.role_title.lower()]
+    db.commit()
