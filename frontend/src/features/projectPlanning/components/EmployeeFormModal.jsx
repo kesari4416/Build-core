@@ -29,18 +29,20 @@ export const EmployeeFormModal = ({ open, onOpenChange, projectId, employee }) =
   });
 
   useEffect(() => {
-    if (open)
+    if (open) {
       setForm(employee ? {
         name: employee.name || "", category_id: employee.category_id ? String(employee.category_id) : "",
         phone: employee.phone || "", wage_type: employee.wage_type || "daily",
         daily_wage: employee.daily_wage ?? "", joining_date: employee.joining_date || "",
       } : empty);
+    }
   }, [open, employee]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const onCategorySelect = (v) => {
     if (v === "__new") { setCatModal(true); return; }
+    if (!v) return;
     const cat = categories?.find((c) => String(c.id) === v);
     setForm((f) => ({ ...f, category_id: v, wage_type: (!employee && cat?.default_wage_type) || f.wage_type }));
   };
@@ -92,7 +94,11 @@ export const EmployeeFormModal = ({ open, onOpenChange, projectId, employee }) =
               <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Category</Label>
               <Select value={form.category_id} onValueChange={onCategorySelect}>
                 <SelectTrigger data-testid="employee-category-select" className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none">
-                  <SelectValue placeholder="Select trade" />
+                  <SelectValue placeholder="Select trade">
+                    {form.category_id
+                      ? (categories?.find((c) => String(c.id) === form.category_id)?.name || "Selected")
+                      : null}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-900 border-zinc-700">
                   {categories?.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
