@@ -6,12 +6,6 @@ import { formatApiErrorDetail } from "../../../api/client";
 
 const BG = "https://images.unsplash.com/photo-1664662566501-73a7e41d8c19?crop=entropy&cs=srgb&fm=jpg&q=85&w=1600";
 
-const demos = [
-  { label: "Admin", email: "kesari4416@gmail.com", password: "admin123" },
-  { label: "Engineer", email: "raj@buildcore.com", password: "engineer123" },
-  { label: "Client", email: "priya@skyline.com", password: "client123" },
-];
-
 export default function LoginPage() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
@@ -78,18 +72,6 @@ export default function LoginPage() {
             {loading && <Loader2 size={16} className="animate-spin" />} Sign In
           </button>
         </form>
-        <div className="mt-10 border-t border-zinc-800 pt-6">
-          <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 font-semibold mb-3">Demo Accounts</div>
-          <div className="grid grid-cols-3 gap-2">
-            {demos.map((d) => (
-              <button key={d.label} data-testid={`demo-login-${d.label.toLowerCase()}`}
-                onClick={(ev) => { setEmail(d.email); setPassword(d.password); submit(ev, d.email, d.password); }}
-                className="border border-zinc-700 py-2 text-xs uppercase tracking-[0.12em] font-semibold text-zinc-400 hover:text-orange-500 hover:border-orange-500 transition-colors">
-                {d.label}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
