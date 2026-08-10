@@ -154,3 +154,11 @@ class Attendance(Base):
     marked_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     marked_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
     notes = Column(Text, nullable=True)
+
+
+class ExpenseCategory(Base):
+    __tablename__ = "expense_categories"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)

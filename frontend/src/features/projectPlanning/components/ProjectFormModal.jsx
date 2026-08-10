@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { MapPin, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Button } from "../../../components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
-import { formatApiErrorDetail } from "../../../api/client";
+import api, { formatApiErrorDetail } from "../../../api/client";
 import { useCreateProject, useUpdateProject, useClients, useEngineers } from "../hooks/useProjects";
 
 const STATUSES = ["Planning", "Ongoing", "OnHold", "Completed", "Cancelled"];
@@ -14,6 +15,27 @@ const empty = { name: "", client_id: "", site_engineer_id: "", location: "", bud
 export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId }) => {
   const [form, setForm] = useState(empty);
   const [errors, setErrors] = useState({});
+  const [detecting, setDetecting] = useState(false);
+
+  const detectLocation = () => {
+    if (!navigator.geolocation) { toast.error("Geolocation is not supported by this browser — please type the address"); return; }
+    setDetecting(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          const { data } = await api.get("/geo/reverse", { params: { lat: latitude, lon: longitude } });
+          setForm((f) => ({ ...f, location: data.location }));
+          toast.success("Location detected");
+        } catch {
+          setForm((f) => ({ ...f, location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` }));
+          toast.success("Location detected (coordinates)");
+        } finally { setDetecting(false); }
+      },
+      () => { setDetecting(false); toast.error("Location access denied — please type the address manually"); },
+      { timeout: 10000 }
+    );
+  };
   const { data: clients } = useClients(open);
   const { data: engineers } = useEngineers(open);
   const create = useCreateProject();
@@ -117,7 +139,13 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Location</Label>
-              <Input data-testid="project-location-input" value={form.location} onChange={(e) => set("location", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+              <div className="flex gap-1.5 mt-1.5">
+                <Input data-testid="project-location-input" placeholder="Auto-detect or type address" value={form.location} onChange={(e) => set("location", e.target.value)} className="bg-zinc-950 border-zinc-700 rounded-none" />
+                <button type="button" data-testid="detect-location-button" title="Detect my location" onClick={detectLocation} disabled={detecting}
+                  className="shrink-0 border border-zinc-700 hover:border-orange-500 text-zinc-400 hover:text-orange-500 px-2.5 transition-colors disabled:opacity-50">
+                  {detecting ? <Loader2 size={15} strokeWidth={2.5} className="animate-spin" /> : <MapPin size={15} strokeWidth={2.5} />}
+                </button>
+              </div>
             </div>
             <div>
               <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Budget (₹)</Label>

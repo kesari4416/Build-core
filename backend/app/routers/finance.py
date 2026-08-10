@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -144,10 +144,84 @@ def project_finance(db, project):
                                         Invoice.status.notin_(["Draft", "Cancelled"])).all()
     outstanding = sum(max(0, f(i.amount) + f(i.tax_amount) - paid_sum(db, i.id)) for i in invoices)
     cost = committed + payroll + expenses
+    cutoff = date.today() - timedelta(days=365)
+    revenue_1y = f(db.query(func.coalesce(func.sum(Payment.amount), 0))
+                   .filter(Payment.project_id == project.id,
+                           Payment.payment_date >= cutoff).scalar())
+    expenses_1y = f(db.query(func.coalesce(func.sum(ExpenseEntry.amount), 0))
+                    .filter(ExpenseEntry.project_id == project.id,
+                            ExpenseEntry.expense_date >= cutoff).scalar())
+    cost_1y = committed + payroll + expenses_1y
     return {"income_to_date": round(income, 2), "cost_to_date": round(cost, 2),
             "committed_procurement": round(committed, 2), "payroll_allocated": round(payroll, 2),
             "expenses_total": round(expenses, 2), "profit": round(income - cost, 2),
-            "outstanding_invoices": round(outstanding, 2)}
+            "outstanding_invoices": round(outstanding, 2),
+            "period_from": cutoff.isoformat(), "period_to": date.today().isoformat(),
+            "revenue_last_year": round(revenue_1y, 2), "cost_last_year": round(cost_1y, 2)}
+
+
+@router.get("/expense-categories")
+def list_expense_categories(db: Session = Depends(get_db), user: User = Depends(STAFF)):
+    from app.models.finance import ExpenseCategory
+    return [{"id": c.id, "name": c.name} for c in
+            db.query(ExpenseCategory).order_by(ExpenseCategory.name).all()]
+
+
+@router.post("/expense-categories", status_code=201)
+def create_expense_category(body: dict, db: Session = Depends(get_db), user: User = Depends(STAFF)):
+    from app.models.finance import ExpenseCategory
+    name = (body.get("name") or "").strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Category name is required")
+    if db.query(ExpenseCategory).filter(ExpenseCategory.name.ilike(name)).first():
+        raise HTTPException(status_code=409, detail=f"Category '{name}' already exists")
+    c = ExpenseCategory(name=name, created_by=user.id)
+    db.add(c); db.commit(); db.refresh(c)
+    return {"id": c.id, "name": c.name}
+
+
+@router.patch("/expense-categories/{category_id}")
+def rename_expense_category(category_id: int, body: dict, db: Session = Depends(get_db),
+                            user: User = Depends(STAFF)):
+    from app.models.finance import ExpenseCategory
+    c = db.get(ExpenseCategory, category_id)
+    if not c:
+        raise HTTPException(status_code=404, detail="Category not found")
+    name = (body.get("name") or "").strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Category name is required")
+    old = c.name
+    c.name = name
+    db.query(ExpenseEntry).filter(ExpenseEntry.category == old).update({"category": name})
+    db.commit()
+    return {"id": c.id, "name": c.name}
+
+
+@router.delete("/expense-categories/{category_id}", status_code=204)
+def delete_expense_category(category_id: int, db: Session = Depends(get_db),
+                            user: User = Depends(STAFF)):
+    from app.models.finance import ExpenseCategory
+    c = db.get(ExpenseCategory, category_id)
+    if not c:
+        raise HTTPException(status_code=404, detail="Category not found")
+    db.delete(c); db.commit()
+
+
+@router.get("/geo/reverse")
+def reverse_geocode(lat: float, lon: float, user: User = Depends(STAFF)):
+    import requests as rq
+    try:
+        r = rq.get("https://nominatim.openstreetmap.org/reverse",
+                   params={"format": "json", "lat": lat, "lon": lon, "zoom": 14},
+                   headers={"User-Agent": "BuildCore-Portal/1.0"}, timeout=8)
+        data = r.json()
+        a = data.get("address", {})
+        parts = [a.get("suburb") or a.get("neighbourhood") or a.get("village"),
+                 a.get("city") or a.get("town") or a.get("county"), a.get("state")]
+        label = ", ".join([p for p in parts if p]) or data.get("display_name") or f"{lat:.4f}, {lon:.4f}"
+    except Exception:
+        label = f"{lat:.4f}, {lon:.4f}"
+    return {"location": label}
 
 
 @router.post("/projects/{project_id}/invoices", status_code=201)

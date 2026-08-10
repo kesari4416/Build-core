@@ -136,3 +136,15 @@ def seed_milestones(db: Session):
                              completed_at=datetime.now(timezone.utc) if status == "Completed" else None,
                              sequence_order=i))
     db.commit()
+
+
+def seed_expense_categories(db: Session):
+    from app.models.finance import ExpenseCategory, ExpenseEntry
+    admin = db.query(User).filter(User.role == "Admin").first()
+    defaults = ["Material", "Labour", "Equipment", "Transport", "Site Overheads", "Misc"]
+    existing_expense_cats = {c for (c,) in db.query(ExpenseEntry.category).distinct().all() if c}
+    for name in sorted(defaults + [c for c in existing_expense_cats if c.lower() not in
+                                   {d.lower() for d in defaults}]):
+        if not db.query(ExpenseCategory).filter(ExpenseCategory.name.ilike(name)).first():
+            db.add(ExpenseCategory(name=name, created_by=admin.id if admin else None))
+    db.commit()
