@@ -60,6 +60,13 @@
 
 - FINANCE_004 UI fix (2026-06, VERIFIED via screenshot): Profit card on ProjectFinancePage now shows 1-year period subtitle (data-testid pf-profit-period rendered via ProjectFinanceSummaryCard sub prop). Backend 1-yr profit already verified in iteration 11. All 4 bug reports (FINANCE_004, VENTORS_001, FIELDOPS_001, PROJECT_002) fully closed.
 
+- Balance Sheets + Invoice Share (2026-06, iter 12, TESTED 100%):
+  - GET /api/finance/balance-sheet (Admin/Accountant): per-project budget/credit/debit/profit_loss sorted losses-first, breakdown (staff_payroll, labour_wages from attendance, expenses, procurement), totals, overall_profit/overall_loss, loss_projects, employee_dues (pending payroll + daily-wage labour by category)
+  - GET /api/projects/{id}/balance-sheet (staff): budget, client_paid, client_outstanding, released breakdown, balance, budget_remaining, transactions latest-first incl daily labour-wage debit entries
+  - Frontend: /admin/finance now has Overview + Balance Sheet tabs (OrgBalanceSheetTab — loss projects red-highlighted, employee dues panel); Project Detail has new 'balance sheet' tab (ProjectBalanceSheetTab — 4 cards + money-out breakdown + latest-first transaction table); hidden from Client/Vendor
+  - Invoice Print/WhatsApp/Email buttons (device-based, no keys): utils/invoiceShare.js — printable BUILDCORE invoice window, wa.me + mailto share; on InvoiceCard (project finance + client detail) and overdue invoices on org Finance
+  - Tests: /app/backend/tests/test_iter12_balance_sheet.py (8/8 RBAC + math)
+
 ## Backlog / Next
 - P1: Milestones UI (backend ready); edit progress updates
 - P2: Replace window.prompt/confirm dialogs (record payment, reset password, delete user, award) with shadcn Dialogs; email channel for alerts (needs Resend/SendGrid key); Gantt view; export reports; invoice PDF export

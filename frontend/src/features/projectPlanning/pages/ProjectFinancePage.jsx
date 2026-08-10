@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, TrendingUp, TrendingDown, IndianRupee, Receipt, Tag, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, TrendingUp, TrendingDown, IndianRupee, Receipt, Tag, Pencil, Trash2, Printer, MessageCircle, Mail } from "lucide-react";
+import { printInvoice, shareInvoiceWhatsApp, shareInvoiceEmail } from "../utils/invoiceShare";
 import api, { formatApiErrorDetail } from "../../../api/client";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
@@ -24,13 +25,21 @@ export const ProjectFinanceSummaryCard = ({ label, value, sub, icon: Icon, accen
   </div>
 );
 
-export const InvoiceCard = ({ inv, canWrite, onPay }) => (
+export const InvoiceCard = ({ inv, canWrite, onPay, projectName, clientName }) => (
   <div className="border border-zinc-800 bg-zinc-900/60 p-4" data-testid={`invoice-card-${inv.id}`}>
     <div className="flex flex-wrap items-center gap-3">
       <span className="font-heading font-bold text-lg text-orange-500">{inv.invoice_number}</span>
       <CommitmentStatusBadge status={inv.status} />
       <span className="text-xs text-zinc-500">Due {inv.due_date || "—"}</span>
       <span className="ml-auto font-semibold text-white">{fmt(inv.total)}</span>
+      <div className="flex gap-0.5">
+        <button data-testid={`invoice-print-${inv.id}`} title="Print invoice" onClick={() => printInvoice(inv, projectName, clientName)}
+          className="p-1.5 text-zinc-500 hover:text-orange-500 transition-colors"><Printer size={14} strokeWidth={2.5} /></button>
+        <button data-testid={`invoice-whatsapp-${inv.id}`} title="Send via WhatsApp" onClick={() => shareInvoiceWhatsApp(inv, projectName)}
+          className="p-1.5 text-zinc-500 hover:text-green-400 transition-colors"><MessageCircle size={14} strokeWidth={2.5} /></button>
+        <button data-testid={`invoice-email-${inv.id}`} title="Send via Email" onClick={() => shareInvoiceEmail(inv, projectName)}
+          className="p-1.5 text-zinc-500 hover:text-sky-400 transition-colors"><Mail size={14} strokeWidth={2.5} /></button>
+      </div>
     </div>
     <div className="text-xs text-zinc-400 mt-1">{inv.description}</div>
     <div className="flex items-center gap-4 mt-2 text-xs">
@@ -111,7 +120,7 @@ export default function ProjectFinancePage() {
                 className="rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-bold uppercase tracking-wide h-9"><Plus size={14} strokeWidth={3} /> Invoice</Button>
             </div>
           )}
-          {(invoices || []).map((inv) => <InvoiceCard key={inv.id} inv={inv} canWrite={canFin} onPay={recordPayment} />)}
+          {(invoices || []).map((inv) => <InvoiceCard key={inv.id} inv={inv} canWrite={canFin} onPay={recordPayment} projectName={project?.name} clientName={project?.client_name} />)}
           {(invoices || []).length === 0 && <div className="border border-zinc-800 p-8 text-center text-xs text-zinc-500" data-testid="invoices-empty">No invoices yet.</div>}
         </div>
         <div className="space-y-3">

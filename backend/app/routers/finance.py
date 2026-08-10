@@ -452,6 +452,112 @@ def finance_summary(project_id: int, db: Session = Depends(get_db), user: User =
     return project_finance(db, get_project_or_404(db, project_id))
 
 
+DAY_VALUE = {"present": 1.0, "half_day": 0.5}
+
+
+def project_labour_rows(db, project_id):
+    from app.models.finance import Employee, Attendance
+    return (db.query(Attendance, Employee)
+            .join(Employee, Attendance.employee_id == Employee.id)
+            .filter(Attendance.project_id == project_id,
+                    Employee.wage_type == "daily",
+                    Employee.daily_wage.isnot(None)).all())
+
+
+def project_labour_total(db, project_id):
+    return round(sum(DAY_VALUE.get(a.status, 0.0) * float(e.daily_wage)
+                     for a, e in project_labour_rows(db, project_id)), 2)
+
+
+def balance_row(db, p):
+    credit = f(db.query(func.coalesce(func.sum(Payment.amount), 0))
+               .filter(Payment.project_id == p.id).scalar())
+    payroll = f(db.query(func.coalesce(func.sum(PayrollEntry.net_pay), 0))
+                .filter(PayrollEntry.project_id == p.id).scalar())
+    labour = project_labour_total(db, p.id)
+    expenses = f(db.query(func.coalesce(func.sum(ExpenseEntry.amount), 0))
+                 .filter(ExpenseEntry.project_id == p.id).scalar())
+    pos = db.query(PurchaseOrder).filter_by(project_id=p.id).all()
+    subs = db.query(Subcontract).filter_by(project_id=p.id).all()
+    procurement = round(sum(committed_amount(db, "po", x) for x in pos if x.status != "Cancelled") +
+                        sum(committed_amount(db, "subcontract", x) for x in subs
+                            if x.status not in ("Cancelled", "Terminated")), 2)
+    debit = round(payroll + labour + expenses + procurement, 2)
+    return {"project_id": p.id, "name": p.name, "budget": f(p.budget or 0),
+            "credit": round(credit, 2), "debit": debit,
+            "breakdown": {"staff_payroll": round(payroll, 2), "labour_wages": labour,
+                          "expenses": round(expenses, 2), "procurement": procurement},
+            "profit_loss": round(credit - debit, 2), "is_loss": credit - debit < 0}
+
+
+@router.get("/finance/balance-sheet")
+def org_balance_sheet(db: Session = Depends(get_db), user: User = Depends(FIN)):
+    from app.models.finance import Employee, Attendance
+    projects = db.query(Project).filter(Project.is_archived == False).all()  # noqa: E712
+    rows = [balance_row(db, p) for p in projects]
+    rows.sort(key=lambda r: r["profit_loss"])
+    total_credit = round(sum(r["credit"] for r in rows), 2)
+    total_debit = round(sum(r["debit"] for r in rows), 2)
+    overall_profit = round(sum(r["profit_loss"] for r in rows if r["profit_loss"] > 0), 2)
+    overall_loss = round(sum(-r["profit_loss"] for r in rows if r["profit_loss"] < 0), 2)
+    payroll_pending = f(db.query(func.coalesce(func.sum(PayrollEntry.net_pay), 0))
+                        .filter(PayrollEntry.payment_status != "Paid").scalar())
+    by_cat = {}
+    for a, e in (db.query(Attendance, Employee)
+                 .join(Employee, Attendance.employee_id == Employee.id)
+                 .filter(Employee.wage_type == "daily", Employee.daily_wage.isnot(None)).all()):
+        day = DAY_VALUE.get(a.status, 0.0)
+        if not day:
+            continue
+        cat = e.category.name if e.category else (e.role_title or "General")
+        by_cat[cat] = by_cat.get(cat, 0.0) + day * float(e.daily_wage)
+    labour_by_category = [{"category": k, "amount": round(v, 2)} for k, v in sorted(by_cat.items())]
+    labour_total = round(sum(x["amount"] for x in labour_by_category), 2)
+    return {"projects": rows, "total_credit": total_credit, "total_debit": total_debit,
+            "net": round(total_credit - total_debit, 2),
+            "overall_profit": overall_profit, "overall_loss": overall_loss,
+            "loss_projects": [{"project_id": r["project_id"], "name": r["name"],
+                               "loss": -r["profit_loss"]} for r in rows if r["is_loss"]],
+            "employee_dues": {"staff_payroll_pending": round(payroll_pending, 2),
+                              "labour_by_category": labour_by_category,
+                              "labour_total": labour_total,
+                              "total_required": round(payroll_pending + labour_total, 2)}}
+
+
+@router.get("/projects/{project_id}/balance-sheet")
+def project_balance_sheet(project_id: int, db: Session = Depends(get_db),
+                          user: User = Depends(STAFF)):
+    project = get_project_or_404(db, project_id)
+    row = balance_row(db, project)
+    invoices = db.query(Invoice).filter(Invoice.project_id == project_id,
+                                        Invoice.status.notin_(["Draft", "Cancelled"])).all()
+    outstanding = round(sum(max(0, f(i.amount) + f(i.tax_amount) - paid_sum(db, i.id))
+                            for i in invoices), 2)
+    ledger = project_ledger(project_id, db, user)
+    entries = list(ledger["entries"])
+    daily = {}
+    for a, e in project_labour_rows(db, project_id):
+        day = DAY_VALUE.get(a.status, 0.0)
+        if not day:
+            continue
+        key = d(a.attendance_date)
+        amt, cnt = daily.get(key, (0.0, 0))
+        daily[key] = (amt + day * float(e.daily_wage), cnt + 1)
+    for k, (amt, cnt) in daily.items():
+        entries.append({"date": k, "type": "debit",
+                        "description": f"Labour wages — {cnt} worker{'s' if cnt != 1 else ''} (attendance)",
+                        "amount": round(amt, 2)})
+    entries.sort(key=lambda x: x["date"] or "", reverse=True)
+    total_credit = round(sum(x["amount"] for x in entries if x["type"] == "credit"), 2)
+    total_debit = round(sum(x["amount"] for x in entries if x["type"] == "debit"), 2)
+    return {"project_id": project_id, "name": project.name, "budget": row["budget"],
+            "client_paid": row["credit"], "client_outstanding": outstanding,
+            "released": row["breakdown"], "total_released": row["debit"],
+            "balance": round(row["credit"] - row["debit"], 2),
+            "budget_remaining": round(row["budget"] - row["debit"], 2),
+            "entries": entries, "total_credit": total_credit, "total_debit": total_debit}
+
+
 @router.get("/finance/dashboard-summary")
 def org_summary(db: Session = Depends(get_db), user: User = Depends(FIN)):
     projects = db.query(Project).filter(Project.is_archived == False).all()  # noqa: E712
