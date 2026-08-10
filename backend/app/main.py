@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
 from app.database import engine, Base, SessionLocal
-from app.routers import auth, projects, clients, uploads, documents, vendors, procurement, finance, users_admin, quotation, notifications, employees
+from app.routers import auth, projects, clients, uploads, documents, vendors, procurement, finance, users_admin, quotation, notifications, employees, exports
 from app.routers.uploads import UPLOAD_DIR
 from app.seed import seed_admin, seed_demo_data
 from app.seed_procurement import seed_procurement
@@ -33,6 +33,7 @@ api_router.include_router(users_admin.router)
 api_router.include_router(quotation.router)
 api_router.include_router(notifications.router)
 api_router.include_router(employees.router)
+api_router.include_router(exports.router)
 
 
 @api_router.get("/")

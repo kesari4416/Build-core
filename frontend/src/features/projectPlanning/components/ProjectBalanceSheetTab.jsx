@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { IndianRupee, TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { toast } from "sonner";
+import { IndianRupee, TrendingUp, TrendingDown, Wallet, FileDown, FileSpreadsheet } from "lucide-react";
 import api from "../../../api/client";
+import { downloadFile } from "../utils/downloadFile";
 
 const fmt = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 const fmtCr = (n) => `${n < 0 ? "−" : ""}₹${(Math.abs(n || 0) / 10000000).toFixed(2)} Cr`;
@@ -27,6 +29,16 @@ export const ProjectBalanceSheetTab = ({ projectId }) => {
 
   return (
     <div data-testid="project-balance-sheet">
+      <div className="flex justify-end gap-2 mb-4">
+        <button data-testid="pbs-export-pdf" onClick={() => downloadFile(`/projects/${projectId}/balance-sheet/export?fmt=pdf`, "project-balance-sheet.pdf").catch(() => toast.error("Export failed"))}
+          className="flex items-center gap-2 border border-zinc-700 px-3 py-2 text-[11px] uppercase tracking-[0.15em] font-semibold text-zinc-300 hover:border-orange-500 hover:text-orange-500 transition-colors">
+          <FileDown size={14} strokeWidth={2.5} /> Export PDF
+        </button>
+        <button data-testid="pbs-export-excel" onClick={() => downloadFile(`/projects/${projectId}/balance-sheet/export?fmt=xlsx`, "project-balance-sheet.xlsx").catch(() => toast.error("Export failed"))}
+          className="flex items-center gap-2 border border-zinc-700 px-3 py-2 text-[11px] uppercase tracking-[0.15em] font-semibold text-zinc-300 hover:border-green-500 hover:text-green-400 transition-colors">
+          <FileSpreadsheet size={14} strokeWidth={2.5} /> Export Excel
+        </button>
+      </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card label="Total Budget" value={fmtCr(bs.budget)} icon={IndianRupee} accent="text-sky-400" testId="pbs-budget" />
         <Card label="Client Payment (In)" value={fmtCr(bs.client_paid)} sub={`Outstanding from client: ${fmt(bs.client_outstanding)}`} icon={TrendingUp} accent="text-green-400" testId="pbs-client-paid" />

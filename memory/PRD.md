@@ -67,6 +67,11 @@
   - Invoice Print/WhatsApp/Email buttons (device-based, no keys): utils/invoiceShare.js — printable BUILDCORE invoice window, wa.me + mailto share; on InvoiceCard (project finance + client detail) and overdue invoices on org Finance
   - Tests: /app/backend/tests/test_iter12_balance_sheet.py (8/8 RBAC + math)
 
+- Balance Sheet Export (2026-06, SELF-TESTED: curl all 4 formats + RBAC + real UI download events):
+  - New router /app/backend/app/routers/exports.py: GET /api/finance/balance-sheet/export?fmt=pdf|xlsx (Admin/Accountant) and GET /api/projects/{id}/balance-sheet/export?fmt=pdf|xlsx (staff) — reportlab PDFs (loss rows red, dues section) + openpyxl workbooks (Balance Sheet + Employee Dues / Summary + Transactions sheets); filenames dated, project slugged
+  - Frontend: Export PDF / Export Excel buttons on both balance sheet tabs (bs-export-pdf/excel, pbs-export-pdf/excel); shared utils/downloadFile.js (blob download, filename from Content-Disposition)
+  - openpyxl added to requirements.txt
+
 ## Backlog / Next
 - P1: Milestones UI (backend ready); edit progress updates
 - P2: Replace window.prompt/confirm dialogs (record payment, reset password, delete user, award) with shadcn Dialogs; email channel for alerts (needs Resend/SendGrid key); Gantt view; export reports; invoice PDF export
