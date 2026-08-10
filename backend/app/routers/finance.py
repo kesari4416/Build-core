@@ -152,12 +152,14 @@ def project_finance(db, project):
                     .filter(ExpenseEntry.project_id == project.id,
                             ExpenseEntry.expense_date >= cutoff).scalar())
     cost_1y = committed + payroll + expenses_1y
+    profit_1y = revenue_1y - cost_1y
     return {"income_to_date": round(income, 2), "cost_to_date": round(cost, 2),
             "committed_procurement": round(committed, 2), "payroll_allocated": round(payroll, 2),
             "expenses_total": round(expenses, 2), "profit": round(income - cost, 2),
             "outstanding_invoices": round(outstanding, 2),
             "period_from": cutoff.isoformat(), "period_to": date.today().isoformat(),
-            "revenue_last_year": round(revenue_1y, 2), "cost_last_year": round(cost_1y, 2)}
+            "revenue_last_year": round(revenue_1y, 2), "cost_last_year": round(cost_1y, 2),
+            "profit_last_year": round(profit_1y, 2)}
 
 
 @router.get("/expense-categories")
@@ -222,6 +224,35 @@ def reverse_geocode(lat: float, lon: float, user: User = Depends(STAFF)):
     except Exception:
         label = f"{lat:.4f}, {lon:.4f}"
     return {"location": label}
+
+
+@router.get("/projects/{project_id}/ledger")
+def project_ledger(project_id: int, db: Session = Depends(get_db), user: User = Depends(STAFF)):
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    entries = []
+    for p in db.query(Payment).filter(Payment.project_id == project_id).all():
+        inv = db.get(Invoice, p.invoice_id) if p.invoice_id else None
+        entries.append({"date": d(p.payment_date), "type": "credit",
+                        "description": f"Client payment{' — ' + inv.invoice_number if inv else ''}"
+                                       f" ({p.payment_method or 'BankTransfer'})",
+                        "amount": f(p.amount)})
+    for e in db.query(ExpenseEntry).filter(ExpenseEntry.project_id == project_id).all():
+        entries.append({"date": d(e.expense_date), "type": "debit",
+                        "description": f"Expense — {e.category}" + (f": {e.description}" if e.description else ""),
+                        "amount": f(e.amount)})
+    for pe, run in (db.query(PayrollEntry, PayrollRun)
+                    .join(PayrollRun, PayrollEntry.payroll_run_id == PayrollRun.id)
+                    .filter(PayrollEntry.project_id == project_id).all()):
+        entries.append({"date": d(run.period_end), "type": "debit",
+                        "description": f"Payroll — period {d(run.period_start)} → {d(run.period_end)}",
+                        "amount": f(pe.net_pay)})
+    entries.sort(key=lambda x: x["date"] or "", reverse=True)
+    total_credit = round(sum(x["amount"] for x in entries if x["type"] == "credit"), 2)
+    total_debit = round(sum(x["amount"] for x in entries if x["type"] == "debit"), 2)
+    return {"project_id": project_id, "entries": entries, "total_credit": total_credit,
+            "total_debit": total_debit, "net": round(total_credit - total_debit, 2)}
 
 
 @router.post("/projects/{project_id}/invoices", status_code=201)

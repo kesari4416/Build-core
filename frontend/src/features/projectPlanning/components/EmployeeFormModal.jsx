@@ -63,9 +63,11 @@ export const EmployeeFormModal = ({ open, onOpenChange, projectId, employee }) =
     };
     try {
       if (employee) await api.patch(`/employees/${employee.id}`, payload);
-      else await api.post(`/projects/${projectId}/employees`, payload);
+      else if (projectId) await api.post(`/projects/${projectId}/employees`, payload);
+      else await api.post("/employees", payload);
       toast.success(employee ? "Employee updated" : "Employee added");
       qc.invalidateQueries({ queryKey: ["employees", projectId] });
+      qc.invalidateQueries({ queryKey: ["allEmployees"] });
       qc.invalidateQueries({ queryKey: ["labourCost", projectId] });
       onOpenChange(false);
     } catch (err) {

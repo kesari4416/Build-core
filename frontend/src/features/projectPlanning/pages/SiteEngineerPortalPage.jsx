@@ -42,6 +42,10 @@ export default function SiteEngineerPortalPage() {
     queryFn: () => api.get(`/projects/${pid}/attendance`, { params: { date_from: day, date_to: day } }).then((r) => r.data),
     enabled: !!pid && !!day,
   });
+  const { data: allEmployees } = useQuery({
+    queryKey: ["allEmployees"],
+    queryFn: () => api.get("/employees").then((r) => r.data),
+  });
 
   const active = (employees || []).filter((e) => e.status === "active");
   const statusMap = {};
@@ -68,7 +72,7 @@ export default function SiteEngineerPortalPage() {
           <div className="text-orange-500 text-[11px] uppercase tracking-[0.3em] font-semibold mb-1">Field Operations</div>
           <h1 className="font-heading font-bold text-4xl sm:text-5xl uppercase leading-none">Daily Attendance</h1>
         </div>
-        <Button data-testid="se-add-employee-button" disabled={!pid} onClick={() => setModal(true)}
+        <Button data-testid="se-add-employee-button" onClick={() => setModal(true)}
           className="rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-bold uppercase tracking-wide">
           <Plus size={15} strokeWidth={3} /> Add Employee
         </Button>
@@ -128,7 +132,42 @@ export default function SiteEngineerPortalPage() {
         )}
       </div>
 
-      <EmployeeFormModal open={modal} onOpenChange={setModal} projectId={pid} />
+      <div className="mt-10" data-testid="org-employee-register">
+        <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 font-semibold mb-3">
+          Employee Register (Organisation) · {(allEmployees || []).length}
+        </div>
+        <div className="border border-zinc-800 overflow-x-auto">
+          <table className="w-full text-sm" data-testid="org-employees-table">
+            <thead>
+              <tr className="text-left text-[10px] uppercase tracking-[0.15em] text-zinc-500 border-b border-zinc-800 bg-zinc-900/60">
+                <th className="px-4 py-3">Name</th><th className="px-4 py-3">Trade</th>
+                <th className="px-4 py-3 text-right">Wage</th><th className="px-4 py-3">Assigned Projects (via phases)</th>
+                <th className="px-4 py-3 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(allEmployees || []).map((e) => (
+                <tr key={e.id} className="border-b border-zinc-800/50 hover:bg-zinc-900/50 transition-colors" data-testid={`org-employee-row-${e.id}`}>
+                  <td className="px-4 py-2.5 font-semibold text-white">{e.name}</td>
+                  <td className="px-4 py-2.5 text-zinc-300">{e.role_title || "—"}</td>
+                  <td className="px-4 py-2.5 text-right text-zinc-200">{e.daily_wage != null ? `₹${Number(e.daily_wage).toLocaleString("en-IN")}/${e.wage_type === "daily" ? "day" : e.wage_type}` : "—"}</td>
+                  <td className="px-4 py-2.5 text-xs text-zinc-400">
+                    {(e.assigned_projects || []).length ? e.assigned_projects.join(", ") : <span className="text-zinc-600">Unassigned — assign via Project → Phases</span>}
+                  </td>
+                  <td className="px-4 py-2.5 text-center">
+                    <span className={`inline-block border px-2 py-0.5 text-[11px] uppercase tracking-[0.12em] font-semibold ${e.status === "active" ? "bg-green-500/10 text-green-400 border-green-500/40" : "bg-zinc-500/10 text-zinc-400 border-zinc-500/40"}`}>{e.status}</span>
+                  </td>
+                </tr>
+              ))}
+              {(allEmployees || []).length === 0 && (
+                <tr><td colSpan={5} className="px-4 py-8 text-center text-zinc-500">No employees yet — add your first worker above.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <EmployeeFormModal open={modal} onOpenChange={setModal} projectId={null} />
     </div>
   );
 }

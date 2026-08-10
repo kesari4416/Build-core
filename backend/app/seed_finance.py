@@ -148,3 +148,26 @@ def seed_expense_categories(db: Session):
         if not db.query(ExpenseCategory).filter(ExpenseCategory.name.ilike(name)).first():
             db.add(ExpenseCategory(name=name, created_by=admin.id if admin else None))
     db.commit()
+
+
+def seed_project_ledgers(db: Session):
+    from app.models import Project
+    from app.models.finance import Payment, ExpenseEntry
+    today = date.today()
+    for p in db.query(Project).filter(Project.is_archived == False).all():  # noqa: E712
+        if not p.client_id:
+            continue
+        if db.query(Payment).filter(Payment.project_id == p.id).count() > 0:
+            continue
+        budget = float(p.budget or 10000000)
+        db.add(Payment(project_id=p.id, client_id=p.client_id, amount=round(budget * 0.15, 2),
+                       payment_date=today - timedelta(days=120), payment_method="BankTransfer",
+                       reference_no="Mobilisation advance"))
+        db.add(Payment(project_id=p.id, client_id=p.client_id, amount=round(budget * 0.10, 2),
+                       payment_date=today - timedelta(days=45), payment_method="Cheque",
+                       reference_no="RA Bill 1"))
+        db.add(ExpenseEntry(project_id=p.id, category="Material", amount=round(budget * 0.08, 2),
+                            expense_date=today - timedelta(days=90), description="Cement & steel procurement"))
+        db.add(ExpenseEntry(project_id=p.id, category="Equipment", amount=round(budget * 0.03, 2),
+                            expense_date=today - timedelta(days=30), description="Crane rental"))
+    db.commit()

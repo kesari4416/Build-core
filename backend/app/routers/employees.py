@@ -4,11 +4,12 @@ from typing import Optional, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User, Project
-from app.models.finance import Employee, Attendance, EmployeeCategory, ProjectAssignment
+from app.models import User, Project, Phase
+from app.models.finance import Employee, Attendance, EmployeeCategory, ProjectAssignment, PhaseEmployee
 from app.core.security import require_roles
 
 router = APIRouter(tags=["employees"])
@@ -22,6 +23,7 @@ WAGE_TYPES = Literal["daily", "monthly", "piece_rate"]
 
 class EmployeeCreate(BaseModel):
     name: str = Field(min_length=1)
+    project_id: Optional[int] = None
     role_title: Optional[str] = None
     category_id: Optional[int] = None
     phone: Optional[str] = None
@@ -106,8 +108,8 @@ def get_project_or_404(db: Session, project_id: int) -> Project:
     return p
 
 
-def check_field_access(db: Session, user: User, project: Project):
-    if user.role != "SiteEngineer":
+def check_field_access(db: Session, user: User, project):
+    if user.role != "SiteEngineer" or project is None:
         return
     if project.site_engineer_id == user.id:
         return
@@ -181,6 +183,109 @@ def deactivate_category(category_id: int, db: Session = Depends(get_db),
     return category_out(c)
 
 
+def project_employee_filter(db: Session, project_id: int):
+    phase_ids = [pid for (pid,) in db.query(Phase.id).filter(Phase.project_id == project_id).all()]
+    assigned = db.query(PhaseEmployee.employee_id).filter(PhaseEmployee.phase_id.in_(phase_ids))
+    return or_(Employee.project_id == project_id, Employee.id.in_(assigned))
+
+
+def employee_in_project(db: Session, employee: Employee, project_id: int) -> bool:
+    if employee.project_id == project_id:
+        return True
+    return db.query(PhaseEmployee).join(Phase, PhaseEmployee.phase_id == Phase.id).filter(
+        PhaseEmployee.employee_id == employee.id, Phase.project_id == project_id).first() is not None
+
+
+# ---------- Org-wide employees ----------
+@router.get("/employees")
+def list_all_employees(db: Session = Depends(get_db), user: User = Depends(INTERNAL),
+                       status: Optional[str] = None, search: Optional[str] = None):
+    q = db.query(Employee)
+    if status:
+        q = q.filter(Employee.status == status)
+    if search:
+        q = q.filter(Employee.name.ilike(f"%{search}%"))
+    rows = q.order_by(Employee.name).all()
+    proj_names = {p.id: p.name for p in db.query(Project).all()}
+    assigns = {}
+    for pe, ph in db.query(PhaseEmployee, Phase).join(Phase, PhaseEmployee.phase_id == Phase.id).all():
+        assigns.setdefault(pe.employee_id, []).append(
+            {"phase_id": ph.id, "phase_name": ph.name,
+             "project_id": ph.project_id, "project_name": proj_names.get(ph.project_id)})
+    out = []
+    for e in rows:
+        o = employee_out(e)
+        phase_assigns = assigns.get(e.id, [])
+        names = {a["project_name"] for a in phase_assigns if a["project_name"]}
+        if e.project_id and proj_names.get(e.project_id):
+            names.add(proj_names[e.project_id])
+        o["assigned_projects"] = sorted(names)
+        o["phase_assignments"] = phase_assigns
+        out.append(o)
+    return out
+
+
+@router.post("/employees", status_code=201)
+def create_org_employee(body: EmployeeCreate, db: Session = Depends(get_db),
+                        user: User = Depends(INTERNAL)):
+    cat = resolve_category(db, body.category_id)
+    data = body.model_dump()
+    if data.get("project_id"):
+        p = db.get(Project, data["project_id"])
+        if not p:
+            raise HTTPException(status_code=422, detail="Project not found")
+    data["wage_type"] = body.wage_type or (cat.default_wage_type if cat else None) or "daily"
+    e = Employee(created_by=user.id, **data)
+    db.add(e); db.commit(); db.refresh(e)
+    return employee_out(e)
+
+
+# ---------- Phase crew ----------
+@router.get("/phases/{phase_id}/employees")
+def list_phase_employees(phase_id: int, db: Session = Depends(get_db),
+                         user: User = Depends(INTERNAL)):
+    ph = db.get(Phase, phase_id)
+    if not ph:
+        raise HTTPException(status_code=404, detail="Phase not found")
+    check_field_access(db, user, db.get(Project, ph.project_id))
+    rows = (db.query(PhaseEmployee, Employee).join(Employee, PhaseEmployee.employee_id == Employee.id)
+            .filter(PhaseEmployee.phase_id == phase_id).order_by(Employee.name).all())
+    return [{"assignment_id": pe.id, "employee_id": e.id, "name": e.name,
+             "role_title": e.category.name if e.category else e.role_title,
+             "status": e.status} for pe, e in rows]
+
+
+@router.post("/phases/{phase_id}/employees", status_code=201)
+def assign_phase_employee(phase_id: int, body: dict, db: Session = Depends(get_db),
+                          user: User = Depends(INTERNAL)):
+    ph = db.get(Phase, phase_id)
+    if not ph:
+        raise HTTPException(status_code=404, detail="Phase not found")
+    check_field_access(db, user, db.get(Project, ph.project_id))
+    e = db.get(Employee, body.get("employee_id") or 0)
+    if not e:
+        raise HTTPException(status_code=422, detail="Employee not found")
+    if db.query(PhaseEmployee).filter_by(phase_id=phase_id, employee_id=e.id).first():
+        raise HTTPException(status_code=409, detail=f"{e.name} is already assigned to this phase")
+    pe = PhaseEmployee(phase_id=phase_id, employee_id=e.id, assigned_by=user.id)
+    db.add(pe); db.commit(); db.refresh(pe)
+    return {"assignment_id": pe.id, "employee_id": e.id, "name": e.name,
+            "role_title": e.category.name if e.category else e.role_title, "status": e.status}
+
+
+@router.delete("/phases/{phase_id}/employees/{employee_id}", status_code=204)
+def unassign_phase_employee(phase_id: int, employee_id: int, db: Session = Depends(get_db),
+                            user: User = Depends(INTERNAL)):
+    ph = db.get(Phase, phase_id)
+    if not ph:
+        raise HTTPException(status_code=404, detail="Phase not found")
+    check_field_access(db, user, db.get(Project, ph.project_id))
+    pe = db.query(PhaseEmployee).filter_by(phase_id=phase_id, employee_id=employee_id).first()
+    if not pe:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    db.delete(pe); db.commit()
+
+
 # ---------- Employees ----------
 @router.post("/projects/{project_id}/employees", status_code=201)
 def create_employee(project_id: int, body: EmployeeCreate, db: Session = Depends(get_db),
@@ -189,6 +294,7 @@ def create_employee(project_id: int, body: EmployeeCreate, db: Session = Depends
     check_field_access(db, user, project)
     cat = resolve_category(db, body.category_id)
     data = body.model_dump()
+    data.pop("project_id", None)
     data["wage_type"] = body.wage_type or (cat.default_wage_type if cat else None) or "daily"
     e = Employee(project_id=project_id, created_by=user.id, **data)
     db.add(e); db.commit(); db.refresh(e)
@@ -200,7 +306,7 @@ def list_employees(project_id: int, db: Session = Depends(get_db), user: User = 
                    status: Optional[str] = None, search: Optional[str] = None):
     project = get_project_or_404(db, project_id)
     check_field_access(db, user, project)
-    q = db.query(Employee).filter(Employee.project_id == project_id)
+    q = db.query(Employee).filter(project_employee_filter(db, project_id))
     if status:
         q = q.filter(Employee.status == status)
     if search:
@@ -213,7 +319,7 @@ def get_employee(employee_id: int, db: Session = Depends(get_db), user: User = D
     e = db.get(Employee, employee_id)
     if not e:
         raise HTTPException(status_code=404, detail="Employee not found")
-    check_field_access(db, user, db.get(Project, e.project_id))
+    check_field_access(db, user, db.get(Project, e.project_id) if e.project_id else None)
     return employee_out(e)
 
 
@@ -223,7 +329,7 @@ def patch_employee(employee_id: int, body: EmployeePatch, db: Session = Depends(
     e = db.get(Employee, employee_id)
     if not e:
         raise HTTPException(status_code=404, detail="Employee not found")
-    check_field_access(db, user, db.get(Project, e.project_id))
+    check_field_access(db, user, db.get(Project, e.project_id) if e.project_id else None)
     data = body.model_dump(exclude_unset=True)
     if user.role not in ("Admin", "Accountant"):
         blocked = {"daily_wage", "wage_type", "status"} & set(data.keys())
@@ -256,7 +362,7 @@ def mark_attendance(project_id: int, body: AttendanceMark, db: Session = Depends
     project = get_project_or_404(db, project_id)
     check_field_access(db, user, project)
     e = db.get(Employee, body.employee_id)
-    if not e or e.project_id != project_id:
+    if not e or not employee_in_project(db, e, project_id):
         raise HTTPException(status_code=422, detail="Employee does not belong to this project")
     day = body.attendance_date or date.today()
     check_backdate_window(user, day)
@@ -319,7 +425,7 @@ def employee_attendance(employee_id: int, db: Session = Depends(get_db),
     e = db.get(Employee, employee_id)
     if not e:
         raise HTTPException(status_code=404, detail="Employee not found")
-    check_field_access(db, user, db.get(Project, e.project_id))
+    check_field_access(db, user, db.get(Project, e.project_id) if e.project_id else None)
     rows = (db.query(Attendance).filter_by(employee_id=employee_id)
             .order_by(Attendance.attendance_date.desc()).limit(limit).all())
     return [attendance_out(a, e.name) for a in rows]
@@ -334,7 +440,7 @@ def labour_cost(project_id: int, db: Session = Depends(get_db), user: User = Dep
     today = date.today()
     date_from = date_from or today.replace(day=1)
     date_to = date_to or today
-    employees = db.query(Employee).filter(Employee.project_id == project_id).all()
+    employees = db.query(Employee).filter(project_employee_filter(db, project_id)).all()
     atts = (db.query(Attendance).filter(Attendance.project_id == project_id,
                                         Attendance.attendance_date >= date_from,
                                         Attendance.attendance_date <= date_to).all())

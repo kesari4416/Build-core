@@ -59,6 +59,7 @@ def startup():
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS category_id "
                           "INTEGER REFERENCES employee_categories(id)"))
+        conn.execute(text("ALTER TABLE employees ALTER COLUMN project_id DROP NOT NULL"))
     from sqlalchemy import text
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_type VARCHAR"))
@@ -80,10 +81,11 @@ def startup():
         seed_procurement(db)
         from app.seed_finance import seed_finance
         seed_finance(db)
-        from app.seed_finance import seed_employees, seed_categories, seed_milestones, seed_expense_categories
+        from app.seed_finance import seed_employees, seed_categories, seed_milestones, seed_expense_categories, seed_project_ledgers
         seed_employees(db)
         seed_categories(db)
         seed_milestones(db)
         seed_expense_categories(db)
+        seed_project_ledgers(db)
     finally:
         db.close()

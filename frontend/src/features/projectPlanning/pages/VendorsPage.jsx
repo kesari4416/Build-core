@@ -1,10 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Truck, ShieldAlert, ShieldCheck, Star, Scale, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { Truck, ShieldAlert, ShieldCheck, Star, Scale, ArrowRight, Plus } from "lucide-react";
 import api from "../../../api/client";
+import { useAuth } from "../../../context/AuthContext";
+import { Button } from "../../../components/ui/button";
 import { CommitmentStatusBadge } from "../components/CommitmentStatusBadge";
+import { VendorFormModal } from "../components/VendorFormModal";
 
 export default function VendorsPage() {
+  const { user } = useAuth();
+  const [vendorModal, setVendorModal] = useState(false);
+  const canAdd = ["Admin", "SiteEngineer"].includes(user?.role);
   const { data: vendors } = useQuery({
     queryKey: ["vendors"],
     queryFn: () => api.get("/vendors").then((r) => r.data),
@@ -16,9 +23,17 @@ export default function VendorsPage() {
 
   return (
     <div className="p-8" data-testid="vendors-page">
-      <div className="mb-8">
-        <div className="text-orange-500 text-[11px] uppercase tracking-[0.3em] font-semibold mb-1">Procurement</div>
-        <h1 className="font-heading font-bold text-4xl sm:text-5xl uppercase leading-none">Vendors & Quotes</h1>
+      <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
+        <div>
+          <div className="text-orange-500 text-[11px] uppercase tracking-[0.3em] font-semibold mb-1">Procurement</div>
+          <h1 className="font-heading font-bold text-4xl sm:text-5xl uppercase leading-none">Vendors & Quotes</h1>
+        </div>
+        {canAdd && (
+          <Button data-testid="add-vendor-button" onClick={() => setVendorModal(true)}
+            className="rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-bold uppercase tracking-wide">
+            <Plus size={15} strokeWidth={3} /> Add Vendor
+          </Button>
+        )}
       </div>
 
       <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 font-semibold mb-3">Vendor Directory</div>
@@ -99,6 +114,7 @@ export default function VendorsPage() {
           <div className="border border-zinc-800 p-10 text-center text-zinc-500 md:col-span-3">No bid packages yet. Create them from a project's Procurement dashboard.</div>
         )}
       </div>
+      <VendorFormModal open={vendorModal} onOpenChange={setVendorModal} />
     </div>
   );
 }

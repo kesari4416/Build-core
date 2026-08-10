@@ -1,5 +1,6 @@
 import { Check, Pencil } from "lucide-react";
 import { PHASE_COLORS } from "./ProjectStatusBadge";
+import { PhaseCrew } from "./PhaseCrew";
 
 export const PhaseTimeline = ({ phases, canWrite, onEdit }) => {
   if (!phases?.length)
@@ -45,6 +46,7 @@ export const PhaseTimeline = ({ phases, canWrite, onEdit }) => {
                     </div>
                     <span className="text-xs text-zinc-400">{ph.percent_complete}%</span>
                   </div>
+                  {canWrite && <PhaseCrew phaseId={ph.id} />}
                 </div>
               </div>
             </div>

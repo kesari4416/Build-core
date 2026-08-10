@@ -55,11 +55,12 @@ export default function ProjectFinancePage() {
   const { data: expenses } = useQuery({ queryKey: ["expenses", id], queryFn: () => api.get(`/projects/${id}/expenses`).then((r) => r.data), enabled: canFin || user?.role === "SiteEngineer" });
   const canExp = canFin || user?.role === "SiteEngineer";
   const { data: expCats } = useQuery({ queryKey: ["expenseCategories"], queryFn: () => api.get("/expense-categories").then((r) => r.data), enabled: canExp });
+  const { data: ledger } = useQuery({ queryKey: ["ledger", id], queryFn: () => api.get(`/projects/${id}/ledger`).then((r) => r.data), enabled: canFin || user?.role === "SiteEngineer" || user?.role === "ProcurementOfficer" });
   const [invForm, setInvForm] = useState({ amount: "", due_date: "", description: "" });
   const [expForm, setExpForm] = useState({ category: "", amount: "" });
   const [newCat, setNewCat] = useState("");
 
-  const refresh = () => ["projFinance", "invoices", "expenses", "orgFinance", "expenseCategories"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+  const refresh = () => ["projFinance", "invoices", "expenses", "orgFinance", "expenseCategories", "ledger"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
   const run = async (fn, ok) => {
     try { await fn(); toast.success(ok); refresh(); }
     catch (e) { toast.error(formatApiErrorDetail(e.response?.data?.detail) || e.message); }
@@ -91,7 +92,9 @@ export default function ProjectFinancePage() {
           <ProjectFinanceSummaryCard label="Expense" value={fmtCr(s.cost_last_year)}
             sub={`1 year · ${s.period_from} → ${s.period_to}`}
             icon={TrendingDown} accent="text-orange-500" testId="pf-cost" />
-          <ProjectFinanceSummaryCard label="Profit" value={fmtCr(s.profit)} icon={IndianRupee} accent={s.profit < 0 ? "text-red-500" : "text-green-500"} testId="pf-profit" />
+          <ProjectFinanceSummaryCard label="Profit" value={fmtCr(s.profit)}
+            sub={`1 year · ${s.period_from} → ${s.period_to}`}
+            icon={IndianRupee} accent={s.profit < 0 ? "text-red-500" : "text-green-500"} testId="pf-profit" />
           <ProjectFinanceSummaryCard label="Outstanding" value={fmtCr(s.outstanding_invoices)} icon={Receipt} accent="text-sky-400" testId="pf-outstanding" />
         </div>
       )}
@@ -162,6 +165,42 @@ export default function ProjectFinancePage() {
           )}
         </div>
       </div>
+
+      {ledger && (
+        <div className="mt-8" data-testid="ledger-section">
+          <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
+            <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 font-semibold">Project Ledger — Credits & Debits</div>
+            <div className="flex gap-4 text-xs">
+              <span className="text-green-400" data-testid="ledger-total-credit">Credit: {fmt(ledger.total_credit)}</span>
+              <span className="text-red-400" data-testid="ledger-total-debit">Debit: {fmt(ledger.total_debit)}</span>
+              <span className={ledger.net >= 0 ? "text-green-400" : "text-red-400"} data-testid="ledger-net">Net: {fmt(ledger.net)}</span>
+            </div>
+          </div>
+          <div className="border border-zinc-800 overflow-x-auto">
+            <table className="w-full text-sm" data-testid="ledger-table">
+              <thead>
+                <tr className="text-left text-[10px] uppercase tracking-[0.15em] text-zinc-500 border-b border-zinc-800 bg-zinc-900/60">
+                  <th className="px-4 py-3">Date</th><th className="px-4 py-3">Description</th>
+                  <th className="px-4 py-3 text-right">Credit (In)</th><th className="px-4 py-3 text-right">Debit (Out)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ledger.entries.map((en, i) => (
+                  <tr key={i} className="border-b border-zinc-800/50" data-testid={`ledger-row-${i}`}>
+                    <td className="px-4 py-2.5 text-xs text-zinc-400">{en.date || "—"}</td>
+                    <td className="px-4 py-2.5 text-zinc-200">{en.description}</td>
+                    <td className="px-4 py-2.5 text-right font-semibold text-green-400">{en.type === "credit" ? fmt(en.amount) : ""}</td>
+                    <td className="px-4 py-2.5 text-right font-semibold text-red-400">{en.type === "debit" ? fmt(en.amount) : ""}</td>
+                  </tr>
+                ))}
+                {ledger.entries.length === 0 && (
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-zinc-500" data-testid="ledger-empty">No transactions yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

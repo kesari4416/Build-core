@@ -123,7 +123,7 @@ class EmployeeCategory(Base):
 class Employee(Base):
     __tablename__ = "employees"
     id = Column(Integer, primary_key=True)
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True, index=True)
     name = Column(String, nullable=False)
     role_title = Column(String, nullable=True)
     category_id = Column(Integer, ForeignKey("employee_categories.id"), nullable=True)
@@ -161,4 +161,14 @@ class ExpenseCategory(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
+class PhaseEmployee(Base):
+    __tablename__ = "phase_employees"
+    __table_args__ = (UniqueConstraint("phase_id", "employee_id", name="uq_phase_employee"),)
+    id = Column(Integer, primary_key=True)
+    phase_id = Column(Integer, ForeignKey("phases.id"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False, index=True)
+    assigned_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utcnow)

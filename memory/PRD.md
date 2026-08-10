@@ -58,6 +58,8 @@
 - Tests: 16 core + 20 planning + 17 procurement + 14 iter4 backend pytest passing (/app/backend/tests/); testing agent iterations 1-4 all green
 - Deployment guide PDF: /app/BUILDCORE_Ubuntu24_Nginx_Installation_Guide.pdf (also served at frontend /public), paths use /var/www/buildcore
 
+- FINANCE_004 UI fix (2026-06, VERIFIED via screenshot): Profit card on ProjectFinancePage now shows 1-year period subtitle (data-testid pf-profit-period rendered via ProjectFinanceSummaryCard sub prop). Backend 1-yr profit already verified in iteration 11. All 4 bug reports (FINANCE_004, VENTORS_001, FIELDOPS_001, PROJECT_002) fully closed.
+
 ## Backlog / Next
 - P1: Milestones UI (backend ready); edit progress updates
 - P2: Replace window.prompt/confirm dialogs (record payment, reset password, delete user, award) with shadcn Dialogs; email channel for alerts (needs Resend/SendGrid key); Gantt view; export reports; invoice PDF export
