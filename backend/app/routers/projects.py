@@ -96,6 +96,62 @@ def dashboard_summary(db: Session = Depends(get_db), user: User = Depends(get_cu
     }
 
 
+@router.get("/projects/dashboard-charts")
+def dashboard_charts(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    from app.crud import compute_percent
+    today = date.today()
+    q = db.query(Project).filter(Project.is_archived == False)  # noqa: E712
+    if user.role == "Client":
+        q = q.filter(Project.client_id == user.client_id)
+    projects = q.order_by(Project.start_date_planned).all()
+    pids = [p.id for p in projects]
+
+    timeline, variance, stage_counts = [], [], {}
+    pcts = []
+    for p in projects:
+        pct = compute_percent(p)
+        pcts.append(pct)
+        timeline.append({"id": p.id, "name": p.name, "status": p.status,
+                         "planned_start": p.start_date_planned.isoformat() if p.start_date_planned else None,
+                         "planned_end": p.end_date_planned.isoformat() if p.end_date_planned else None,
+                         "percent_complete": pct})
+        if p.start_date_planned and p.end_date_planned and p.end_date_planned > p.start_date_planned:
+            elapsed = (today - p.start_date_planned).days
+            total = (p.end_date_planned - p.start_date_planned).days
+            expected = round(max(0, min(100, elapsed / total * 100)))
+            variance.append({"id": p.id, "name": p.name, "expected_pct": expected,
+                             "actual_pct": pct, "variance": pct - expected})
+        phases = sorted(p.phases, key=lambda ph: ph.sequence_order)
+        current = next((ph.name for ph in phases if ph.status != "Completed"), None)
+        stage = current or ("Completed" if phases else "No Phases")
+        stage_counts[stage] = stage_counts.get(stage, 0) + 1
+
+    milestones = (db.query(Milestone).join(Phase, Milestone.phase_id == Phase.id)
+                  .filter(Phase.project_id.in_(pids)).all()) if pids else []
+    ms_completed = sum(1 for m in milestones if m.status == "Completed")
+    ms_overdue = sum(1 for m in milestones if m.status != "Completed" and m.due_date and m.due_date < today)
+    ms_pending = len(milestones) - ms_completed - ms_overdue
+    upcoming = sorted([m for m in milestones if m.status != "Completed" and m.due_date],
+                      key=lambda m: m.due_date)[:5]
+    proj_by_phase = {ph.id: ph.project_id for p in projects for ph in p.phases}
+    name_by_id = {p.id: p.name for p in projects}
+
+    return {
+        "portfolio_progress": {"avg_pct": round(sum(pcts) / len(pcts)) if pcts else 0,
+                               "total": len(projects),
+                               "completed": sum(1 for p in projects if p.status == "Completed")},
+        "timeline": timeline,
+        "schedule_variance": variance,
+        "stages": [{"stage": k, "count": v} for k, v in sorted(stage_counts.items(), key=lambda x: -x[1])],
+        "milestones": {"completed": ms_completed, "pending": ms_pending, "overdue": ms_overdue,
+                       "total": len(milestones),
+                       "upcoming": [{"id": m.id, "title": m.title,
+                                     "project": name_by_id.get(proj_by_phase.get(m.phase_id), ""),
+                                     "due_date": m.due_date.isoformat(),
+                                     "overdue": m.due_date < today} for m in upcoming]},
+    }
+
+
 @router.get("/projects/{project_id}")
 def get_project(project_id: int, db: Session = Depends(get_db),
                 user: User = Depends(get_current_user)):

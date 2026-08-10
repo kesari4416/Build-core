@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, timezone
 
 from sqlalchemy.orm import Session
 
@@ -111,4 +111,28 @@ def seed_categories(db: Session):
     for e in db.query(Employee).filter(Employee.category_id.is_(None)).all():
         if e.role_title and e.role_title.lower() in cats:
             e.category_id = cats[e.role_title.lower()]
+    db.commit()
+
+
+def seed_milestones(db: Session):
+    from app.models import Milestone, Phase
+    if db.query(Milestone).count() > 0:
+        return
+    today = date.today()
+    phases = db.query(Phase).order_by(Phase.project_id, Phase.sequence_order).all()
+    for ph in phases:
+        specs = []
+        if ph.status == "Completed":
+            specs = [(f"{ph.name} sign-off", "Completed", -20), (f"{ph.name} QA inspection", "Completed", -10)]
+        elif ph.status in ("InProgress", "Blocked", "Delayed"):
+            specs = [(f"{ph.name} 50% checkpoint", "Completed", -7),
+                     (f"{ph.name} material clearance", "Pending", -3),
+                     (f"{ph.name} completion review", "Pending", 21)]
+        else:
+            specs = [(f"{ph.name} kickoff", "Pending", 35)]
+        for i, (title, status, offset) in enumerate(specs, 1):
+            db.add(Milestone(phase_id=ph.id, title=title, status=status,
+                             due_date=today + timedelta(days=offset),
+                             completed_at=datetime.now(timezone.utc) if status == "Completed" else None,
+                             sequence_order=i))
     db.commit()

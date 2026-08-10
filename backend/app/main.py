@@ -80,8 +80,9 @@ def startup():
         seed_procurement(db)
         from app.seed_finance import seed_finance
         seed_finance(db)
-        from app.seed_finance import seed_employees, seed_categories
+        from app.seed_finance import seed_employees, seed_categories, seed_milestones
         seed_employees(db)
         seed_categories(db)
+        seed_milestones(db)
     finally:
         db.close()

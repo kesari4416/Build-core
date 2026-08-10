@@ -23,6 +23,9 @@
 - Client: read-only, own projects only, no internal updates
 
 ## Implemented (2026-06)
+- Dashboard analytics — TC_DASHBOARD_001 (2026-06, iter 9, TESTED 100%): GET /api/projects/dashboard-charts (Client-scoped) + seed_milestones (25 across phases). DashboardPage now has all 6 graphs: portfolio progress radial gauge, custom CSS Gantt timeline w/ Today marker, status breakdown bars, schedule variance bars (actual−expected % from planned dates, green/red), milestone tracker donut + upcoming list, projects-by-stage bars (current = first non-completed phase). testids: portfolio-progress-chart, gantt-chart, status-chart, variance-chart, milestone-chart, stages-chart. NOTE: Project model uses start_date_planned/end_date_planned (NOT planned_start).
+- Login page: Demo Accounts quick-login section removed on user request (2026-06). Credentials remain in /app/memory/test_credentials.md.
+- Client PPT deck generated at /app/frontend/public/downloads/BUILDCORE_Client_Presentation.pptx (13 slides, live screenshots; regenerate via python-pptx if screens change).
 - New modules per prompt_for_adding_modules.pdf (2026-06, iteration 4 — ALL TESTED GREEN):
   - Finance: org dashboard /admin/finance (income/cost/profit/outstanding cards, overdue invoices, payroll history), Payroll /admin/finance/payroll (create run → process → mark entries paid), Project Finance /admin/projects/:id/finance (invoices + payments, expense log, summary cards; Finance button on project detail). Endpoints: /api/finance/dashboard-summary, /api/projects/{id}/invoices|payments|expenses|finance/summary, /api/payroll-runs*
   - Client Management: /admin/clients table (active projects, total_billed, status) + ClientFormModal (add/edit), /admin/clients/:id detail with Projects/Invoices/Documents tabs. GET /api/clients now returns total_billed
