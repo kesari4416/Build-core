@@ -1,95 +1,124 @@
 {
-  "theme": "Dark Theme Industrial Construction Dashboard",
-  "archetype": "Performance Pro / Industrial Brutalist",
-  "colors": {
-    "background": "#09090b",
-    "surface": "#18181b",
-    "border": "#27272a",
-    "primary_accent": "#f97316",
-    "primary_hover": "#ea580c",
-    "text_primary": "#ffffff",
-    "text_secondary": "#a1a1aa",
-    "status_on_track": "#22c55e",
-    "status_delayed": "#eab308",
-    "status_blocked": "#ef4444"
-  },
+  "theme_archetype": "Swiss & High-Contrast (Authority, Clarity, Truth)",
+  "context": "Dashboards & Admin Panels (Construction Enterprise SaaS)",
+  "vibe": "International standard, architectural precision, highly professional, data-dense but readable.",
   "typography": {
-    "headings": "Barlow Condensed",
-    "body": "IBM Plex Sans",
+    "strategy": "The 'Old Money Tech' variant adapted for engineering.",
+    "fonts": {
+      "headings": "Cabinet Grotesk",
+      "body": "IBM Plex Sans",
+      "mono": "JetBrains Mono"
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl font-bold tracking-tight text-slate-900",
+      "h2": "text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900",
+      "h3": "text-xl font-medium tracking-tight text-slate-800",
+      "body": "text-sm text-slate-600 leading-relaxed",
+      "labels_overlines": "text-xs font-semibold tracking-[0.2em] uppercase text-slate-500",
+      "data_values": "text-2xl font-semibold text-slate-900 font-mono tracking-tight"
+    },
     "rules": [
-      "Use uppercase with wide tracking for small labels (tracking-[0.2em]).",
-      "Do not use generic fonts for headings (like Inter or Roboto).",
-      "Tight line height for headings (leading-none).",
-      "Body text should use leading-relaxed for readability."
+      "DO NOT use Inter for headings.",
+      "Always use tracking-tight on headings larger than 24px.",
+      "Use IBM Plex Sans for body text to maintain an engineered, structural feel.",
+      "Data tables and financial numbers must use tabular-nums to align correctly."
+    ]
+  },
+  "colors": {
+    "mode": "Light theme default for professional B2B tools, with high-contrast components.",
+    "palette": {
+      "background": "#F8FAFC", 
+      "surface": "#FFFFFF",
+      "surface_muted": "#F1F5F9",
+      "primary": "#2563EB", 
+      "primary_hover": "#1D4ED8",
+      "accent_construction": "#F59E0B", 
+      "success": "#10B981", 
+      "danger": "#EF4444", 
+      "text_primary": "#0F172A",
+      "text_secondary": "#64748B",
+      "border": "#E2E8F0",
+      "sidebar_bg": "#0F172A",
+      "sidebar_text": "#F8FAFC"
+    },
+    "chart_palette": [
+      "#2563EB", "#F59E0B", "#10B981", "#8B5CF6", "#64748B", "#0EA5E9"
+    ],
+    "rules": [
+      "Avoid pure black or pure white over large spans without structural borders.",
+      "No full-screen gradients. Use flat, solid colors for clarity.",
+      "Use Accent (Amber) strictly for warnings, 'ongoing' statuses, and attention hooks. Do not overuse.",
+      "The sidebar MUST use 'sidebar_bg' (Slate 900) to create a distinct, focused workspace area against the light app content."
     ]
   },
   "visual_enhancers": {
-    "borders": "Grid borders. Use 1px solid strokes to expose the skeleton. Avoid soft shadows.",
-    "shadows": "Minimal to no soft shadows. Use 'Inner Glow' highlights (1px border) or sharp geometric drop-shadows.",
-    "radii": "Sharp edges. Max border radius is 4px (rounded-sm) for inputs/buttons, mostly rounded-none for cards and large containers.",
-    "textures": "Use subtle grain textures or subtle scanlines for empty states or login backgrounds to avoid 'digital flatness'."
+    "radii": "rounded-md (6px) or rounded-lg (8px) maximum. No pill-shaped cards. Maintain a structured, architectural geometry.",
+    "shadows": "Minimal. Use shadow-sm for cards to lift them slightly off the #F8FAFC background. Use shadow-md for dropdowns/modals.",
+    "borders": "1px solid #E2E8F0 (border-slate-200) on all cards, tables, and sections. This exposes the 'skeleton' of the application.",
+    "glassmorphism": "Not recommended for data-heavy construction dashboards. Use solid, opaque surfaces to prevent data refraction and maintain contrast."
   },
   "layouts": {
-    "spacing": "Dense but structured. Use bento grids with tight gaps (gap-4 or gap-6) for dashboards.",
-    "dashboard_cards": "Flat solid background, 1px subtle border, no shadow.",
-    "navigation": "Sidebar or top nav with solid dark background. No transparent headers over content."
+    "grid_strategy": "The 'Bento' High-Density Grid (Mode B)",
+    "spacing_scale": "p-4, p-6, p-8. Use generous spacing (p-6) inside large cards, tighter spacing (p-3) in data tables.",
+    "dashboard_grid": "grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6",
+    "alignment": "Left-align dense content and labels. Center align only empty states or highly visual isolated metrics."
   },
-  "components": {
-    "buttons": "Sharp corners, high contrast hover states. Use Safety Orange for primary CTAs.",
-    "tables": "Dense, high contrast headers, 1px border between rows. Left-align text.",
-    "tabs": "Industrial style. Active tab has a sharp safety-orange bottom border or sharp background highlight.",
-    "cards": "Rectangular dense styles. Avoid heavy card styling. Use borders to separate content instead of elevated cards.",
-    "modals": "Backdrop blur, dark solid surface, 1px border. Do not use rounded corners.",
-    "stepper": "Horizontal stepper for 'Phases' tab. Color-coded. Connected by straight 1px lines."
+  "component_treatments": {
+    "cards": "Flat background (bg-white), 1px subtle border (border-slate-200), rounded-lg. No heavy drop shadows.",
+    "buttons": "Primary: bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors. Secondary: bg-white border border-slate-200 text-slate-700 hover:bg-slate-50.",
+    "tables": "border-collapse. Header row must have border-b border-slate-300 bg-slate-50 text-xs uppercase tracking-wider text-slate-500. Rows have subtle border-b border-slate-100 hover:bg-slate-50/50.",
+    "sidebar": "Fixed left, bg-slate-900 text-slate-300. Active item: bg-slate-800 text-white border-l-2 border-blue-500.",
+    "tabs": "Shadcn standard. DO NOT use fixed heights (h-9). Override with h-auto. Active tab gets bottom border or solid background toggle.",
+    "status_badges": "Inline flex, rounded-full, px-2.5 py-0.5 text-xs font-semibold. e.g., Ongoing: bg-amber-100 text-amber-800. Completed: bg-emerald-100 text-emerald-800.",
+    "forms": "Inputs use bg-white border-slate-200 rounded-md focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500."
   },
-  "motion": {
-    "interactions": "Hover states must increase contrast. Buttons scale slightly (-translate-y-0.5).",
-    "transitions": "Specific properties only (transition-colors, transition-transform). No transition-all."
+  "motion_and_interactions": {
+    "rules": [
+      "Micro-interactions only. No sweeping page transitions.",
+      "Hover states on all interactive elements (rows, buttons, links).",
+      "Use specific transitions (e.g., transition-colors duration-200), NEVER transition-all."
+    ]
   },
-  "image_urls": [
-    {
-      "url": "https://images.unsplash.com/photo-1664662566501-73a7e41d8c19?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwzfHxjb25zdHJ1Y3Rpb24lMjBzaXRlJTIwZGFyayUyMG1vb2R5fGVufDB8fHx8MTc4NTk1Mzc1Nnww&ixlib=rb-4.1.0&q=85",
-      "category": "Login Page Background",
-      "description": "Moody building under construction. Use with heavy dark overlay (bg-zinc-950/80) so the login form pops out."
+  "icons_and_assets": {
+    "library": "@phosphor-icons/react",
+    "rationale": "Phosphor provides highly professional, architectural, and legible icons perfect for dense enterprise tools.",
+    "installation": "yarn add @phosphor-icons/react"
+  },
+  "image_urls": {
+    "login_background": {
+      "url": "https://images.pexels.com/photos/4458205/pexels-photo-4458205.jpeg",
+      "description": "High-resolution architectural blueprint. Use as the left split-screen background with a bg-slate-900/60 overlay to maintain the professional engineering vibe."
     },
-    {
-      "url": "https://images.unsplash.com/photo-1609867271967-a82f85c48531?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwxfHxjb25zdHJ1Y3Rpb24lMjBzaXRlJTIwZGFyayUyMG1vb2R5fGVufDB8fHx8MTc4NTk1Mzc1Nnww&ixlib=rb-4.1.0&q=85",
-      "category": "Project Tracking Photo",
-      "description": "Sample photo for construction progress feed."
-    },
-    {
-      "url": "https://images.pexels.com/photos/11827689/pexels-photo-11827689.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-      "category": "Project Tracking Photo",
-      "description": "Sample photo for scaffolding/structural progress update."
-    },
-    {
-      "url": "https://images.unsplash.com/photo-1721244654346-9be0c0129e36?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwzfHxhcmNoaXRlY3R1cmFsJTIwYmx1ZXByaW50JTIwZGFya3xlbnwwfHx8fDE3ODU5NTM3NTd8MA&ixlib=rb-4.1.0&q=85",
-      "category": "Empty State / Dashboard Visual",
-      "description": "Dark architectural blueprint. Great for empty states or subtle background patterns."
-    }
-  ],
-  "accessibility": {
-    "contrast": "Ensure text over orange is black or dark zinc. Ensure body text against dark background is high contrast white/zinc-300.",
-    "testing": "All interactive and key informational elements MUST include a data-testid attribute.",
-    "focus": "Focus states must have HIGHER contrast than default state with ring-2 and ring-orange-500."
+    "project_covers": [
+      {
+        "url": "https://images.pexels.com/photos/3818947/pexels-photo-3818947.jpeg",
+        "description": "Detailed Japanese construction site. Use in Project Planning / Project Details hero header."
+      },
+      {
+        "url": "https://images.pexels.com/photos/4170184/pexels-photo-4170184.jpeg",
+        "description": "Aerial view of an active construction site. Use as a placeholder for project imagery."
+      }
+    ],
+    "user_avatars": [
+      {
+        "url": "https://images.pexels.com/photos/9617369/pexels-photo-9617369.jpeg",
+        "description": "Young architect at desk. Use in Employee/User Management lists or Admin profile."
+      }
+    ]
   },
   "instructions_to_main_agent": [
-    "Use Shadcn UI for standard components but override radii to be rounded-none or rounded-sm.",
-    "Do NOT use pure #000000. Use Tailwind zinc palette (zinc-950, zinc-900) for backgrounds.",
-    "Add Recharts for Dashboard stats with industrial colors (orange, zinc-400, white).",
-    "Install lucide-react for icons.",
-    "Install sonner for toasts.",
-    "Ensure the Phases tab has a distinct horizontal timeline/stepper, color-coded by status.",
-    "Tracking tab should look like a chronological feed (vertical line connecting cards).",
-    "The entire application MUST be built using .js/.jsx, NOT .tsx. All configurations must be tailored for a JavaScript codebase.",
-    "Use lucide-react with bold strokes (e.g., strokeWidth={2.5}) to match the industrial typography."
+    "Discard the previous dark zinc-950 and orange-500 styling. Apply the new light-theme High-Contrast Swiss layout.",
+    "Ensure the application container DOES NOT have text-align: center.",
+    "Use Shadcn UI components for complex interactions (Dropdowns, Tabs, DatePickers) but override their Vercel-look to match this architectural palette.",
+    "Implement Recharts for the 6 requested dashboard charts. Apply the defined chart_palette.",
+    "For the Field Ops one-tap attendance cards, ensure touch targets are massive (min-h-[80px]) and visually distinct.",
+    "All interactive and key informational elements MUST include a data-testid attribute in kebab-case."
   ],
-  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
-    "Do not use generic centered layouts or simplistic gradients.",
-    "Do not use transparent backgrounds under dropdowns or modals.",
-    "Always use crisp edges via semi-transparent borders.",
-    "Add 'transition: transform 0.2s ease, opacity 0.2s ease' to buttons. Never use 'transition: all'.",
-    "Never use AI emoji characters.",
-    "Prioritize optical alignment over geometric alignment."
-  ]
+  "general_ui_ux_guidelines": {
+    "contrast": "Text must meet APCA or WCAG AA standards. Gray text must be dark enough (e.g., slate-500 or slate-600) on white backgrounds.",
+    "alignment": "Optical alignment over mathematical. Ensure numbers in financial tables are right-aligned.",
+    "spacing": "Maintain strong vertical rhythm. The gap between a section heading and its content must be less than the gap between sections.",
+    "empty_states": "Do not leave panels blank. Include a subtle Phosphor icon, a brief explanation, and a primary CTA to add data.",
+    "responsiveness": "The dashboard must fold elegantly. Sidebar collapses to hamburger on mobile. Data tables should allow horizontal scrolling on small screens."
+  }
 }

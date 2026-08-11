@@ -32,30 +32,30 @@ export default function ClientDetailPage() {
 
   return (
     <div className="p-8" data-testid="client-detail-page">
-      <Link to="/admin/clients" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] font-semibold text-zinc-500 hover:text-orange-500 mb-4">
+      <Link to="/admin/clients" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] font-semibold text-slate-500 hover:text-blue-600 mb-4">
         <ArrowLeft size={14} strokeWidth={2.5} /> Clients
       </Link>
       <div className="flex items-end justify-between flex-wrap gap-4 mb-6">
         <div>
-          <div className="text-orange-500 text-[11px] uppercase tracking-[0.3em] font-semibold mb-1">{client?.company || "Client"}</div>
-          <h1 className="font-heading font-bold text-4xl sm:text-5xl uppercase leading-none" data-testid="client-name">{client?.name}</h1>
-          <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-zinc-400">
+          <div className="text-blue-600 text-[11px] uppercase tracking-[0.3em] font-semibold mb-1">{client?.company || "Client"}</div>
+          <h1 className="font-heading font-bold text-4xl sm:text-5xl tracking-tight leading-none" data-testid="client-name">{client?.name}</h1>
+          <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-slate-500">
             <span className="flex items-center gap-1.5"><Mail size={12} strokeWidth={2.5} /> {client?.email || "—"}</span>
             <span className="flex items-center gap-1.5"><Phone size={12} strokeWidth={2.5} /> {client?.phone || "—"}</span>
             <span className="flex items-center gap-1.5"><MapPin size={12} strokeWidth={2.5} /> {client?.address || "—"}</span>
           </div>
         </div>
         {isAdmin && (
-          <Button data-testid="edit-client-button" onClick={() => setEditModal(true)} variant="outline" className="rounded-none border-zinc-700 hover:border-orange-500">
+          <Button data-testid="edit-client-button" onClick={() => setEditModal(true)} variant="outline" className="rounded-md border-slate-300 hover:border-blue-400">
             <Pencil size={14} strokeWidth={2.5} /> Edit Client
           </Button>
         )}
       </div>
-      <div className="flex gap-1 border-b border-zinc-800 mb-6">
+      <div className="flex gap-1 border-b border-slate-200 mb-6">
         {TABS.map((t) => (
           <button key={t} data-testid={`client-tab-${t.toLowerCase()}`} onClick={() => setTab(t)}
             className={`px-5 py-2.5 text-xs uppercase tracking-[0.15em] font-semibold border-b-2 -mb-px transition-colors ${
-              tab === t ? "border-orange-500 text-orange-500" : "border-transparent text-zinc-500 hover:text-white"}`}>
+              tab === t ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-900"}`}>
             {t}
           </button>
         ))}
@@ -65,24 +65,24 @@ export default function ClientDetailPage() {
         <div className="space-y-2" data-testid="client-projects-list">
           {(projects || []).map((p) => (
             <Link key={p.id} to={`/admin/projects/${p.id}`} data-testid={`client-project-${p.id}`}
-              className="flex items-center gap-4 border border-zinc-800 bg-zinc-900/60 p-4 hover:border-orange-500 transition-colors group">
-              <div className="font-heading font-bold text-2xl text-zinc-700 group-hover:text-orange-500 transition-colors w-16">{p.percent_complete}%</div>
+              className="flex items-center gap-4 border border-slate-200 bg-white shadow-sm p-4 hover:border-blue-400 transition-colors group">
+              <div className="font-heading font-bold text-2xl text-slate-700 group-hover:text-blue-600 transition-colors w-16">{p.percent_complete}%</div>
               <div className="min-w-0 flex-1">
-                <div className="font-semibold text-white truncate">{p.name}</div>
-                <div className="text-xs text-zinc-500">{p.location || "—"}</div>
+                <div className="font-semibold text-slate-900 truncate">{p.name}</div>
+                <div className="text-xs text-slate-500">{p.location || "—"}</div>
               </div>
               <ProjectStatusBadge status={p.status} />
-              <ArrowRight size={15} strokeWidth={2.5} className="text-zinc-600 group-hover:text-orange-500 transition-colors" />
+              <ArrowRight size={15} strokeWidth={2.5} className="text-slate-400 group-hover:text-blue-600 transition-colors" />
             </Link>
           ))}
-          {(projects || []).length === 0 && <div className="border border-zinc-800 p-10 text-center text-zinc-500">No projects for this client.</div>}
+          {(projects || []).length === 0 && <div className="border border-slate-200 p-10 text-center text-slate-500">No projects for this client.</div>}
         </div>
       )}
 
       {tab === "Invoices" && (
         <div className="space-y-3 max-w-3xl" data-testid="client-invoices-list">
           {(invoices || []).map((inv) => <InvoiceCard key={inv.id} inv={inv} canWrite={false} onPay={() => {}} />)}
-          {(invoices || []).length === 0 && <div className="border border-zinc-800 p-10 text-center text-zinc-500">No invoices for this client.</div>}
+          {(invoices || []).length === 0 && <div className="border border-slate-200 p-10 text-center text-slate-500">No invoices for this client.</div>}
         </div>
       )}
 
@@ -90,16 +90,16 @@ export default function ClientDetailPage() {
         <div className="space-y-2 max-w-3xl" data-testid="client-documents-list">
           {(documents || []).map((doc) => (
             <a key={doc.id} href={assetUrl(doc.file_url)} target="_blank" rel="noreferrer" data-testid={`client-doc-${doc.id}`}
-              className="flex items-center gap-3 border border-zinc-800 bg-zinc-900/60 p-3 hover:border-orange-500 transition-colors">
-              <FileText size={16} strokeWidth={2.5} className="text-orange-500 shrink-0" />
+              className="flex items-center gap-3 border border-slate-200 bg-white shadow-sm p-3 hover:border-blue-400 transition-colors">
+              <FileText size={16} strokeWidth={2.5} className="text-blue-600 shrink-0" />
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold text-white truncate">{doc.document_name}</div>
-                <div className="text-[11px] text-zinc-500">{doc.category} · {doc.uploader_name || "—"} · {doc.uploaded_at?.slice(0, 10)}</div>
+                <div className="text-sm font-semibold text-slate-900 truncate">{doc.document_name}</div>
+                <div className="text-[11px] text-slate-500">{doc.category} · {doc.uploader_name || "—"} · {doc.uploaded_at?.slice(0, 10)}</div>
               </div>
-              <span className="text-[10px] uppercase tracking-[0.15em] text-zinc-500">{doc.file_type}</span>
+              <span className="text-[10px] uppercase tracking-[0.15em] text-slate-500">{doc.file_type}</span>
             </a>
           ))}
-          {(documents || []).length === 0 && <div className="border border-zinc-800 p-10 text-center text-zinc-500">No documents.</div>}
+          {(documents || []).length === 0 && <div className="border border-slate-200 p-10 text-center text-slate-500">No documents.</div>}
         </div>
       )}
 

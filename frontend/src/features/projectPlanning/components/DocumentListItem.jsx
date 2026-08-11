@@ -49,24 +49,24 @@ export const DocumentListItem = ({ doc, isAdmin, projectId }) => {
   };
 
   return (
-    <div className="border border-zinc-800 bg-zinc-900/40 p-3 flex items-start gap-3" data-testid={`document-item-${doc.id}`}>
-      <div className="bg-zinc-800 border border-zinc-700 p-2 shrink-0">
-        <Icon size={16} strokeWidth={2.5} className="text-orange-500" />
+    <div className="border border-slate-200 bg-white shadow-sm p-3 flex items-start gap-3" data-testid={`document-item-${doc.id}`}>
+      <div className="bg-slate-200 border border-slate-300 p-2 shrink-0">
+        <Icon size={16} strokeWidth={2.5} className="text-blue-600" />
       </div>
       <div className="min-w-0 flex-1">
         <a href={assetUrl(doc.file_url)} target="_blank" rel="noreferrer" data-testid={`document-link-${doc.id}`}
-          className="block text-sm font-semibold text-white truncate hover:text-orange-500 transition-colors">
+          className="block text-sm font-semibold text-slate-900 truncate hover:text-blue-600 transition-colors">
           {doc.document_name}
         </a>
-        <div className="text-[11px] text-zinc-500 mt-0.5">
+        <div className="text-[11px] text-slate-500 mt-0.5">
           {doc.uploader_name} · {doc.uploaded_at?.slice(0, 10)} · {fmtSize(doc.file_size)}
         </div>
         <div className="flex items-center gap-1.5 mt-1.5">
-          <span className="border border-zinc-700 text-zinc-400 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.12em] font-semibold">
+          <span className="border border-slate-300 text-slate-500 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.12em] font-semibold">
             {doc.category || "Other"}
           </span>
           {doc.is_client_visible === false && (
-            <span className="border border-zinc-700 text-zinc-500 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.12em] font-semibold">
+            <span className="border border-slate-300 text-slate-500 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.12em] font-semibold">
               Internal
             </span>
           )}
@@ -75,37 +75,37 @@ export const DocumentListItem = ({ doc, isAdmin, projectId }) => {
       {isAdmin && (
         <div className="flex gap-1 shrink-0">
           <button data-testid={`document-rename-${doc.id}`} onClick={() => { setName(doc.document_name); setCategory(doc.category || "Other"); setRenameOpen(true); }}
-            className="p-1.5 text-zinc-500 hover:text-orange-500 transition-colors"><Pencil size={13} strokeWidth={2.5} /></button>
+            className="p-1.5 text-slate-500 hover:text-blue-600 transition-colors"><Pencil size={13} strokeWidth={2.5} /></button>
           <button data-testid={`document-delete-${doc.id}`} onClick={remove}
-            className="p-1.5 text-zinc-500 hover:text-red-500 transition-colors"><Trash2 size={13} strokeWidth={2.5} /></button>
+            className="p-1.5 text-slate-500 hover:text-red-500 transition-colors"><Trash2 size={13} strokeWidth={2.5} /></button>
         </div>
       )}
       <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
-        <DialogContent className="bg-zinc-900 border-zinc-700 rounded-none max-w-sm" data-testid="document-rename-modal">
+        <DialogContent className="bg-white border-slate-300 rounded-md max-w-sm" data-testid="document-rename-modal">
           <DialogHeader>
             <DialogTitle className="font-heading text-xl uppercase tracking-wide">Edit Document</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Document Name</Label>
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Document Name</Label>
               <Input data-testid="document-rename-input" value={name} onChange={(e) => setName(e.target.value)}
-                className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+                className="mt-1.5 bg-white border-slate-300 rounded-md" />
             </div>
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Category</Label>
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Category</Label>
               <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger data-testid="document-rename-category" className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none">
+                <SelectTrigger data-testid="document-rename-category" className="mt-1.5 bg-white border-slate-300 rounded-md">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-700">
+                <SelectContent className="bg-white border-slate-300">
                   {DOC_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setRenameOpen(false)} className="rounded-none border-zinc-700">Cancel</Button>
+              <Button variant="outline" onClick={() => setRenameOpen(false)} className="rounded-md border-slate-300">Cancel</Button>
               <Button data-testid="document-rename-save" onClick={saveRename} disabled={patch.isPending}
-                className="rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-semibold uppercase tracking-wide">Save</Button>
+                className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">Save</Button>
             </div>
           </div>
         </DialogContent>

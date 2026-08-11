@@ -71,13 +71,13 @@ export default function SiteEngineerPortalPage() {
     <div className="p-8" data-testid="se-portal-page">
       <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
         <div>
-          <div className="text-orange-500 text-[11px] uppercase tracking-[0.3em] font-semibold mb-1">Field Operations</div>
-          <h1 className="font-heading font-bold text-4xl sm:text-5xl uppercase leading-none">Daily Attendance</h1>
-          {isClient && <div className="text-xs text-zinc-500 mt-2" data-testid="client-viewonly-note">View-only — attendance for your projects</div>}
+          <div className="text-blue-600 text-[11px] uppercase tracking-[0.3em] font-semibold mb-1">Field Operations</div>
+          <h1 className="font-heading font-bold text-4xl sm:text-5xl tracking-tight leading-none">Daily Attendance</h1>
+          {isClient && <div className="text-xs text-slate-500 mt-2" data-testid="client-viewonly-note">View-only — attendance for your projects</div>}
         </div>
         {!isClient && (
           <Button data-testid="se-add-employee-button" onClick={() => setModal(true)}
-            className="rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-bold uppercase tracking-wide">
+            className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide">
             <Plus size={15} strokeWidth={3} /> Add Employee
           </Button>
         )}
@@ -85,37 +85,37 @@ export default function SiteEngineerPortalPage() {
 
       <div className="flex flex-wrap items-end gap-3 mb-6">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.15em] text-zinc-500 mb-1">Project</div>
+          <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 mb-1">Project</div>
           <Select value={projectId} onValueChange={setProjectId}>
-            <SelectTrigger data-testid="se-project-select" className="w-64 bg-zinc-900 border-zinc-700 rounded-none">
+            <SelectTrigger data-testid="se-project-select" className="w-64 bg-white border-slate-300 rounded-md">
               <SelectValue placeholder="Select project" />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-900 border-zinc-700">
+            <SelectContent className="bg-white border-slate-300">
               {(projects || []).map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <div>
-          <div className="text-[10px] uppercase tracking-[0.15em] text-zinc-500 mb-1">Date</div>
+          <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 mb-1">Date</div>
           <Input data-testid="se-date-input" type="date" value={day}
             min={isAdmin || isClient ? undefined : minDate()} max={todayIso()}
-            onChange={(e) => setDay(e.target.value)} className="bg-zinc-900 border-zinc-700 rounded-none h-10 w-44" />
+            onChange={(e) => setDay(e.target.value)} className="bg-white border-slate-300 rounded-md h-10 w-44" />
         </div>
         {pid && (
           <Link to={`/admin/projects/${pid}`} data-testid="se-project-link"
-            className="ml-auto flex items-center gap-1.5 text-[11px] uppercase tracking-[0.15em] font-semibold text-zinc-500 hover:text-orange-500 transition-colors pb-2">
+            className="ml-auto flex items-center gap-1.5 text-[11px] uppercase tracking-[0.15em] font-semibold text-slate-500 hover:text-blue-600 transition-colors pb-2">
             Full Project View <ArrowRight size={13} strokeWidth={2.5} />
           </Link>
         )}
       </div>
 
       {project && (
-        <div className="border border-zinc-800 bg-zinc-900/60 p-4 mb-6 flex flex-wrap items-center gap-4" data-testid="se-summary-bar">
-          <span className="flex items-center gap-2 text-sm text-zinc-300">
-            <HardHat size={15} strokeWidth={2.5} className="text-orange-500" /> {project.name}
+        <div className="border border-slate-200 bg-white shadow-sm p-4 mb-6 flex flex-wrap items-center gap-4" data-testid="se-summary-bar">
+          <span className="flex items-center gap-2 text-sm text-slate-600">
+            <HardHat size={15} strokeWidth={2.5} className="text-blue-600" /> {project.name}
           </span>
-          <span className="flex items-center gap-2 text-sm text-zinc-400">
-            <ClipboardCheck size={15} strokeWidth={2.5} className="text-green-500" />
+          <span className="flex items-center gap-2 text-sm text-slate-500">
+            <ClipboardCheck size={15} strokeWidth={2.5} className="text-emerald-600" />
             <span data-testid="se-marked-count">{markedCount}/{active.length}</span> marked for {day}
           </span>
         </div>
@@ -126,12 +126,12 @@ export default function SiteEngineerPortalPage() {
           <DailyAttendanceCard key={e.id} employee={e} status={statusMap[e.id]} onMark={mark} readOnly={isClient} />
         ))}
         {pid && active.length === 0 && (
-          <div className="border border-zinc-800 p-10 text-center text-zinc-500 md:col-span-2" data-testid="se-empty">
+          <div className="border border-slate-200 p-10 text-center text-slate-500 md:col-span-2" data-testid="se-empty">
             {isClient ? "No employees on this project yet." : 'No employees on this project yet. Tap "Add Employee" to register your first field worker.'}
           </div>
         )}
         {!pid && (
-          <div className="border border-zinc-800 p-10 text-center text-zinc-500 md:col-span-2">
+          <div className="border border-slate-200 p-10 text-center text-slate-500 md:col-span-2">
             No assigned projects found.
           </div>
         )}
@@ -139,13 +139,13 @@ export default function SiteEngineerPortalPage() {
 
       {!isClient && (
       <div className="mt-10" data-testid="org-employee-register">
-        <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 font-semibold mb-3">
+        <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold mb-3">
           Employee Register (Organisation) · {(allEmployees || []).length}
         </div>
-        <div className="border border-zinc-800 overflow-x-auto">
+        <div className="border border-slate-200 overflow-x-auto">
           <table className="w-full text-sm" data-testid="org-employees-table">
             <thead>
-              <tr className="text-left text-[10px] uppercase tracking-[0.15em] text-zinc-500 border-b border-zinc-800 bg-zinc-900/60">
+              <tr className="text-left text-[10px] uppercase tracking-[0.15em] text-slate-500 border-b border-slate-200 bg-white">
                 <th className="px-4 py-3">Name</th><th className="px-4 py-3">Trade</th>
                 <th className="px-4 py-3 text-right">Wage</th><th className="px-4 py-3">Assigned Projects (via phases)</th>
                 <th className="px-4 py-3 text-center">Status</th>
@@ -153,20 +153,20 @@ export default function SiteEngineerPortalPage() {
             </thead>
             <tbody>
               {(allEmployees || []).map((e) => (
-                <tr key={e.id} className="border-b border-zinc-800/50 hover:bg-zinc-900/50 transition-colors" data-testid={`org-employee-row-${e.id}`}>
-                  <td className="px-4 py-2.5 font-semibold text-white">{e.name}</td>
-                  <td className="px-4 py-2.5 text-zinc-300">{e.role_title || "—"}</td>
-                  <td className="px-4 py-2.5 text-right text-zinc-200">{e.daily_wage != null ? `₹${Number(e.daily_wage).toLocaleString("en-IN")}/${e.wage_type === "daily" ? "day" : e.wage_type}` : "—"}</td>
-                  <td className="px-4 py-2.5 text-xs text-zinc-400">
-                    {(e.assigned_projects || []).length ? e.assigned_projects.join(", ") : <span className="text-zinc-600">Unassigned — assign via Project → Phases</span>}
+                <tr key={e.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors" data-testid={`org-employee-row-${e.id}`}>
+                  <td className="px-4 py-2.5 font-semibold text-slate-900">{e.name}</td>
+                  <td className="px-4 py-2.5 text-slate-600">{e.role_title || "—"}</td>
+                  <td className="px-4 py-2.5 text-right text-slate-700">{e.daily_wage != null ? `₹${Number(e.daily_wage).toLocaleString("en-IN")}/${e.wage_type === "daily" ? "day" : e.wage_type}` : "—"}</td>
+                  <td className="px-4 py-2.5 text-xs text-slate-500">
+                    {(e.assigned_projects || []).length ? e.assigned_projects.join(", ") : <span className="text-slate-400">Unassigned — assign via Project → Phases</span>}
                   </td>
                   <td className="px-4 py-2.5 text-center">
-                    <span className={`inline-block border px-2 py-0.5 text-[11px] uppercase tracking-[0.12em] font-semibold ${e.status === "active" ? "bg-green-500/10 text-green-400 border-green-500/40" : "bg-zinc-500/10 text-zinc-400 border-zinc-500/40"}`}>{e.status}</span>
+                    <span className={`inline-block border px-2 py-0.5 text-[11px] uppercase tracking-[0.12em] font-semibold ${e.status === "active" ? "bg-emerald-50 text-emerald-600 border-emerald-200" : "bg-slate-100 text-slate-500 border-slate-300"}`}>{e.status}</span>
                   </td>
                 </tr>
               ))}
               {(allEmployees || []).length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-8 text-center text-zinc-500">No employees yet — add your first worker above.</td></tr>
+                <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">No employees yet — add your first worker above.</td></tr>
               )}
             </tbody>
           </table>

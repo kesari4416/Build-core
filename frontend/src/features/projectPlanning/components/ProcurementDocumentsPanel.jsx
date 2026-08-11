@@ -52,55 +52,55 @@ export const ProcurementDocumentsPanel = ({ type, id, canWrite, isAdmin }) => {
   return (
     <div className="space-y-4 max-w-3xl" data-testid="proc-documents-panel">
       {canWrite && (
-        <div className="border border-zinc-800 bg-zinc-900/60 p-4 space-y-3" data-testid="proc-doc-upload-card">
+        <div className="border border-slate-200 bg-white shadow-sm p-4 space-y-3" data-testid="proc-doc-upload-card">
           <input ref={fileRef} type="file" hidden data-testid="proc-doc-file-input"
             onChange={(e) => { const f = e.target.files?.[0]; setFile(f || null); if (f) setName(f.name); }} />
           {!file ? (
             <button data-testid="proc-doc-pick" onClick={() => fileRef.current?.click()}
-              className="w-full border border-dashed border-zinc-600 py-5 flex items-center justify-center gap-2 text-zinc-500 hover:text-orange-500 hover:border-orange-500 transition-colors text-xs uppercase tracking-[0.15em] font-semibold">
+              className="w-full border border-dashed border-slate-300 py-5 flex items-center justify-center gap-2 text-slate-500 hover:text-blue-600 hover:border-blue-400 transition-colors text-xs uppercase tracking-[0.15em] font-semibold">
               <Upload size={16} strokeWidth={2.5} /> Choose file
             </button>
           ) : (
             <div className="flex flex-wrap items-end gap-3">
               <div className="flex-1 min-w-[180px]">
-                <div className="text-[10px] uppercase tracking-[0.15em] text-zinc-500 mb-1">Document Name</div>
+                <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 mb-1">Document Name</div>
                 <Input data-testid="proc-doc-name-input" value={name} onChange={(e) => setName(e.target.value)}
-                  className="bg-zinc-950 border-zinc-700 rounded-none h-9" />
+                  className="bg-white border-slate-300 rounded-md h-9" />
               </div>
               <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger data-testid="proc-doc-category" className="w-32 bg-zinc-950 border-zinc-700 rounded-none h-9"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-700">
+                <SelectTrigger data-testid="proc-doc-category" className="w-32 bg-white border-slate-300 rounded-md h-9"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-white border-slate-300">
                   {CATS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <label className="flex items-center gap-2 text-xs text-zinc-400 h-9">
+              <label className="flex items-center gap-2 text-xs text-slate-500 h-9">
                 <Switch data-testid="proc-doc-visible" checked={visible} onCheckedChange={setVisible} /> Client visible
               </label>
               <Button data-testid="proc-doc-upload-submit" onClick={upload} disabled={mut.isPending}
-                className="rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-bold uppercase tracking-wide h-9">Upload</Button>
+                className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide h-9">Upload</Button>
             </div>
           )}
         </div>
       )}
       <input data-testid="proc-doc-search" value={search} onChange={(e) => setSearch(e.target.value)}
         placeholder="Search documents…"
-        className="w-full max-w-xs bg-zinc-900 border border-zinc-700 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500" />
+        className="w-full max-w-xs bg-white border border-slate-300 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
       <div className="space-y-2">
-        {filtered.length === 0 && <div className="border border-zinc-800 p-6 text-center text-xs text-zinc-500" data-testid="proc-docs-empty">No documents.</div>}
+        {filtered.length === 0 && <div className="border border-slate-200 p-6 text-center text-xs text-slate-500" data-testid="proc-docs-empty">No documents.</div>}
         {filtered.map((d) => (
-          <div key={d.id} className="border border-zinc-800 bg-zinc-900/40 p-3 flex items-center gap-3" data-testid={`proc-doc-item-${d.id}`}>
-            <FileText size={16} strokeWidth={2.5} className="text-orange-500 shrink-0" />
+          <div key={d.id} className="border border-slate-200 bg-white shadow-sm p-3 flex items-center gap-3" data-testid={`proc-doc-item-${d.id}`}>
+            <FileText size={16} strokeWidth={2.5} className="text-blue-600 shrink-0" />
             <div className="min-w-0 flex-1">
               <a href={assetUrl(d.file_url)} target="_blank" rel="noreferrer"
-                className="block text-sm font-semibold text-white truncate hover:text-orange-500 transition-colors">{d.document_name}</a>
-              <div className="text-[11px] text-zinc-500">{d.uploader_name} · {d.uploaded_at?.slice(0, 10)} · {d.category}
-                {!d.is_client_visible && <span className="ml-2 border border-zinc-700 px-1 uppercase tracking-wide text-[9px]">Internal</span>}
+                className="block text-sm font-semibold text-slate-900 truncate hover:text-blue-600 transition-colors">{d.document_name}</a>
+              <div className="text-[11px] text-slate-500">{d.uploader_name} · {d.uploaded_at?.slice(0, 10)} · {d.category}
+                {!d.is_client_visible && <span className="ml-2 border border-slate-300 px-1 uppercase tracking-wide text-[9px]">Internal</span>}
               </div>
             </div>
             {isAdmin && (
               <div className="flex gap-1">
-                <button data-testid={`proc-doc-rename-${d.id}`} onClick={() => rename(d)} className="p-1 text-zinc-500 hover:text-orange-500"><Pencil size={13} strokeWidth={2.5} /></button>
-                <button data-testid={`proc-doc-delete-${d.id}`} onClick={() => remove(d)} className="p-1 text-zinc-500 hover:text-red-500"><Trash2 size={13} strokeWidth={2.5} /></button>
+                <button data-testid={`proc-doc-rename-${d.id}`} onClick={() => rename(d)} className="p-1 text-slate-500 hover:text-blue-600"><Pencil size={13} strokeWidth={2.5} /></button>
+                <button data-testid={`proc-doc-delete-${d.id}`} onClick={() => remove(d)} className="p-1 text-slate-500 hover:text-red-500"><Trash2 size={13} strokeWidth={2.5} /></button>
               </div>
             )}
           </div>

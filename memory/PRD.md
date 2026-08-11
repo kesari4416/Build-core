@@ -79,6 +79,12 @@
   - Env note: PostgreSQL was fully wiped by container reset this session — reinstalled via apt, ALTER USER password, CREATE DATABASE construction_db, seed repopulated
   - Tests: /app/backend/tests/test_iter13_client_fieldops_rbac.py (11/11)
 
+- Full UI Redesign — Swiss High-Contrast Light Theme (2026-06, iter 14, TESTED 100% 14/14 pages, 5 roles):
+  - design_agent blueprint at /app/design_guidelines.json: light slate-50 bg, white cards (slate-200 border + shadow-sm, rounded-lg), blue-600 primary, amber construction accent, DARK slate-900 sidebar (intentional contrast, amber logo, blue active border), Cabinet Grotesk headings (Fontshare) + IBM Plex Sans body, rounded-full pastel status badges, light recharts palette (#2563EB/#F59E0B/#10B981/#8B5CF6/#64748B/#0EA5E9), white chart tooltips
+  - Implementation: global class mapping (zinc→slate, orange→blue/amber, rounded-none→rounded-md, dark→light status colors) across 49 jsx files via /tmp/restyle.sh; manual rewrites: index.css (light shadcn vars + fonts + scrollbar + selection), Layout.jsx, LoginPage.jsx (Pexels blueprint split-screen), ProjectStatusBadge, CommitmentStatusBadge, DashboardPage hex palette, App.js auth loader
+  - All data-testids preserved; zero functional regressions (verified across Admin/Client/Vendor/Accountant/SiteEngineer)
+  - Remaining cosmetic (optional): Radix Dialog aria-describedby warnings; recharts width(-1) first-paint warning; native <select> in expense category could become shadcn Select
+
 ## Backlog / Next
 - P1: Milestones UI (backend ready); edit progress updates
 - P2: Replace window.prompt/confirm dialogs (record payment, reset password, delete user, award) with shadcn Dialogs; email channel for alerts (needs Resend/SendGrid key); Gantt view; export reports; invoice PDF export

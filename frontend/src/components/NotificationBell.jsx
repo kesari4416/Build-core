@@ -52,7 +52,7 @@ export const NotificationBell = () => {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button data-testid="notification-bell"
-          className="relative w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium border-l-2 border-transparent text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors">
+          className="relative w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium border-l-2 border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors">
           <Bell size={17} strokeWidth={2.5} />
           <span className="uppercase tracking-[0.12em] text-xs font-semibold">Alerts</span>
           {unread > 0 && (
@@ -64,12 +64,12 @@ export const NotificationBell = () => {
         </button>
       </PopoverTrigger>
       <PopoverContent side="right" align="start" sideOffset={8}
-        className="w-96 p-0 bg-zinc-900 border-zinc-700 rounded-none" data-testid="notification-panel">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
-          <span className="text-[11px] uppercase tracking-[0.2em] text-zinc-400 font-semibold">Alerts</span>
+        className="w-96 p-0 bg-white border-slate-300 rounded-md" data-testid="notification-panel">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+          <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold">Alerts</span>
           {unread > 0 && (
             <button data-testid="mark-all-read" onClick={markAll}
-              className="flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] font-bold text-orange-500 hover:text-orange-400">
+              className="flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] font-bold text-blue-600 hover:text-blue-700">
               <CheckCheck size={12} strokeWidth={2.5} /> Mark all read
             </button>
           )}
@@ -77,24 +77,24 @@ export const NotificationBell = () => {
         <div className="max-h-96 overflow-y-auto">
           {(notifications || []).map((n) => (
             <button key={n.id} data-testid={`notification-item-${n.id}`} onClick={() => onClickNotif(n)}
-              className={`w-full text-left px-4 py-3 border-b border-zinc-800/60 hover:bg-zinc-800/50 transition-colors ${n.is_read ? "opacity-60" : ""}`}>
+              className={`w-full text-left px-4 py-3 border-b border-slate-200/60 hover:bg-slate-200/50 transition-colors ${n.is_read ? "opacity-60" : ""}`}>
               <div className="flex items-start gap-2.5">
-                <span className={`mt-0.5 shrink-0 ${n.type.includes("Blocked") ? "text-red-400" : "text-yellow-400"}`}>
+                <span className={`mt-0.5 shrink-0 ${n.type.includes("Blocked") ? "text-red-600" : "text-amber-600"}`}>
                   {n.type.includes("Blocked") ? <AlertTriangle size={15} strokeWidth={2.5} /> : <Clock size={15} strokeWidth={2.5} />}
                 </span>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-white truncate">{n.title}</span>
-                    {!n.is_read && <span className="w-1.5 h-1.5 bg-orange-500 shrink-0" />}
+                    <span className="text-sm font-semibold text-slate-900 truncate">{n.title}</span>
+                    {!n.is_read && <span className="w-1.5 h-1.5 bg-blue-600 shrink-0" />}
                   </div>
-                  <div className="text-xs text-zinc-400 mt-0.5 line-clamp-2">{n.message}</div>
-                  <div className="text-[10px] uppercase tracking-[0.12em] text-zinc-600 mt-1">{timeAgo(n.created_at)}</div>
+                  <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">{n.message}</div>
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-slate-400 mt-1">{timeAgo(n.created_at)}</div>
                 </div>
               </div>
             </button>
           ))}
           {(notifications || []).length === 0 && (
-            <div className="px-4 py-10 text-center text-xs text-zinc-500" data-testid="notifications-empty">
+            <div className="px-4 py-10 text-center text-xs text-slate-500" data-testid="notifications-empty">
               No alerts yet. You'll be notified when work gets blocked or delayed.
             </div>
           )}

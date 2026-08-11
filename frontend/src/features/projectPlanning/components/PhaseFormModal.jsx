@@ -77,7 +77,7 @@ export const PhaseFormModal = ({ open, onOpenChange, projectId, phase, nextOrder
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-zinc-900 border-zinc-700 rounded-none max-w-md" data-testid="phase-form-modal">
+      <DialogContent className="bg-white border-slate-300 rounded-md max-w-md" data-testid="phase-form-modal">
         <DialogHeader>
           <DialogTitle className="font-heading text-2xl uppercase tracking-wide">
             {phase ? "Edit Phase" : "Add Phase"}
@@ -86,50 +86,50 @@ export const PhaseFormModal = ({ open, onOpenChange, projectId, phase, nextOrder
         <form onSubmit={submit} className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-2">
-              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Phase Name *</Label>
-              <Input data-testid="phase-name-input" value={form.name} onChange={(e) => set("name", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
-              {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Phase Name *</Label>
+              <Input data-testid="phase-name-input" value={form.name} onChange={(e) => set("name", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+              {errors.name && <p className="text-red-600 text-xs mt-1">{errors.name}</p>}
             </div>
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Order *</Label>
-              <Input data-testid="phase-order-input" type="number" value={form.sequence_order} onChange={(e) => set("sequence_order", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
-              {errors.sequence_order && <p className="text-red-400 text-xs mt-1">{errors.sequence_order}</p>}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Planned Start</Label>
-              <Input data-testid="phase-start-input" type="date" value={form.planned_start} onChange={(e) => set("planned_start", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
-            </div>
-            <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Planned End</Label>
-              <Input data-testid="phase-end-input" type="date" value={form.planned_end} onChange={(e) => set("planned_end", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
-              {errors.planned_end && <p className="text-red-400 text-xs mt-1">{errors.planned_end}</p>}
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Order *</Label>
+              <Input data-testid="phase-order-input" type="number" value={form.sequence_order} onChange={(e) => set("sequence_order", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+              {errors.sequence_order && <p className="text-red-600 text-xs mt-1">{errors.sequence_order}</p>}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Status</Label>
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Planned Start</Label>
+              <Input data-testid="phase-start-input" type="date" value={form.planned_start} onChange={(e) => set("planned_start", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Planned End</Label>
+              <Input data-testid="phase-end-input" type="date" value={form.planned_end} onChange={(e) => set("planned_end", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+              {errors.planned_end && <p className="text-red-600 text-xs mt-1">{errors.planned_end}</p>}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Status</Label>
               <Select value={form.status} onValueChange={(v) => set("status", v)}>
-                <SelectTrigger data-testid="phase-status-select" className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-700">
+                <SelectTrigger data-testid="phase-status-select" className="mt-1.5 bg-white border-slate-300 rounded-md"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-white border-slate-300">
                   {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">% Complete</Label>
-              <Input data-testid="phase-percent-input" type="number" min="0" max="100" value={form.percent_complete} onChange={(e) => set("percent_complete", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
-              {errors.percent_complete && <p className="text-red-400 text-xs mt-1">{errors.percent_complete}</p>}
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">% Complete</Label>
+              <Input data-testid="phase-percent-input" type="number" min="0" max="100" value={form.percent_complete} onChange={(e) => set("percent_complete", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+              {errors.percent_complete && <p className="text-red-600 text-xs mt-1">{errors.percent_complete}</p>}
             </div>
           </div>
           <div className="flex justify-between pt-2">
             {phase ? (
-              <Button type="button" variant="destructive" onClick={remove} className="rounded-none" data-testid="phase-delete-button">Delete</Button>
+              <Button type="button" variant="destructive" onClick={remove} className="rounded-md" data-testid="phase-delete-button">Delete</Button>
             ) : <span />}
             <div className="flex gap-3">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-none border-zinc-700">Cancel</Button>
-              <Button type="submit" disabled={add.isPending || update.isPending} data-testid="phase-form-submit" className="rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-semibold uppercase tracking-wide">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300">Cancel</Button>
+              <Button type="submit" disabled={add.isPending || update.isPending} data-testid="phase-form-submit" className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">
                 {phase ? "Save" : "Add Phase"}
               </Button>
             </div>

@@ -11,31 +11,31 @@ import { CommitmentStatusBadge } from "../components/CommitmentStatusBadge";
 const fmt = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
 export const VendorQuoteLineItemForm = ({ item, row, onChange, disabled }) => (
-  <div className="border border-zinc-800 bg-zinc-900/60 p-4" data-testid={`quote-item-${item.id}`}>
+  <div className="border border-slate-200 bg-white shadow-sm p-4" data-testid={`quote-item-${item.id}`}>
     <div className="flex flex-wrap items-center gap-3 mb-3">
-      <span className="font-semibold text-white">{item.item_description}</span>
-      <span className="text-xs text-zinc-500">Required: {item.quantity_required} {item.unit || ""}</span>
-      {item.my_quote && <span className="ml-auto text-xs text-green-400">Quoted {fmt(item.my_quote.line_total)}</span>}
+      <span className="font-semibold text-slate-900">{item.item_description}</span>
+      <span className="text-xs text-slate-500">Required: {item.quantity_required} {item.unit || ""}</span>
+      {item.my_quote && <span className="ml-auto text-xs text-emerald-600">Quoted {fmt(item.my_quote.line_total)}</span>}
     </div>
     <div className="flex flex-wrap gap-3">
       <div>
-        <div className="text-[10px] uppercase tracking-[0.15em] text-zinc-500 mb-1">Qty Offered</div>
+        <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 mb-1">Qty Offered</div>
         <Input data-testid={`quote-qty-${item.id}`} type="number" disabled={disabled} value={row.qty}
-          onChange={(e) => onChange(item.id, "qty", e.target.value)} className="bg-zinc-950 border-zinc-700 rounded-none h-9 w-28" />
+          onChange={(e) => onChange(item.id, "qty", e.target.value)} className="bg-white border-slate-300 rounded-md h-9 w-28" />
       </div>
       <div>
-        <div className="text-[10px] uppercase tracking-[0.15em] text-zinc-500 mb-1">Unit Price (₹) *</div>
+        <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 mb-1">Unit Price (₹) *</div>
         <Input data-testid={`quote-price-${item.id}`} type="number" disabled={disabled} value={row.price}
-          onChange={(e) => onChange(item.id, "price", e.target.value)} className="bg-zinc-950 border-zinc-700 rounded-none h-9 w-32" />
+          onChange={(e) => onChange(item.id, "price", e.target.value)} className="bg-white border-slate-300 rounded-md h-9 w-32" />
       </div>
       <div>
-        <div className="text-[10px] uppercase tracking-[0.15em] text-zinc-500 mb-1">Lead Time (days)</div>
+        <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 mb-1">Lead Time (days)</div>
         <Input data-testid={`quote-lead-${item.id}`} type="number" disabled={disabled} value={row.lead}
-          onChange={(e) => onChange(item.id, "lead", e.target.value)} className="bg-zinc-950 border-zinc-700 rounded-none h-9 w-28" />
+          onChange={(e) => onChange(item.id, "lead", e.target.value)} className="bg-white border-slate-300 rounded-md h-9 w-28" />
       </div>
       {row.price !== "" && (
-        <div className="ml-auto self-end pb-1 text-sm text-zinc-300">
-          Line total: <span className="font-semibold text-white">{fmt(Number(row.qty || item.quantity_required) * Number(row.price))}</span>
+        <div className="ml-auto self-end pb-1 text-sm text-slate-600">
+          Line total: <span className="font-semibold text-slate-900">{fmt(Number(row.qty || item.quantity_required) * Number(row.price))}</span>
         </div>
       )}
     </div>
@@ -90,23 +90,23 @@ export default function VendorBidPackagePage() {
 
   return (
     <div className="p-8" data-testid="vendor-bid-package-page">
-      <Link to="/portal/vendor/bid-packages" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] font-semibold text-zinc-500 hover:text-orange-500 mb-4">
+      <Link to="/portal/vendor/bid-packages" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] font-semibold text-slate-500 hover:text-blue-600 mb-4">
         <ArrowLeft size={14} strokeWidth={2.5} /> Bid Invitations
       </Link>
-      {isLoading && <div className="border border-zinc-800 p-10 text-center text-zinc-500">Loading…</div>}
+      {isLoading && <div className="border border-slate-200 p-10 text-center text-slate-500">Loading…</div>}
       {data && (
         <>
           <div className="flex items-end justify-between flex-wrap gap-4 mb-2">
-            <h1 className="font-heading font-bold text-4xl sm:text-5xl uppercase leading-none" data-testid="vendor-package-title">{data.title}</h1>
+            <h1 className="font-heading font-bold text-4xl sm:text-5xl tracking-tight leading-none" data-testid="vendor-package-title">{data.title}</h1>
             <CommitmentStatusBadge status={data.status} />
           </div>
-          <div className="text-sm text-zinc-400 mb-1">{data.scope_description}</div>
-          <div className="text-xs text-zinc-500 mb-6">
+          <div className="text-sm text-slate-500 mb-1">{data.scope_description}</div>
+          <div className="text-xs text-slate-500 mb-6">
             Bids due {data.bid_due_date || "—"}
-            {data.my_bid_amount != null && <span className="ml-3 text-green-400">Your current bid: {fmt(data.my_bid_amount)}</span>}
+            {data.my_bid_amount != null && <span className="ml-3 text-emerald-600">Your current bid: {fmt(data.my_bid_amount)}</span>}
           </div>
           {disabled && (
-            <div className="border border-red-500/40 bg-red-500/5 text-red-400 p-4 text-sm mb-6" data-testid="bidding-closed-banner">
+            <div className="border border-red-200 bg-red-50/60 text-red-600 p-4 text-sm mb-6" data-testid="bidding-closed-banner">
               Bidding is {closed ? "closed" : "past the due date"} for this package. Quotes can no longer be submitted.
             </div>
           )}
@@ -115,12 +115,12 @@ export default function VendorBidPackagePage() {
               <VendorQuoteLineItemForm key={li.id} item={li} row={rows[li.id]} onChange={onChange} disabled={disabled} />
             ))}
             {data.line_items.length === 0 && (
-              <div className="border border-zinc-800 p-10 text-center text-zinc-500">No line items defined for this package yet.</div>
+              <div className="border border-slate-200 p-10 text-center text-slate-500">No line items defined for this package yet.</div>
             )}
           </div>
           {!disabled && data.line_items.length > 0 && (
             <Button data-testid="submit-quote-button" disabled={saving} onClick={submit}
-              className="mt-6 rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-bold uppercase tracking-wide">
+              className="mt-6 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide">
               <Send size={14} strokeWidth={2.5} /> {data.my_bid_amount != null ? "Update Quote" : "Submit Quote"}
             </Button>
           )}

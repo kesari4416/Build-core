@@ -1,8 +1,8 @@
 const STYLES = {
-  Admin: "bg-orange-500/10 text-orange-400 border-orange-500/40",
-  SiteEngineer: "bg-sky-500/10 text-sky-400 border-sky-500/40",
-  Accountant: "bg-green-500/10 text-green-400 border-green-500/40",
-  ProcurementOfficer: "bg-yellow-500/10 text-yellow-400 border-yellow-500/40",
+  Admin: "bg-amber-50 text-blue-600 border-amber-300",
+  SiteEngineer: "bg-sky-50 text-sky-600 border-sky-200",
+  Accountant: "bg-emerald-50 text-emerald-600 border-emerald-200",
+  ProcurementOfficer: "bg-amber-50 text-amber-600 border-amber-200",
   Client: "bg-teal-500/10 text-teal-400 border-teal-500/40",
   Vendor: "bg-amber-500/10 text-amber-400 border-amber-500/40",
 };

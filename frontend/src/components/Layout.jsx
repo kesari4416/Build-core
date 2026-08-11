@@ -20,14 +20,14 @@ export default function Layout({ children }) {
   const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen bg-zinc-950 text-zinc-100">
-      <aside className="w-60 shrink-0 border-r border-zinc-800 bg-zinc-950 flex flex-col fixed inset-y-0" data-testid="sidebar">
-        <div className="h-16 flex items-center gap-2.5 px-5 border-b border-zinc-800">
-          <div className="bg-orange-500 p-1.5">
-            <HardHat size={20} strokeWidth={2.5} className="text-zinc-950" />
+    <div className="flex min-h-screen bg-slate-50 text-slate-900">
+      <aside className="w-60 shrink-0 border-r border-slate-800 bg-slate-900 flex flex-col fixed inset-y-0" data-testid="sidebar">
+        <div className="h-16 flex items-center gap-2.5 px-5 border-b border-slate-800">
+          <div className="bg-amber-500 p-1.5 rounded-md">
+            <HardHat size={20} strokeWidth={2.5} className="text-slate-900" />
           </div>
-          <div className="font-heading font-bold text-xl tracking-wide leading-none">
-            BUILD<span className="text-orange-500">CORE</span>
+          <div className="font-heading font-bold text-xl tracking-tight leading-none text-white">
+            BUILD<span className="text-amber-400">CORE</span>
           </div>
         </div>
         <nav className="flex-1 py-6 px-3 space-y-1">
@@ -40,10 +40,10 @@ export default function Layout({ children }) {
                 end={end}
                 data-testid={`nav-${label.toLowerCase()}`}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 text-sm font-medium border-l-2 transition-colors ${
+                  `flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md border-l-2 transition-colors ${
                     isActive
-                      ? "border-orange-500 bg-zinc-900 text-white"
-                      : "border-transparent text-zinc-400 hover:text-white hover:bg-zinc-900"
+                      ? "border-blue-500 bg-slate-800 text-white"
+                      : "border-transparent text-slate-400 hover:text-white hover:bg-slate-800/60"
                   }`
                 }
               >
@@ -57,20 +57,20 @@ export default function Layout({ children }) {
             <NotificationBell />
           </div>
         )}
-        <div className="border-t border-zinc-800 p-4">
+        <div className="border-t border-slate-800 p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 bg-zinc-800 border border-zinc-700 flex items-center justify-center font-heading font-bold text-orange-500">
+            <div className="w-9 h-9 bg-slate-800 border border-slate-700 rounded-md flex items-center justify-center font-heading font-bold text-amber-400">
               {user?.name?.[0]?.toUpperCase()}
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-semibold truncate" data-testid="user-name">{user?.name}</div>
-              <div className="text-[11px] uppercase tracking-[0.15em] text-zinc-500">{user?.role}</div>
+              <div className="text-sm font-semibold truncate text-white" data-testid="user-name">{user?.name}</div>
+              <div className="text-[11px] uppercase tracking-[0.15em] text-slate-500">{user?.role}</div>
             </div>
           </div>
           <button
             data-testid="logout-button"
             onClick={async () => { await logout(); navigate("/login"); }}
-            className="w-full flex items-center justify-center gap-2 border border-zinc-700 py-2 text-xs uppercase tracking-[0.15em] font-semibold text-zinc-400 hover:text-white hover:border-orange-500 transition-colors"
+            className="w-full flex items-center justify-center gap-2 border border-slate-700 rounded-md py-2 text-xs uppercase tracking-[0.15em] font-semibold text-slate-400 hover:text-white hover:border-slate-500 transition-colors"
           >
             <LogOut size={14} strokeWidth={2.5} /> Sign Out
           </button>

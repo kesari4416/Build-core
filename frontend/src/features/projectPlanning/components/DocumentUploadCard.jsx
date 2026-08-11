@@ -45,47 +45,47 @@ export const DocumentUploadCard = ({ projectId }) => {
   };
 
   return (
-    <div className="border border-zinc-800 bg-zinc-900/60 p-4" data-testid="document-upload-card">
-      <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 font-semibold mb-3">Upload Document</div>
+    <div className="border border-slate-200 bg-white shadow-sm p-4" data-testid="document-upload-card">
+      <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold mb-3">Upload Document</div>
       <input ref={fileRef} type="file" hidden data-testid="document-file-input"
         accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.doc,.docx,.xls,.xlsx,.csv,.txt,.dwg,.zip"
         onChange={(e) => setFile(e.target.files?.[0] || null)} />
       {!file ? (
         <button data-testid="document-pick-button" onClick={() => fileRef.current?.click()}
-          className="w-full border border-dashed border-zinc-600 py-6 flex flex-col items-center gap-2 text-zinc-500 hover:text-orange-500 hover:border-orange-500 transition-colors">
+          className="w-full border border-dashed border-slate-300 py-6 flex flex-col items-center gap-2 text-slate-500 hover:text-blue-600 hover:border-blue-400 transition-colors">
           <Upload size={20} strokeWidth={2.5} />
           <span className="text-xs uppercase tracking-[0.15em] font-semibold">Choose file</span>
         </button>
       ) : (
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs text-zinc-400">
+          <div className="flex items-center justify-between text-xs text-slate-500">
             <span className="truncate">{file.name}</span>
-            <button onClick={reset} data-testid="document-clear-file" className="text-zinc-500 hover:text-red-400">
+            <button onClick={reset} data-testid="document-clear-file" className="text-slate-500 hover:text-red-600">
               <X size={14} strokeWidth={2.5} />
             </button>
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Document Name</Label>
+            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Document Name</Label>
             <Input data-testid="document-name-input" value={name} onChange={(e) => setName(e.target.value)}
-              className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+              className="mt-1.5 bg-white border-slate-300 rounded-md" />
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Category</Label>
+            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Category</Label>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger data-testid="document-category-select" className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none">
+              <SelectTrigger data-testid="document-category-select" className="mt-1.5 bg-white border-slate-300 rounded-md">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-700">
+              <SelectContent className="bg-white border-slate-300">
                 {DOC_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="flex items-center gap-2">
             <Switch data-testid="document-visible-switch" checked={visible} onCheckedChange={setVisible} />
-            <span className="text-xs text-zinc-300">Visible to client</span>
+            <span className="text-xs text-slate-600">Visible to client</span>
           </div>
           <Button data-testid="document-upload-submit" onClick={submit} disabled={upload.isPending}
-            className="w-full rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-bold uppercase tracking-[0.12em]">
+            className="w-full rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-[0.12em]">
             {upload.isPending ? "Uploading…" : "Upload"}
           </Button>
         </div>

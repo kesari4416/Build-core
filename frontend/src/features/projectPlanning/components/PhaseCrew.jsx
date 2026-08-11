@@ -41,28 +41,28 @@ export const PhaseCrew = ({ phaseId }) => {
 
   return (
     <div className="mt-3" data-testid={`phase-crew-${phaseId}`}>
-      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.15em] text-zinc-500 font-semibold mb-1.5">
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.15em] text-slate-500 font-semibold mb-1.5">
         <Users size={11} strokeWidth={2.5} /> Crew · {(crew || []).length}
       </div>
       <div className="flex flex-wrap gap-1.5">
         {(crew || []).map((c) => (
           <span key={c.employee_id} data-testid={`crew-chip-${phaseId}-${c.employee_id}`}
-            className="inline-flex items-center gap-1 border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[11px] text-zinc-300">
+            className="inline-flex items-center gap-1 border border-slate-300 bg-white px-2 py-0.5 text-[11px] text-slate-600">
             {c.name}{c.role_title ? ` · ${c.role_title}` : ""}
             <button data-testid={`crew-remove-${phaseId}-${c.employee_id}`} onClick={() => unassign(c.employee_id)}
-              className="text-zinc-500 hover:text-red-400 transition-colors"><X size={11} strokeWidth={2.5} /></button>
+              className="text-slate-500 hover:text-red-600 transition-colors"><X size={11} strokeWidth={2.5} /></button>
           </span>
         ))}
         {adding ? (
           <select autoFocus data-testid={`crew-select-${phaseId}`} defaultValue=""
             onChange={(e) => assign(e.target.value)} onBlur={() => setAdding(false)}
-            className="bg-zinc-950 border border-orange-500 text-zinc-200 text-[11px] h-6 px-1">
+            className="bg-white border border-blue-600 text-slate-700 text-[11px] h-6 px-1">
             <option value="" disabled>Choose employee…</option>
             {options.map((e) => <option key={e.id} value={e.id}>{e.name}{e.role_title ? ` (${e.role_title})` : ""}</option>)}
           </select>
         ) : (
           <button data-testid={`crew-add-${phaseId}`} onClick={() => setAdding(true)}
-            className="inline-flex items-center gap-1 border border-dashed border-zinc-700 hover:border-orange-500 text-zinc-500 hover:text-orange-500 px-2 py-0.5 text-[11px] transition-colors">
+            className="inline-flex items-center gap-1 border border-dashed border-slate-300 hover:border-blue-400 text-slate-500 hover:text-blue-600 px-2 py-0.5 text-[11px] transition-colors">
             <Plus size={11} strokeWidth={2.5} /> Assign
           </button>
         )}

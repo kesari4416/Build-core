@@ -99,7 +99,7 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-zinc-900 border-zinc-700 rounded-none max-w-lg" data-testid="project-form-modal">
+      <DialogContent className="bg-white border-slate-300 rounded-md max-w-lg" data-testid="project-form-modal">
         <DialogHeader>
           <DialogTitle className="font-heading text-2xl uppercase tracking-wide">
             {project ? "Edit Project" : "New Project"}
@@ -107,30 +107,30 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId 
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Project Name *</Label>
-            <Input data-testid="project-name-input" value={form.name} onChange={(e) => set("name", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
-            {errors.name && <p className="text-red-400 text-xs mt-1" data-testid="project-name-error">{errors.name}</p>}
+            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Project Name *</Label>
+            <Input data-testid="project-name-input" value={form.name} onChange={(e) => set("name", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+            {errors.name && <p className="text-red-600 text-xs mt-1" data-testid="project-name-error">{errors.name}</p>}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Client *</Label>
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Client *</Label>
               <Select value={form.client_id} onValueChange={(v) => set("client_id", v)}>
-                <SelectTrigger data-testid="project-client-select" className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none">
+                <SelectTrigger data-testid="project-client-select" className="mt-1.5 bg-white border-slate-300 rounded-md">
                   <SelectValue placeholder="Select client" />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-700">
+                <SelectContent className="bg-white border-slate-300">
                   {clients?.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
-              {errors.client_id && <p className="text-red-400 text-xs mt-1">{errors.client_id}</p>}
+              {errors.client_id && <p className="text-red-600 text-xs mt-1">{errors.client_id}</p>}
             </div>
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Site Engineer</Label>
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Site Engineer</Label>
               <Select value={form.site_engineer_id} onValueChange={(v) => set("site_engineer_id", v)}>
-                <SelectTrigger data-testid="project-engineer-select" className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none">
+                <SelectTrigger data-testid="project-engineer-select" className="mt-1.5 bg-white border-slate-300 rounded-md">
                   <SelectValue placeholder="Assign engineer" />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-700">
+                <SelectContent className="bg-white border-slate-300">
                   {engineers?.map((e) => <SelectItem key={e.id} value={String(e.id)}>{e.name}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -138,49 +138,49 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId 
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Location</Label>
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Location</Label>
               <div className="flex gap-1.5 mt-1.5">
-                <Input data-testid="project-location-input" placeholder="Auto-detect or type address" value={form.location} onChange={(e) => set("location", e.target.value)} className="bg-zinc-950 border-zinc-700 rounded-none" />
+                <Input data-testid="project-location-input" placeholder="Auto-detect or type address" value={form.location} onChange={(e) => set("location", e.target.value)} className="bg-white border-slate-300 rounded-md" />
                 <button type="button" data-testid="detect-location-button" title="Detect my location" onClick={detectLocation} disabled={detecting}
-                  className="shrink-0 border border-zinc-700 hover:border-orange-500 text-zinc-400 hover:text-orange-500 px-2.5 transition-colors disabled:opacity-50">
+                  className="shrink-0 border border-slate-300 hover:border-blue-400 text-slate-500 hover:text-blue-600 px-2.5 transition-colors disabled:opacity-50">
                   {detecting ? <Loader2 size={15} strokeWidth={2.5} className="animate-spin" /> : <MapPin size={15} strokeWidth={2.5} />}
                 </button>
               </div>
             </div>
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Budget (₹)</Label>
-              <Input data-testid="project-budget-input" type="number" placeholder="e.g. 250000000 = ₹25 Cr" value={form.budget} onChange={(e) => set("budget", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Budget (₹)</Label>
+              <Input data-testid="project-budget-input" type="number" placeholder="e.g. 250000000 = ₹25 Cr" value={form.budget} onChange={(e) => set("budget", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
               {form.budget !== "" && !isNaN(Number(form.budget)) && Number(form.budget) > 0 && (
-                <p className="text-orange-400 text-xs mt-1 font-semibold" data-testid="budget-preview">= ₹{(Number(form.budget) / 10000000).toFixed(2)} Cr</p>
+                <p className="text-blue-600 text-xs mt-1 font-semibold" data-testid="budget-preview">= ₹{(Number(form.budget) / 10000000).toFixed(2)} Cr</p>
               )}
-              {errors.budget && <p className="text-red-400 text-xs mt-1">{errors.budget}</p>}
+              {errors.budget && <p className="text-red-600 text-xs mt-1">{errors.budget}</p>}
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Planned Start</Label>
-              <Input data-testid="project-start-input" type="date" value={form.start_date_planned} onChange={(e) => set("start_date_planned", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Planned Start</Label>
+              <Input data-testid="project-start-input" type="date" value={form.start_date_planned} onChange={(e) => set("start_date_planned", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
             </div>
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Planned End</Label>
-              <Input data-testid="project-end-input" type="date" value={form.end_date_planned} onChange={(e) => set("end_date_planned", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
-              {errors.end_date_planned && <p className="text-red-400 text-xs mt-1" data-testid="project-date-error">{errors.end_date_planned}</p>}
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Planned End</Label>
+              <Input data-testid="project-end-input" type="date" value={form.end_date_planned} onChange={(e) => set("end_date_planned", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+              {errors.end_date_planned && <p className="text-red-600 text-xs mt-1" data-testid="project-date-error">{errors.end_date_planned}</p>}
             </div>
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Status</Label>
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Status</Label>
               <Select value={form.status} onValueChange={(v) => set("status", v)}>
-                <SelectTrigger data-testid="project-status-select" className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none">
+                <SelectTrigger data-testid="project-status-select" className="mt-1.5 bg-white border-slate-300 rounded-md">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-700">
+                <SelectContent className="bg-white border-slate-300">
                   {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-none border-zinc-700" data-testid="project-form-cancel">Cancel</Button>
-            <Button type="submit" disabled={create.isPending || update.isPending} data-testid="project-form-submit" className="rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-semibold uppercase tracking-wide">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300" data-testid="project-form-cancel">Cancel</Button>
+            <Button type="submit" disabled={create.isPending || update.isPending} data-testid="project-form-submit" className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">
               {project ? "Save Changes" : "Create Project"}
             </Button>
           </div>
