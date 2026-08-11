@@ -91,6 +91,12 @@
   - dark: variants added across 49 jsx files via placeholder-based class mapping (/tmp/darkify.sh); .dark shadcn CSS vars + --gauge-track/--tooltip-* chart vars + dark scrollbar/calendar-icon in index.css; chart tooltips & gauge theme-aware
   - Sidebar intentionally dark slate-900 in BOTH themes; zero unflipped surfaces (programmatic scan), light mode regression clean
 
+- Workflow Guide PDF (2026-06, SELF-TESTED: curl 200 application/pdf, 7 pages verified via analyze tool, sidebar link screenshot):
+  - Generator: /app/scripts/generate_workflow_pdf.py (reportlab) -> /app/frontend/public/BUILDCORE_Workflow_Guide.pdf, served at {url}/BUILDCORE_Workflow_Guide.pdf
+  - Contents: cover, system overview + roles table, master lifecycle flow diagram (custom FlowDiagram flowable with box->arrow rendering), module workflows (Project Planning, Field Ops, Procurement/Bidding, Finance, Balance Sheets) each with flow diagram + numbered steps, role-wise daily workflows, permissions matrix, tips; footer with page numbers
+  - Sidebar "Workflow Guide" link (workflow-guide-link, BookOpen icon, all roles) opens PDF in new tab
+  - ENV: PostgreSQL wiped AGAIN by container reset; created one-command recovery script /app/scripts/restore_postgres.sh (reinstalls postgres, sets password, creates DB, restarts backend). Use it whenever backend 500s / port 5432 dead.
+
 ## Backlog / Next
 - P1: Milestones UI (backend ready); edit progress updates
 - P2: Replace window.prompt/confirm dialogs (record payment, reset password, delete user, award) with shadcn Dialogs; email channel for alerts (needs Resend/SendGrid key); Gantt view; export reports; invoice PDF export
