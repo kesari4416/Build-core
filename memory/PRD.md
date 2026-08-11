@@ -72,6 +72,13 @@
   - Frontend: Export PDF / Export Excel buttons on both balance sheet tabs (bs-export-pdf/excel, pbs-export-pdf/excel); shared utils/downloadFile.js (blob download, filename from Content-Disposition)
   - openpyxl added to requirements.txt
 
+- Client bug batch: DASHBOARD_001 / PROJECTS_002 / FIELDOPS_001 (2026-06, iter 13, TESTED 100%):
+  - Budget "not updated" reports: investigated end-to-end — creation/display/dashboard totals all worked; root cause likely unit confusion. Fix: Budget (₹) field now shows placeholder "e.g. 250000000 = ₹25 Cr" + live "= ₹X.XX Cr" preview (budget-preview) in ProjectFormModal
+  - Client read-only Field Ops (user choice a): READ_FIELD dep + Client branch in check_field_access (403 for other clients' projects) + mask_for_client (daily_wage/wage_type/phone/id_proof nulled for clients) on GET employees/attendance routes in employees.py. Writes + org register (/api/employees) stay INTERNAL → 403 for Client
+  - Frontend: Field Ops nav visible to Client; SiteEngineerPortalPage isClient mode — view-only note, no Add Employee, no org register, DailyAttendanceCard readOnly prop renders status badges instead of P/½/A/L buttons; date input unclamped for viewing history
+  - Env note: PostgreSQL was fully wiped by container reset this session — reinstalled via apt, ALTER USER password, CREATE DATABASE construction_db, seed repopulated
+  - Tests: /app/backend/tests/test_iter13_client_fieldops_rbac.py (11/11)
+
 ## Backlog / Next
 - P1: Milestones UI (backend ready); edit progress updates
 - P2: Replace window.prompt/confirm dialogs (record payment, reset password, delete user, award) with shadcn Dialogs; email channel for alerts (needs Resend/SendGrid key); Gantt view; export reports; invoice PDF export

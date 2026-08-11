@@ -17,6 +17,7 @@ const minDate = () => { const d = new Date(); d.setDate(d.getDate() - 3); return
 
 export default function SiteEngineerPortalPage() {
   const { user, isAdmin } = useAuth();
+  const isClient = user?.role === "Client";
   const qc = useQueryClient();
   const [projectId, setProjectId] = useState("");
   const [day, setDay] = useState(todayIso());
@@ -45,6 +46,7 @@ export default function SiteEngineerPortalPage() {
   const { data: allEmployees } = useQuery({
     queryKey: ["allEmployees"],
     queryFn: () => api.get("/employees").then((r) => r.data),
+    enabled: !isClient,
   });
 
   const active = (employees || []).filter((e) => e.status === "active");
@@ -71,11 +73,14 @@ export default function SiteEngineerPortalPage() {
         <div>
           <div className="text-orange-500 text-[11px] uppercase tracking-[0.3em] font-semibold mb-1">Field Operations</div>
           <h1 className="font-heading font-bold text-4xl sm:text-5xl uppercase leading-none">Daily Attendance</h1>
+          {isClient && <div className="text-xs text-zinc-500 mt-2" data-testid="client-viewonly-note">View-only — attendance for your projects</div>}
         </div>
-        <Button data-testid="se-add-employee-button" onClick={() => setModal(true)}
-          className="rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-bold uppercase tracking-wide">
-          <Plus size={15} strokeWidth={3} /> Add Employee
-        </Button>
+        {!isClient && (
+          <Button data-testid="se-add-employee-button" onClick={() => setModal(true)}
+            className="rounded-none bg-orange-500 hover:bg-orange-600 text-zinc-950 font-bold uppercase tracking-wide">
+            <Plus size={15} strokeWidth={3} /> Add Employee
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-wrap items-end gap-3 mb-6">
@@ -93,7 +98,7 @@ export default function SiteEngineerPortalPage() {
         <div>
           <div className="text-[10px] uppercase tracking-[0.15em] text-zinc-500 mb-1">Date</div>
           <Input data-testid="se-date-input" type="date" value={day}
-            min={isAdmin ? undefined : minDate()} max={todayIso()}
+            min={isAdmin || isClient ? undefined : minDate()} max={todayIso()}
             onChange={(e) => setDay(e.target.value)} className="bg-zinc-900 border-zinc-700 rounded-none h-10 w-44" />
         </div>
         {pid && (
@@ -118,11 +123,11 @@ export default function SiteEngineerPortalPage() {
 
       <div className="grid md:grid-cols-2 gap-3" data-testid="se-attendance-list">
         {active.map((e) => (
-          <DailyAttendanceCard key={e.id} employee={e} status={statusMap[e.id]} onMark={mark} />
+          <DailyAttendanceCard key={e.id} employee={e} status={statusMap[e.id]} onMark={mark} readOnly={isClient} />
         ))}
         {pid && active.length === 0 && (
           <div className="border border-zinc-800 p-10 text-center text-zinc-500 md:col-span-2" data-testid="se-empty">
-            No employees on this project yet. Tap "Add Employee" to register your first field worker.
+            {isClient ? "No employees on this project yet." : 'No employees on this project yet. Tap "Add Employee" to register your first field worker.'}
           </div>
         )}
         {!pid && (
@@ -132,6 +137,7 @@ export default function SiteEngineerPortalPage() {
         )}
       </div>
 
+      {!isClient && (
       <div className="mt-10" data-testid="org-employee-register">
         <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 font-semibold mb-3">
           Employee Register (Organisation) · {(allEmployees || []).length}
@@ -166,6 +172,7 @@ export default function SiteEngineerPortalPage() {
           </table>
         </div>
       </div>
+      )}
 
       <EmployeeFormModal open={modal} onOpenChange={setModal} projectId={null} />
     </div>

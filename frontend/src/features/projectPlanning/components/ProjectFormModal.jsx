@@ -149,7 +149,10 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId 
             </div>
             <div>
               <Label className="text-xs uppercase tracking-[0.15em] text-zinc-400">Budget (₹)</Label>
-              <Input data-testid="project-budget-input" type="number" value={form.budget} onChange={(e) => set("budget", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+              <Input data-testid="project-budget-input" type="number" placeholder="e.g. 250000000 = ₹25 Cr" value={form.budget} onChange={(e) => set("budget", e.target.value)} className="mt-1.5 bg-zinc-950 border-zinc-700 rounded-none" />
+              {form.budget !== "" && !isNaN(Number(form.budget)) && Number(form.budget) > 0 && (
+                <p className="text-orange-400 text-xs mt-1 font-semibold" data-testid="budget-preview">= ₹{(Number(form.budget) / 10000000).toFixed(2)} Cr</p>
+              )}
               {errors.budget && <p className="text-red-400 text-xs mt-1">{errors.budget}</p>}
             </div>
           </div>

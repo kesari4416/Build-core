@@ -14,6 +14,7 @@ from app.core.security import require_roles
 
 router = APIRouter(tags=["employees"])
 INTERNAL = require_roles("Admin", "SiteEngineer", "Accountant", "ProcurementOfficer")
+READ_FIELD = require_roles("Admin", "SiteEngineer", "Accountant", "ProcurementOfficer", "Client")
 WAGE_ADMIN = require_roles("Admin", "Accountant")
 
 ATT_STATUSES = ("present", "absent", "half_day", "leave")
@@ -101,6 +102,13 @@ def attendance_out(a: Attendance, employee_name: str = None) -> dict:
             "marked_by": a.marked_by, "marked_at": d(a.marked_at), "notes": a.notes}
 
 
+def mask_for_client(out: dict, user: User) -> dict:
+    if user.role == "Client":
+        for k in ("daily_wage", "wage_type", "phone", "id_proof_type", "id_proof_number"):
+            out[k] = None
+    return out
+
+
 def get_project_or_404(db: Session, project_id: int) -> Project:
     p = db.get(Project, project_id)
     if not p or p.is_archived:
@@ -109,6 +117,10 @@ def get_project_or_404(db: Session, project_id: int) -> Project:
 
 
 def check_field_access(db: Session, user: User, project):
+    if user.role == "Client":
+        if project is None or project.client_id != user.client_id:
+            raise HTTPException(status_code=403, detail="Not authorized for this project")
+        return
     if user.role != "SiteEngineer" or project is None:
         return
     if project.site_engineer_id == user.id:
@@ -302,7 +314,7 @@ def create_employee(project_id: int, body: EmployeeCreate, db: Session = Depends
 
 
 @router.get("/projects/{project_id}/employees")
-def list_employees(project_id: int, db: Session = Depends(get_db), user: User = Depends(INTERNAL),
+def list_employees(project_id: int, db: Session = Depends(get_db), user: User = Depends(READ_FIELD),
                    status: Optional[str] = None, search: Optional[str] = None):
     project = get_project_or_404(db, project_id)
     check_field_access(db, user, project)
@@ -311,16 +323,16 @@ def list_employees(project_id: int, db: Session = Depends(get_db), user: User = 
         q = q.filter(Employee.status == status)
     if search:
         q = q.filter(Employee.name.ilike(f"%{search}%"))
-    return [employee_out(e) for e in q.order_by(Employee.name).all()]
+    return [mask_for_client(employee_out(e), user) for e in q.order_by(Employee.name).all()]
 
 
 @router.get("/employees/{employee_id}")
-def get_employee(employee_id: int, db: Session = Depends(get_db), user: User = Depends(INTERNAL)):
+def get_employee(employee_id: int, db: Session = Depends(get_db), user: User = Depends(READ_FIELD)):
     e = db.get(Employee, employee_id)
     if not e:
         raise HTTPException(status_code=404, detail="Employee not found")
     check_field_access(db, user, db.get(Project, e.project_id) if e.project_id else None)
-    return employee_out(e)
+    return mask_for_client(employee_out(e), user)
 
 
 @router.patch("/employees/{employee_id}")
@@ -383,7 +395,7 @@ def mark_attendance(project_id: int, body: AttendanceMark, db: Session = Depends
 
 
 @router.get("/projects/{project_id}/attendance")
-def list_attendance(project_id: int, db: Session = Depends(get_db), user: User = Depends(INTERNAL),
+def list_attendance(project_id: int, db: Session = Depends(get_db), user: User = Depends(READ_FIELD),
                     date_from: Optional[date] = None, date_to: Optional[date] = None,
                     employee_id: Optional[int] = None, status: Optional[str] = None):
     project = get_project_or_404(db, project_id)
