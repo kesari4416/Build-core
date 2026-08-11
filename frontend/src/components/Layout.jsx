@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, LogOut, HardHat, IndianRupee, Truck, UserCog, FileText, ClipboardCheck, Sun, Moon, BookOpen } from "lucide-react";
+import { LayoutDashboard, Building2, Users, LogOut, HardHat, IndianRupee, Truck, UserCog, FileText, ClipboardCheck, Sun, Moon } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { NotificationBell } from "./NotificationBell";
@@ -59,12 +59,6 @@ export default function Layout({ children }) {
             <NotificationBell />
           </div>
         )}
-        <div className="px-3 pb-2">
-          <a href="/BUILDCORE_Workflow_Guide.pdf" target="_blank" rel="noopener noreferrer" data-testid="workflow-guide-link"
-            className="flex items-center gap-3 px-3 py-2 text-xs uppercase tracking-[0.12em] font-semibold rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors">
-            <BookOpen size={15} strokeWidth={2.5} /> Workflow Guide
-          </a>
-        </div>
         <div className="border-t border-slate-800 p-4">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 bg-slate-800 border border-slate-700 rounded-md flex items-center justify-center font-heading font-bold text-amber-400">
