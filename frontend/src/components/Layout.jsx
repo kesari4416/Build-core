@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, LogOut, HardHat, IndianRupee, Truck, UserCog, FileText, ClipboardCheck } from "lucide-react";
+import { LayoutDashboard, Building2, Users, LogOut, HardHat, IndianRupee, Truck, UserCog, FileText, ClipboardCheck, Sun, Moon } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { NotificationBell } from "./NotificationBell";
 
 const STAFF = ["Admin", "SiteEngineer", "Accountant", "ProcurementOfficer"];
@@ -17,10 +18,11 @@ const navItems = [
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <aside className="w-60 shrink-0 border-r border-slate-800 bg-slate-900 flex flex-col fixed inset-y-0" data-testid="sidebar">
         <div className="h-16 flex items-center gap-2.5 px-5 border-b border-slate-800">
           <div className="bg-amber-500 p-1.5 rounded-md">
@@ -62,10 +64,18 @@ export default function Layout({ children }) {
             <div className="w-9 h-9 bg-slate-800 border border-slate-700 rounded-md flex items-center justify-center font-heading font-bold text-amber-400">
               {user?.name?.[0]?.toUpperCase()}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold truncate text-white" data-testid="user-name">{user?.name}</div>
               <div className="text-[11px] uppercase tracking-[0.15em] text-slate-500">{user?.role}</div>
             </div>
+            <button
+              data-testid="theme-toggle"
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+              className="p-2 rounded-md border border-slate-700 text-slate-400 hover:text-amber-400 hover:border-slate-500 transition-colors"
+            >
+              {theme === "dark" ? <Sun size={15} strokeWidth={2.5} /> : <Moon size={15} strokeWidth={2.5} />}
+            </button>
           </div>
           <button
             data-testid="logout-button"

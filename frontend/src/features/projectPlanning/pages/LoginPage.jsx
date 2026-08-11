@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
-import { HardHat, Loader2 } from "lucide-react";
+import { HardHat, Loader2, Sun, Moon } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
+import { useTheme } from "../../../context/ThemeContext";
 import { formatApiErrorDetail } from "../../../api/client";
 
 const BG = "https://images.pexels.com/photos/4458205/pexels-photo-4458205.jpeg?auto=compress&cs=tinysrgb&w=1600";
 
 export default function LoginPage() {
   const { user, login } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,7 +34,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-white text-slate-900">
+    <div className="min-h-screen flex bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
       <div className="hidden lg:block flex-1 relative grain-bg">
         <img src={BG} alt="Architectural blueprint" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-slate-900/70" />
@@ -46,27 +48,32 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
-      <div className="w-full lg:w-[480px] flex flex-col justify-center px-8 sm:px-14 border-l border-slate-200 bg-white">
+      <div className="w-full lg:w-[480px] flex flex-col justify-center px-8 sm:px-14 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 relative">
+        <button data-testid="theme-toggle-login" onClick={toggleTheme}
+          title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+          className="absolute top-6 right-6 p-2 rounded-md border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-amber-400 transition-colors">
+          {theme === "dark" ? <Sun size={15} strokeWidth={2.5} /> : <Moon size={15} strokeWidth={2.5} />}
+        </button>
         <div className="flex items-center gap-2.5 mb-10">
-          <div className="bg-amber-500 p-2 rounded-md">
-            <HardHat size={22} strokeWidth={2.5} className="text-slate-900" />
+          <div className="bg-amber-50 dark:bg-amber-500/100 p-2 rounded-md">
+            <HardHat size={22} strokeWidth={2.5} className="text-slate-900 dark:text-slate-100" />
           </div>
           <span className="font-heading font-bold text-2xl tracking-tight">BUILD<span className="text-amber-500">CORE</span></span>
         </div>
         <h2 className="font-heading font-bold text-3xl tracking-tight mb-1">Sign in</h2>
-        <p className="text-slate-500 text-sm mb-8">Access your project command center</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">Access your project command center</p>
         <form onSubmit={submit} className="space-y-5">
           <div>
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-500 font-semibold">Email</label>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Email</label>
             <input data-testid="login-email-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              className="mt-2 w-full bg-white border border-slate-300 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors" placeholder="you@company.com" />
+              className="mt-2 w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors" placeholder="you@company.com" />
           </div>
           <div>
-            <label className="text-xs uppercase tracking-[0.2em] text-slate-500 font-semibold">Password</label>
+            <label className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Password</label>
             <input data-testid="login-password-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              className="mt-2 w-full bg-white border border-slate-300 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors" placeholder="••••••••" />
+              className="mt-2 w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors" placeholder="••••••••" />
           </div>
-          {error && <p className="text-red-600 text-sm" data-testid="login-error">{error}</p>}
+          {error && <p className="text-red-600 dark:text-red-400 text-sm" data-testid="login-error">{error}</p>}
           <button data-testid="login-submit-button" type="submit" disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-[0.15em] rounded-md py-3.5 text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
             {loading && <Loader2 size={16} className="animate-spin" />} Sign In

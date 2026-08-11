@@ -85,6 +85,12 @@
   - All data-testids preserved; zero functional regressions (verified across Admin/Client/Vendor/Accountant/SiteEngineer)
   - Remaining cosmetic (optional): Radix Dialog aria-describedby warnings; recharts width(-1) first-paint warning; native <select> in expense category could become shadcn Select
 
+- Dark Theme Preference (2026-06, iter 15, TESTED 100%):
+  - ThemeContext (/app/frontend/src/context/ThemeContext.jsx): light/dark persisted in localStorage 'buildcore-theme', toggles 'dark' class on <html>; App wrapped in ThemeProvider
+  - Toggles: sidebar footer (theme-toggle, Sun/Moon) + login page top-right (theme-toggle-login)
+  - dark: variants added across 49 jsx files via placeholder-based class mapping (/tmp/darkify.sh); .dark shadcn CSS vars + --gauge-track/--tooltip-* chart vars + dark scrollbar/calendar-icon in index.css; chart tooltips & gauge theme-aware
+  - Sidebar intentionally dark slate-900 in BOTH themes; zero unflipped surfaces (programmatic scan), light mode regression clean
+
 ## Backlog / Next
 - P1: Milestones UI (backend ready); edit progress updates
 - P2: Replace window.prompt/confirm dialogs (record payment, reset password, delete user, award) with shadcn Dialogs; email channel for alerts (needs Resend/SendGrid key); Gantt view; export reports; invoice PDF export

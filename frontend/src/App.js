@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { Toaster } from "./components/ui/sonner";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import Layout from "./components/Layout";
 import LoginPage from "./features/projectPlanning/pages/LoginPage";
 import DashboardPage from "./features/projectPlanning/pages/DashboardPage";
@@ -49,6 +50,7 @@ const AdminHome = () => {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
           <Routes>
@@ -75,6 +77,7 @@ function App() {
         </BrowserRouter>
         <Toaster position="top-right" theme="dark" />
       </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

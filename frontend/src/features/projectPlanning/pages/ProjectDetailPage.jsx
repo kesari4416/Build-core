@@ -19,11 +19,11 @@ import { useAuth } from "../../../context/AuthContext";
 const fmtBudget = (b) => (b == null ? "—" : `₹${(b / 10000000).toFixed(2)} Cr`);
 
 const InfoCell = ({ icon: Icon, label, value, testId }) => (
-  <div className="border border-slate-200 bg-white shadow-sm p-5" data-testid={testId}>
-    <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold">
+  <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5" data-testid={testId}>
+    <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">
       <Icon size={13} strokeWidth={2.5} /> {label}
     </div>
-    <div className="font-heading font-semibold text-xl mt-2 leading-none text-slate-900">{value || "—"}</div>
+    <div className="font-heading font-semibold text-xl mt-2 leading-none text-slate-900 dark:text-slate-100">{value || "—"}</div>
   </div>
 );
 
@@ -40,13 +40,13 @@ export default function ProjectDetailPage() {
   const canWrite = roleCanWrite && (isAdmin || project?.site_engineer_id === user?.id);
 
   if (isLoading)
-    return <div className="p-8 space-y-4"><Skeleton className="h-16 bg-slate-200 rounded-md w-1/2" /><Skeleton className="h-64 bg-slate-200 rounded-md" /></div>;
+    return <div className="p-8 space-y-4"><Skeleton className="h-16 bg-slate-200 dark:bg-slate-800 rounded-md w-1/2" /><Skeleton className="h-64 bg-slate-200 dark:bg-slate-800 rounded-md" /></div>;
   if (isError || !project)
-    return <div className="p-8"><div className="border border-red-200 bg-red-50 p-8 text-center text-red-600" data-testid="project-error">Project not found or failed to load.</div></div>;
+    return <div className="p-8"><div className="border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-8 text-center text-red-600 dark:text-red-400" data-testid="project-error">Project not found or failed to load.</div></div>;
 
   return (
     <div className="p-8" data-testid="project-detail-page">
-      <Link to="/admin/projects" data-testid="back-to-projects" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] font-semibold text-slate-500 hover:text-blue-600 transition-colors mb-4">
+      <Link to="/admin/projects" data-testid="back-to-projects" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] font-semibold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-400 transition-colors mb-4">
         <ArrowLeft size={14} strokeWidth={2.5} /> All Projects
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
@@ -55,49 +55,49 @@ export default function ProjectDetailPage() {
             <h1 className="font-heading font-bold text-4xl sm:text-5xl tracking-tight leading-none" data-testid="project-title">{project.name}</h1>
             <ProjectStatusBadge status={project.status} />
             {project.has_active_issues && (
-              <span className="flex items-center gap-1.5 border border-red-200 bg-red-50 text-red-600 px-2 py-0.5 text-[11px] uppercase tracking-[0.12em] font-semibold" data-testid="active-issues-flag">
+              <span className="flex items-center gap-1.5 border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 px-2 py-0.5 text-[11px] uppercase tracking-[0.12em] font-semibold" data-testid="active-issues-flag">
                 <AlertTriangle size={12} strokeWidth={2.5} /> Active Issues
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1.5 text-sm text-slate-500 mt-2">
+          <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 mt-2">
             <MapPin size={13} strokeWidth={2.5} /> {project.location || "Location not set"} · Client: {project.client_name}
           </div>
         </div>
         {canWrite && (
           <div className="flex gap-3">
             <Link to={`/admin/projects/${id}/finance`} data-testid="project-finance-link">
-              <Button variant="outline" className="rounded-md border-slate-300 hover:border-blue-400">
+              <Button variant="outline" className="rounded-md border-slate-300 dark:border-slate-700 hover:border-blue-400">
                 Finance
               </Button>
             </Link>
             <Link to={`/admin/projects/${id}/procurement`} data-testid="procurement-link">
-              <Button variant="outline" className="rounded-md border-slate-300 hover:border-blue-400">
+              <Button variant="outline" className="rounded-md border-slate-300 dark:border-slate-700 hover:border-blue-400">
                 Procurement
               </Button>
             </Link>
-            <Button data-testid="edit-project-button" onClick={() => setEditModal(true)} variant="outline" className="rounded-md border-slate-300 hover:border-blue-400">
+            <Button data-testid="edit-project-button" onClick={() => setEditModal(true)} variant="outline" className="rounded-md border-slate-300 dark:border-slate-700 hover:border-blue-400">
               <Pencil size={14} strokeWidth={2.5} /> Edit Project
             </Button>
           </div>
         )}
       </div>
 
-      <div className="border border-slate-200 bg-white shadow-sm p-5 mb-6" data-testid="overall-progress">
+      <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 mb-6" data-testid="overall-progress">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold">Overall Completion</span>
-          <span className="font-heading font-bold text-2xl text-blue-600 leading-none">{project.percent_complete}%</span>
+          <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Overall Completion</span>
+          <span className="font-heading font-bold text-2xl text-blue-600 dark:text-blue-400 leading-none">{project.percent_complete}%</span>
         </div>
-        <div className="h-2.5 bg-slate-200">
+        <div className="h-2.5 bg-slate-200 dark:bg-slate-800">
           <div className="h-full bg-blue-600 transition-[width] duration-500" style={{ width: `${project.percent_complete}%` }} />
         </div>
       </div>
 
       <Tabs defaultValue="overview">
-        <TabsList className="bg-transparent border-b border-slate-200 rounded-md w-full justify-start h-auto p-0 gap-1">
+        <TabsList className="bg-transparent border-b border-slate-200 dark:border-slate-800 rounded-md w-full justify-start h-auto p-0 gap-1">
           {["overview", "phases", "tracking", ...(user?.role !== "Client" && user?.role !== "Vendor" ? ["employees", "balancesheet"] : [])].map((t) => (
             <TabsTrigger key={t} value={t} data-testid={`tab-${t}`}
-              className="rounded-md px-5 py-2.5 text-xs uppercase tracking-[0.15em] font-semibold data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none text-slate-500 border-b-2 border-transparent">
+              className="rounded-md px-5 py-2.5 text-xs uppercase tracking-[0.15em] font-semibold data-[state=active]:bg-white dark:bg-slate-900 data-[state=active]:text-slate-900 dark:text-slate-100 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none text-slate-500 dark:text-slate-400 border-b-2 border-transparent">
               {t === "balancesheet" ? "balance sheet" : t}
             </TabsTrigger>
           ))}
@@ -116,7 +116,7 @@ export default function ProjectDetailPage() {
 
         <TabsContent value="phases" className="mt-6" data-testid="phases-tab-content">
           <div className="flex items-center justify-between mb-6">
-            <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold">Phase Timeline · {project.phases?.length || 0} phases</div>
+            <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Phase Timeline · {project.phases?.length || 0} phases</div>
             {canWrite && (
               <Button data-testid="add-phase-button" onClick={() => setPhaseModal({ open: true, phase: null })} size="sm"
                 className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-[0.12em]">
@@ -131,7 +131,7 @@ export default function ProjectDetailPage() {
           <div className="grid lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <div className="flex items-center justify-between mb-6">
-                <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold">Progress Feed · {feed?.total ?? 0} updates</div>
+                <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Progress Feed · {feed?.total ?? 0} updates</div>
                 {canWrite && (
                   <Button data-testid="post-update-button" onClick={() => setUpdateModal(true)} size="sm"
                     className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-[0.12em]">
@@ -140,7 +140,7 @@ export default function ProjectDetailPage() {
                 )}
               </div>
               {feedLoading ? (
-                <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-28 bg-white rounded-md" />)}</div>
+                <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-28 bg-white dark:bg-slate-900 rounded-md" />)}</div>
               ) : (
                 <ProgressUpdateFeed updates={feed?.items} />
               )}

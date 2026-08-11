@@ -74,66 +74,66 @@ export const ProgressUpdateFormModal = ({ open, onOpenChange, projectId, phases 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-slate-300 rounded-md max-w-lg" data-testid="update-form-modal">
+      <DialogContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md max-w-lg" data-testid="update-form-modal">
         <DialogHeader>
           <DialogTitle className="font-heading text-2xl uppercase tracking-wide">Post Progress Update</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Description *</Label>
-            <Textarea data-testid="update-description-input" rows={3} value={form.description} onChange={(e) => set("description", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
-            {error && <p className="text-red-600 text-xs mt-1" data-testid="update-form-error">{error}</p>}
+            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Description *</Label>
+            <Textarea data-testid="update-description-input" rows={3} value={form.description} onChange={(e) => set("description", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
+            {error && <p className="text-red-600 dark:text-red-400 text-xs mt-1" data-testid="update-form-error">{error}</p>}
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Phase</Label>
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Phase</Label>
               <Select value={form.phase_id || "project"} onValueChange={(v) => set("phase_id", v === "project" ? "" : v)}>
-                <SelectTrigger data-testid="update-phase-select" className="mt-1.5 bg-white border-slate-300 rounded-md"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-white border-slate-300">
+                <SelectTrigger data-testid="update-phase-select" className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
                   <SelectItem value="project">Project-level</SelectItem>
                   {phases?.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">% Progress</Label>
-              <Input data-testid="update-percent-input" type="number" min="0" max="100" value={form.percent_progress} onChange={(e) => set("percent_progress", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">% Progress</Label>
+              <Input data-testid="update-percent-input" type="number" min="0" max="100" value={form.percent_progress} onChange={(e) => set("percent_progress", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
             </div>
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Status Flag</Label>
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Status Flag</Label>
               <Select value={form.status_flag} onValueChange={(v) => set("status_flag", v)}>
-                <SelectTrigger data-testid="update-flag-select" className="mt-1.5 bg-white border-slate-300 rounded-md"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-white border-slate-300">
+                <SelectTrigger data-testid="update-flag-select" className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
                   {FLAGS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Photos</Label>
+            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Photos</Label>
             <div className="flex flex-wrap gap-2 mt-1.5">
               {files.map((u, i) => (
                 <div key={i} className="relative">
-                  <img src={assetUrl(u)} alt="upload" className="w-20 h-16 object-cover border border-slate-300" />
-                  <button type="button" onClick={() => setFiles(files.filter((_, j) => j !== i))} className="absolute -top-1.5 -right-1.5 bg-red-500 p-0.5">
-                    <X size={10} strokeWidth={3} className="text-slate-900" />
+                  <img src={assetUrl(u)} alt="upload" className="w-20 h-16 object-cover border border-slate-300 dark:border-slate-700" />
+                  <button type="button" onClick={() => setFiles(files.filter((_, j) => j !== i))} className="absolute -top-1.5 -right-1.5 bg-red-50 dark:bg-red-500/100 p-0.5">
+                    <X size={10} strokeWidth={3} className="text-slate-900 dark:text-slate-100" />
                   </button>
                 </div>
               ))}
               <button type="button" data-testid="update-photo-button" onClick={() => fileRef.current?.click()} disabled={uploading}
-                className="w-20 h-16 border border-dashed border-slate-300 flex items-center justify-center text-slate-500 hover:text-blue-600 hover:border-blue-400 transition-colors">
+                className="w-20 h-16 border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-400 hover:border-blue-400 transition-colors">
                 <ImagePlus size={18} strokeWidth={2.5} />
               </button>
               <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={onFiles} data-testid="update-file-input" />
             </div>
-            {uploading && <p className="text-xs text-slate-500 mt-1">Uploading…</p>}
+            {uploading && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Uploading…</p>}
           </div>
           <div className="flex items-center gap-3">
             <Switch data-testid="update-visible-switch" checked={form.visible_to_client} onCheckedChange={(v) => set("visible_to_client", v)} />
-            <span className="text-sm text-slate-600">Visible to client</span>
+            <span className="text-sm text-slate-600 dark:text-slate-400">Visible to client</span>
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300">Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300 dark:border-slate-700">Cancel</Button>
             <Button type="submit" disabled={uploading} data-testid="update-form-submit" className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">
               Post Update
             </Button>

@@ -77,35 +77,35 @@ export const EmployeeFormModal = ({ open, onOpenChange, projectId, employee }) =
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-slate-300 rounded-md max-w-md" data-testid="employee-form-modal">
+      <DialogContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md max-w-md" data-testid="employee-form-modal">
         <DialogHeader>
           <DialogTitle className="font-heading text-2xl uppercase tracking-wide">
             {employee ? "Edit Employee" : "Add Employee"}
           </DialogTitle>
-          <DialogDescription className="text-xs text-slate-500">
+          <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
             Field workers for this project — separate from portal users.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Name *</Label>
-              <Input data-testid="employee-name-input" value={form.name} onChange={(e) => set("name", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Name *</Label>
+              <Input data-testid="employee-name-input" value={form.name} onChange={(e) => set("name", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
             </div>
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Category</Label>
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Category</Label>
               <Select value={form.category_id} onValueChange={onCategorySelect}>
-                <SelectTrigger data-testid="employee-category-select" className="mt-1.5 bg-white border-slate-300 rounded-md">
+                <SelectTrigger data-testid="employee-category-select" className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md">
                   <SelectValue placeholder="Select trade">
                     {form.category_id
                       ? (categories?.find((c) => String(c.id) === form.category_id)?.name || "Selected")
                       : null}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="bg-white border-slate-300">
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
                   {categories?.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
                   <SelectItem value="__new" data-testid="add-category-option">
-                    <span className="flex items-center gap-1.5 text-blue-600 font-semibold"><Plus size={13} strokeWidth={3} /> Add Category</span>
+                    <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-semibold"><Plus size={13} strokeWidth={3} /> Add Category</span>
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -113,37 +113,37 @@ export const EmployeeFormModal = ({ open, onOpenChange, projectId, employee }) =
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Phone</Label>
-              <Input data-testid="employee-phone-input" value={form.phone} onChange={(e) => set("phone", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Phone</Label>
+              <Input data-testid="employee-phone-input" value={form.phone} onChange={(e) => set("phone", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
             </div>
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Joining Date</Label>
-              <Input data-testid="employee-joining-input" type="date" value={form.joining_date} onChange={(e) => set("joining_date", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Joining Date</Label>
+              <Input data-testid="employee-joining-input" type="date" value={form.joining_date} onChange={(e) => set("joining_date", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
             </div>
           </div>
           {canEditWage ? (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Wage Type</Label>
+                <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Wage Type</Label>
                 <Select value={form.wage_type} onValueChange={(v) => set("wage_type", v)}>
-                  <SelectTrigger data-testid="employee-wagetype-select" className="mt-1.5 bg-white border-slate-300 rounded-md"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-white border-slate-300">
+                  <SelectTrigger data-testid="employee-wagetype-select" className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
                     {WAGE_TYPES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Daily Wage (₹)</Label>
-                <Input data-testid="employee-wage-input" type="number" value={form.daily_wage} onChange={(e) => set("daily_wage", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+                <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Daily Wage (₹)</Label>
+                <Input data-testid="employee-wage-input" type="number" value={form.daily_wage} onChange={(e) => set("daily_wage", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
               </div>
             </div>
           ) : (
-            <div className="border border-slate-200 bg-white/50 p-3 text-[11px] text-slate-500" data-testid="wage-locked-note">
+            <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-3 text-[11px] text-slate-500 dark:text-slate-400" data-testid="wage-locked-note">
               Wage: {form.daily_wage !== "" ? `₹${form.daily_wage}` : "—"} / {form.wage_type} — only Admin or Accountant can edit wage fields.
             </div>
           )}
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300" data-testid="employee-form-cancel">Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300 dark:border-slate-700" data-testid="employee-form-cancel">Cancel</Button>
             <Button type="submit" disabled={saving} data-testid="employee-form-submit" className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">
               {employee ? "Save Changes" : "Add Employee"}
             </Button>

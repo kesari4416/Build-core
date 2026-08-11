@@ -52,24 +52,24 @@ export const NotificationBell = () => {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button data-testid="notification-bell"
-          className="relative w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium border-l-2 border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+          className="relative w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium border-l-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-800/60 transition-colors">
           <Bell size={17} strokeWidth={2.5} />
           <span className="uppercase tracking-[0.12em] text-xs font-semibold">Alerts</span>
           {unread > 0 && (
             <span data-testid="notification-badge"
-              className="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 leading-none min-w-[18px] text-center">
+              className="ml-auto bg-red-50 dark:bg-red-500/100 text-white text-[10px] font-bold px-1.5 py-0.5 leading-none min-w-[18px] text-center">
               {unread > 99 ? "99+" : unread}
             </span>
           )}
         </button>
       </PopoverTrigger>
       <PopoverContent side="right" align="start" sideOffset={8}
-        className="w-96 p-0 bg-white border-slate-300 rounded-md" data-testid="notification-panel">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-          <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-semibold">Alerts</span>
+        className="w-96 p-0 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" data-testid="notification-panel">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+          <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Alerts</span>
           {unread > 0 && (
             <button data-testid="mark-all-read" onClick={markAll}
-              className="flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] font-bold text-blue-600 hover:text-blue-700">
+              className="flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
               <CheckCheck size={12} strokeWidth={2.5} /> Mark all read
             </button>
           )}
@@ -77,24 +77,24 @@ export const NotificationBell = () => {
         <div className="max-h-96 overflow-y-auto">
           {(notifications || []).map((n) => (
             <button key={n.id} data-testid={`notification-item-${n.id}`} onClick={() => onClickNotif(n)}
-              className={`w-full text-left px-4 py-3 border-b border-slate-200/60 hover:bg-slate-200/50 transition-colors ${n.is_read ? "opacity-60" : ""}`}>
+              className={`w-full text-left px-4 py-3 border-b border-slate-200 dark:border-slate-800/60 hover:bg-slate-200 dark:bg-slate-800/50 transition-colors ${n.is_read ? "opacity-60" : ""}`}>
               <div className="flex items-start gap-2.5">
-                <span className={`mt-0.5 shrink-0 ${n.type.includes("Blocked") ? "text-red-600" : "text-amber-600"}`}>
+                <span className={`mt-0.5 shrink-0 ${n.type.includes("Blocked") ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"}`}>
                   {n.type.includes("Blocked") ? <AlertTriangle size={15} strokeWidth={2.5} /> : <Clock size={15} strokeWidth={2.5} />}
                 </span>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-slate-900 truncate">{n.title}</span>
+                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{n.title}</span>
                     {!n.is_read && <span className="w-1.5 h-1.5 bg-blue-600 shrink-0" />}
                   </div>
-                  <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">{n.message}</div>
-                  <div className="text-[10px] uppercase tracking-[0.12em] text-slate-400 mt-1">{timeAgo(n.created_at)}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">{n.message}</div>
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500 mt-1">{timeAgo(n.created_at)}</div>
                 </div>
               </div>
             </button>
           ))}
           {(notifications || []).length === 0 && (
-            <div className="px-4 py-10 text-center text-xs text-slate-500" data-testid="notifications-empty">
+            <div className="px-4 py-10 text-center text-xs text-slate-500 dark:text-slate-400" data-testid="notifications-empty">
               No alerts yet. You'll be notified when work gets blocked or delayed.
             </div>
           )}

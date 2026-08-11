@@ -71,93 +71,93 @@ export const UserFormModal = ({ open, onOpenChange, user }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-slate-300 rounded-md max-w-md" data-testid="user-form-modal">
+      <DialogContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md max-w-md" data-testid="user-form-modal">
         <DialogHeader>
           <DialogTitle className="font-heading text-2xl uppercase tracking-wide">
             {user ? "Edit User" : "New User"}
           </DialogTitle>
-          <DialogDescription className="text-xs text-slate-500">
+          <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
             {user ? "Update user details and role." : "Create an account — extra fields appear based on the selected role."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Name *</Label>
-              <Input data-testid="user-name-input" value={form.name} onChange={(e) => set("name", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Name *</Label>
+              <Input data-testid="user-name-input" value={form.name} onChange={(e) => set("name", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
             </div>
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Phone</Label>
-              <Input data-testid="user-phone-input" value={form.phone} onChange={(e) => set("phone", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Phone</Label>
+              <Input data-testid="user-phone-input" value={form.phone} onChange={(e) => set("phone", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
             </div>
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Email *</Label>
-            <Input data-testid="user-email-input" type="email" value={form.email} disabled={!!user} onChange={(e) => set("email", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Email *</Label>
+            <Input data-testid="user-email-input" type="email" value={form.email} disabled={!!user} onChange={(e) => set("email", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
           </div>
           {!user && (
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Password *</Label>
-              <Input data-testid="user-password-input" type="password" value={form.password} onChange={(e) => set("password", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Password *</Label>
+              <Input data-testid="user-password-input" type="password" value={form.password} onChange={(e) => set("password", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
             </div>
           )}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Role *</Label>
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Role *</Label>
               <Select value={form.role} onValueChange={(v) => set("role", v)}>
-                <SelectTrigger data-testid="user-role-select" className="mt-1.5 bg-white border-slate-300 rounded-md"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-white border-slate-300">
+                <SelectTrigger data-testid="user-role-select" className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
                   {ROLES.map((r) => <SelectItem key={r} value={r}>{r.replace(/([A-Z])/g, " $1").trim()}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             {STAFF_ROLES.includes(form.role) && (
               <div>
-                <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Base Salary (₹/mo)</Label>
-                <Input data-testid="user-salary-input" type="number" value={form.base_salary} onChange={(e) => set("base_salary", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+                <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Base Salary (₹/mo)</Label>
+                <Input data-testid="user-salary-input" type="number" value={form.base_salary} onChange={(e) => set("base_salary", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
               </div>
             )}
           </div>
           {form.role === "Client" && (
-            <div className="border border-slate-200 p-3 space-y-3" data-testid="client-link-fields">
+            <div className="border border-slate-200 dark:border-slate-800 p-3 space-y-3" data-testid="client-link-fields">
               <div>
-                <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Link Existing Client</Label>
+                <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Link Existing Client</Label>
                 <Select value={form.linked_client_id} onValueChange={(v) => set("linked_client_id", v)}>
-                  <SelectTrigger data-testid="user-client-select" className="mt-1.5 bg-white border-slate-300 rounded-md"><SelectValue placeholder="Select client" /></SelectTrigger>
-                  <SelectContent className="bg-white border-slate-300">
+                  <SelectTrigger data-testid="user-client-select" className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md"><SelectValue placeholder="Select client" /></SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
                     {clients?.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               {!user && !form.linked_client_id && (
                 <div>
-                  <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">…or Create New Client</Label>
-                  <Input data-testid="user-new-client-input" placeholder="New client name" value={form.new_client_name} onChange={(e) => set("new_client_name", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+                  <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">…or Create New Client</Label>
+                  <Input data-testid="user-new-client-input" placeholder="New client name" value={form.new_client_name} onChange={(e) => set("new_client_name", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
                 </div>
               )}
             </div>
           )}
           {form.role === "Vendor" && (
-            <div className="border border-slate-200 p-3 space-y-3" data-testid="vendor-link-fields">
+            <div className="border border-slate-200 dark:border-slate-800 p-3 space-y-3" data-testid="vendor-link-fields">
               <div>
-                <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Link Existing Vendor</Label>
+                <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Link Existing Vendor</Label>
                 <Select value={form.linked_vendor_id} onValueChange={(v) => set("linked_vendor_id", v)}>
-                  <SelectTrigger data-testid="user-vendor-select" className="mt-1.5 bg-white border-slate-300 rounded-md"><SelectValue placeholder="Select vendor" /></SelectTrigger>
-                  <SelectContent className="bg-white border-slate-300">
+                  <SelectTrigger data-testid="user-vendor-select" className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md"><SelectValue placeholder="Select vendor" /></SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
                     {vendors?.map((v) => <SelectItem key={v.id} value={String(v.id)}>{v.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               {!user && !form.linked_vendor_id && (
                 <div>
-                  <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">…or Create New Vendor</Label>
-                  <Input data-testid="user-new-vendor-input" placeholder="New vendor name" value={form.new_vendor_name} onChange={(e) => set("new_vendor_name", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+                  <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">…or Create New Vendor</Label>
+                  <Input data-testid="user-new-vendor-input" placeholder="New vendor name" value={form.new_vendor_name} onChange={(e) => set("new_vendor_name", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
                 </div>
               )}
             </div>
           )}
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300" data-testid="user-form-cancel">Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300 dark:border-slate-700" data-testid="user-form-cancel">Cancel</Button>
             <Button type="submit" disabled={saving} data-testid="user-form-submit" className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">
               {user ? "Save Changes" : "Create User"}
             </Button>

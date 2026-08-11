@@ -29,27 +29,27 @@ export const ProjectAssignmentPicker = ({ open, onOpenChange, targetUser }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-slate-300 rounded-md max-w-sm" data-testid="assignment-picker-modal">
+      <DialogContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md max-w-sm" data-testid="assignment-picker-modal">
         <DialogHeader>
           <DialogTitle className="font-heading text-2xl uppercase tracking-wide">Assign to Project</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="text-sm text-slate-500">
-            Assign <span className="text-slate-900 font-semibold">{targetUser?.name}</span> ({targetUser?.role}) to a project.
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            Assign <span className="text-slate-900 dark:text-slate-100 font-semibold">{targetUser?.name}</span> ({targetUser?.role}) to a project.
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Project</Label>
+            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Project</Label>
             <Select value={projectId} onValueChange={setProjectId}>
-              <SelectTrigger data-testid="assignment-project-select" className="mt-1.5 bg-white border-slate-300 rounded-md">
+              <SelectTrigger data-testid="assignment-project-select" className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md">
                 <SelectValue placeholder="Select project" />
               </SelectTrigger>
-              <SelectContent className="bg-white border-slate-300">
+              <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
                 {(data?.items || []).map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300" data-testid="assignment-cancel">Cancel</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300 dark:border-slate-700" data-testid="assignment-cancel">Cancel</Button>
             <Button disabled={!projectId || saving} onClick={assign} data-testid="assignment-submit" className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">Assign</Button>
           </div>
         </div>

@@ -42,40 +42,40 @@ export const ClientFormModal = ({ open, onOpenChange, client }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-slate-300 rounded-md max-w-md" data-testid="client-form-modal">
+      <DialogContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md max-w-md" data-testid="client-form-modal">
         <DialogHeader>
           <DialogTitle className="font-heading text-2xl uppercase tracking-wide">
             {client ? "Edit Client" : "New Client"}
           </DialogTitle>
-          <DialogDescription className="text-xs text-slate-500">
+          <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
             {client ? "Update client details." : "Add a new client to the directory."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Name *</Label>
-            <Input data-testid="client-name-input" value={form.name} onChange={(e) => set("name", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Name *</Label>
+            <Input data-testid="client-name-input" value={form.name} onChange={(e) => set("name", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Company</Label>
-            <Input data-testid="client-company-input" value={form.company} onChange={(e) => set("company", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Company</Label>
+            <Input data-testid="client-company-input" value={form.company} onChange={(e) => set("company", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Email</Label>
-              <Input data-testid="client-email-input" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Email</Label>
+              <Input data-testid="client-email-input" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
             </div>
             <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Phone</Label>
-              <Input data-testid="client-phone-input" value={form.phone} onChange={(e) => set("phone", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Phone</Label>
+              <Input data-testid="client-phone-input" value={form.phone} onChange={(e) => set("phone", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
             </div>
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500">Address</Label>
-            <Input data-testid="client-address-input" value={form.address} onChange={(e) => set("address", e.target.value)} className="mt-1.5 bg-white border-slate-300 rounded-md" />
+            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Address</Label>
+            <Input data-testid="client-address-input" value={form.address} onChange={(e) => set("address", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300" data-testid="client-form-cancel">Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300 dark:border-slate-700" data-testid="client-form-cancel">Cancel</Button>
             <Button type="submit" disabled={saving} data-testid="client-form-submit" className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">
               {client ? "Save Changes" : "Create Client"}
             </Button>
