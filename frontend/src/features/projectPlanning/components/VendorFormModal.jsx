@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import api, { formatApiErrorDetail } from "../../../api/client";
 
 const TYPES = ["Supplier", "Subcontractor", "Consultant"];
-const empty = { name: "", vendor_type: "Supplier", trade: "", contact_name: "", email: "", phone: "", insurance_expiry: "" };
+const empty = { name: "", vendor_type: "Supplier", trade: "", contact_name: "", email: "", phone: "", address: "", tax_id: "", insurance_expiry: "" };
 
 export const VendorFormModal = ({ open, onOpenChange }) => {
   const qc = useQueryClient();
@@ -28,6 +28,7 @@ export const VendorFormModal = ({ open, onOpenChange }) => {
         name: form.name.trim(), vendor_type: form.vendor_type, trade: form.trade || null,
         contact_name: form.contact_name || null, email: form.email || null, phone: form.phone || null,
         insurance_expiry: form.insurance_expiry || null,
+        address: form.address || null, tax_id: form.tax_id || null,
       });
       toast.success("Vendor created");
       qc.invalidateQueries({ queryKey: ["vendors"] });
@@ -81,8 +82,18 @@ export const VendorFormModal = ({ open, onOpenChange }) => {
             </div>
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Insurance Expiry</Label>
-            <Input data-testid="vendor-insurance-input" type="date" value={form.insurance_expiry} onChange={(e) => set("insurance_expiry", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
+            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Address</Label>
+            <Input data-testid="vendor-address-input" value={form.address} onChange={(e) => set("address", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">GST / Tax ID</Label>
+              <Input data-testid="vendor-taxid-input" value={form.tax_id} onChange={(e) => set("tax_id", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Insurance Expiry</Label>
+              <Input data-testid="vendor-insurance-input" type="date" value={form.insurance_expiry} onChange={(e) => set("insurance_expiry", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
+            </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300 dark:border-slate-700" data-testid="vendor-form-cancel">Cancel</Button>

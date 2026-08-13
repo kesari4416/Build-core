@@ -245,3 +245,89 @@ def vendor_quote(bp_id: int, body: VendorQuoteIn, db: Session = Depends(get_db),
     inv.response_status = "Submitted"
     db.commit()
     return {"bid_id": bid.id, "amount": f(bid.amount), "message": "Quote submitted"}
+
+
+@router.get("/vendor/dashboard")
+def vendor_dashboard(db: Session = Depends(get_db), user: User = Depends(require_roles("Vendor"))):
+    from datetime import date as _date
+    from sqlalchemy import or_, and_
+    from app.models import Project
+    from app.models.procurement import PurchaseOrder, Subcontract, MaterialDelivery, PayApplication
+    vid = user.linked_vendor_id
+    if not vid:
+        raise HTTPException(status_code=404, detail="No vendor profile linked to this account")
+    proj = {p.id: p.name for p in db.query(Project).all()}
+    pos = db.query(PurchaseOrder).filter_by(vendor_id=vid).all()
+    subs = db.query(Subcontract).filter_by(vendor_id=vid).all()
+    po_ids = [p.id for p in pos]
+    sub_ids = [s.id for s in subs]
+
+    def amt(x):
+        return f(x.revised_amount or x.original_amount or 0)
+
+    committed = round(sum(amt(p) for p in pos if p.status != "Cancelled") +
+                      sum(amt(s) for s in subs if s.status not in ("Cancelled", "Terminated")), 2)
+
+    deliveries = (db.query(MaterialDelivery)
+                  .filter(MaterialDelivery.purchase_order_id.in_(po_ids)).all()) if po_ids else []
+    d_status = {}
+    for m in deliveries:
+        d_status[m.status] = d_status.get(m.status, 0) + 1
+
+    pay_apps = []
+    conds = []
+    if po_ids:
+        conds.append(and_(PayApplication.commitment_type == "po", PayApplication.commitment_id.in_(po_ids)))
+    if sub_ids:
+        conds.append(and_(PayApplication.commitment_type == "subcontract", PayApplication.commitment_id.in_(sub_ids)))
+    if conds:
+        pay_apps = db.query(PayApplication).filter(or_(*conds)).all()
+    po_by_id = {p.id: p for p in pos}
+    sub_by_id = {s.id: s for s in subs}
+
+    def ref(pa):
+        if pa.commitment_type == "po":
+            c = po_by_id.get(pa.commitment_id)
+            return c.po_number if c else f"PO#{pa.commitment_id}"
+        c = sub_by_id.get(pa.commitment_id)
+        return c.contract_number if c else f"SC#{pa.commitment_id}"
+
+    billed = round(sum(f(pa.amount_due) for pa in pay_apps if pa.status not in ("Draft", "Void", "Rejected")), 2)
+    paid = round(sum(f(pa.amount_due) for pa in pay_apps if pa.status == "Paid"), 2)
+
+    invites = db.query(BidInvitation).filter_by(vendor_id=vid).all()
+    bps = {b.id: b for b in db.query(BidPackage).all()}
+    open_invites = sum(1 for i in invites if bps.get(i.bid_package_id) and bps[i.bid_package_id].status == "Open")
+    my_bids = db.query(Bid).filter_by(vendor_id=vid).all()
+    awarded = sum(1 for b in my_bids if b.status == "Awarded")
+
+    today = _date.today()
+    upcoming = [{"po_number": p.po_number, "project_name": proj.get(p.project_id),
+                 "expected_delivery_date": d(p.expected_delivery_date), "status": p.status, "amount": amt(p)}
+                for p in pos
+                if p.expected_delivery_date and p.expected_delivery_date >= today
+                and p.status not in ("Cancelled", "Closed")]
+    upcoming.sort(key=lambda x: x["expected_delivery_date"])
+
+    return {
+        "vendor_id": vid,
+        "overview": {"purchase_orders": len(pos), "subcontracts": len(subs),
+                     "total_committed": committed, "open_bid_invites": open_invites,
+                     "bids_submitted": len(my_bids), "bids_awarded": awarded,
+                     "total_billed": billed, "total_paid": paid,
+                     "payment_pending": round(billed - paid, 2)},
+        "purchase_orders": [{"id": p.id, "po_number": p.po_number, "project_name": proj.get(p.project_id),
+                             "status": p.status, "amount": amt(p),
+                             "expected_delivery_date": d(p.expected_delivery_date)} for p in pos],
+        "subcontracts": [{"id": s.id, "contract_number": s.contract_number, "project_name": proj.get(s.project_id),
+                          "status": s.status, "amount": amt(s), "end_date": d(s.end_date)} for s in subs],
+        "delivery_performance": {"total": len(deliveries), "by_status": d_status},
+        "material_supply": [{"item_description": m.item_description, "quantity_delivered": f(m.quantity_delivered),
+                             "delivery_date": d(m.delivery_date), "status": m.status,
+                             "project_name": proj.get(m.project_id)}
+                            for m in sorted(deliveries, key=lambda x: (x.delivery_date or _date.min), reverse=True)[:15]],
+        "invoices": [{"id": pa.id, "application_number": pa.application_number, "reference": ref(pa),
+                      "amount_due": f(pa.amount_due), "status": pa.status,
+                      "period_end": d(pa.period_end)} for pa in pay_apps],
+        "upcoming_deliveries": upcoming,
+    }

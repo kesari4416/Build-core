@@ -13,6 +13,7 @@ const navItems = [
   { to: "/admin/finance", label: "Finance", icon: IndianRupee, roles: ["Admin", "Accountant"] },
   { to: "/admin/procurement/vendors", label: "Vendors", icon: Truck, roles: ["Admin", "SiteEngineer", "ProcurementOfficer"] },
   { to: "/admin/users", label: "Users", icon: UserCog, roles: ["Admin"] },
+  { to: "/portal/vendor/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["Vendor"] },
   { to: "/portal/vendor/bid-packages", label: "Bid Invites", icon: FileText, roles: ["Vendor"] },
 ];
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { HardHat, Plus, ArrowRight, ClipboardCheck } from "lucide-react";
+import { HardHat, Plus, ArrowRight, ClipboardCheck, Tags } from "lucide-react";
 import api, { formatApiErrorDetail } from "../../../api/client";
 import { useAuth } from "../../../context/AuthContext";
 import { Button } from "../../../components/ui/button";
@@ -10,6 +10,7 @@ import { Input } from "../../../components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import { DailyAttendanceCard } from "../components/DailyAttendanceCard";
 import { EmployeeFormModal } from "../components/EmployeeFormModal";
+import { CategoryManagerModal } from "../components/CategoryManagerModal";
 
 const iso = (d) => d.toISOString().slice(0, 10);
 const todayIso = () => iso(new Date());
@@ -22,6 +23,7 @@ export default function SiteEngineerPortalPage() {
   const [projectId, setProjectId] = useState("");
   const [day, setDay] = useState(todayIso());
   const [modal, setModal] = useState(false);
+  const [catModal, setCatModal] = useState(false);
 
   const { data: projects } = useQuery({
     queryKey: ["fieldProjects"],
@@ -76,10 +78,18 @@ export default function SiteEngineerPortalPage() {
           {isClient && <div className="text-xs text-slate-500 dark:text-slate-400 mt-2" data-testid="client-viewonly-note">View-only — attendance for your projects</div>}
         </div>
         {!isClient && (
-          <Button data-testid="se-add-employee-button" onClick={() => setModal(true)}
-            className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide">
-            <Plus size={15} strokeWidth={3} /> Add Employee
-          </Button>
+          <div className="flex gap-2">
+            {["Admin", "Accountant"].includes(user?.role) && (
+              <Button data-testid="manage-categories-button" variant="outline" onClick={() => setCatModal(true)}
+                className="rounded-md border-slate-300 dark:border-slate-700 font-semibold uppercase tracking-wide text-xs">
+                <Tags size={15} strokeWidth={2.5} /> Categories
+              </Button>
+            )}
+            <Button data-testid="se-add-employee-button" onClick={() => setModal(true)}
+              className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide">
+              <Plus size={15} strokeWidth={3} /> Add Employee
+            </Button>
+          </div>
         )}
       </div>
 
@@ -175,6 +185,7 @@ export default function SiteEngineerPortalPage() {
       )}
 
       <EmployeeFormModal open={modal} onOpenChange={setModal} projectId={null} />
+      <CategoryManagerModal open={catModal} onOpenChange={setCatModal} />
     </div>
   );
 }

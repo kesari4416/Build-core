@@ -99,9 +99,10 @@ export default function DashboardPage() {
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 bg-white dark:bg-slate-900 rounded-md" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard icon={Building2} label="Total Projects" value={stats?.total_projects ?? 0} accent="text-blue-600 dark:text-blue-400" testId="stat-total-projects" />
           <StatCard icon={CheckCircle2} label="Ongoing" value={stats?.by_status?.Ongoing ?? 0} accent="text-emerald-600 dark:text-emerald-400" testId="stat-ongoing" />
+          <StatCard icon={CheckCircle2} label="Completed" value={stats?.by_status?.Completed ?? 0} accent="text-purple-600 dark:text-purple-400" testId="stat-completed" />
           <StatCard icon={AlertTriangle} label="With Issues" value={stats?.projects_with_issues ?? 0} accent="text-red-500" testId="stat-issues" />
           <StatCard icon={IndianRupee} label="Total Budget" value={stats ? `₹${(stats.total_budget / 10000000).toFixed(1)}Cr` : "—"} accent="text-sky-600 dark:text-sky-400" testId="stat-budget" />
         </div>

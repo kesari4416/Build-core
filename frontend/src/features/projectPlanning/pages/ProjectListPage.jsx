@@ -62,6 +62,12 @@ export default function ProjectListPage() {
     if (ongoingActive) n.delete("status"); else n.set("status", "Ongoing");
     setParams(n);
   };
+  const clickCompleted = () => {
+    const n = new URLSearchParams(params);
+    n.delete("has_issues"); n.delete("offset");
+    if (params.get("status") === "Completed") n.delete("status"); else n.set("status", "Completed");
+    setParams(n);
+  };
   const clickIssues = () => {
     const n = new URLSearchParams(params);
     n.delete("status"); n.delete("offset");
@@ -84,11 +90,13 @@ export default function ProjectListPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6" data-testid="dashboard-stat-cards">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6" data-testid="dashboard-stat-cards">
         <DashboardStatCard label="Total Projects" value={summary?.total_projects ?? "—"} icon={Building2}
           isActive={totalActive} onClick={clickTotal} variant="default" testId="stat-card-total" />
         <DashboardStatCard label="Ongoing" value={summary?.ongoing ?? "—"} icon={Activity}
           isActive={ongoingActive} onClick={clickOngoing} variant="success" testId="stat-card-ongoing" />
+        <DashboardStatCard label="Completed" value={summary?.completed ?? "—"} icon={Activity}
+          isActive={params.get("status") === "Completed"} onClick={clickCompleted} variant="info" testId="stat-card-completed" />
         <DashboardStatCard label="With Issues" value={summary?.with_issues ?? "—"} icon={AlertTriangle}
           isActive={issuesActive} onClick={clickIssues} variant="warning" testId="stat-card-issues" />
         <DashboardStatCard label="Total Budget" value={summary ? fmtCr(summary.total_budget) : "—"} icon={IndianRupee}

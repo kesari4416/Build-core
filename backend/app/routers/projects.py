@@ -45,6 +45,16 @@ def create_project(body: ProjectCreate, db: Session = Depends(get_db),
     return project_out(db, project)
 
 
+def scope_by_role(q, db, user):
+    if user.role == "Client":
+        return q.filter(Project.client_id == user.client_id)
+    if user.role == "SiteEngineer":
+        from app.models.finance import ProjectAssignment
+        assigned = [a.project_id for a in db.query(ProjectAssignment).filter_by(user_id=user.id).all()]
+        return q.filter(or_(Project.site_engineer_id == user.id, Project.id.in_(assigned or [0])))
+    return q
+
+
 @router.get("/projects")
 def list_projects(db: Session = Depends(get_db), user: User = Depends(get_current_user),
                   client_id: int = None, status: str = None, site_engineer_id: int = None,
@@ -52,12 +62,7 @@ def list_projects(db: Session = Depends(get_db), user: User = Depends(get_curren
                   start_date: date = None, end_date: date = None,
                   limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0)):
     q = db.query(Project).filter(Project.is_archived == False)  # noqa: E712
-    if user.role == "Client":
-        q = q.filter(Project.client_id == user.client_id)
-    if user.role == "SiteEngineer":
-        from app.models.finance import ProjectAssignment
-        assigned = [a.project_id for a in db.query(ProjectAssignment).filter_by(user_id=user.id).all()]
-        q = q.filter(or_(Project.site_engineer_id == user.id, Project.id.in_(assigned or [0])))
+    q = scope_by_role(q, db, user)
     if client_id is not None:
         q = q.filter(Project.client_id == client_id)
     if status:
@@ -85,12 +90,12 @@ def list_projects(db: Session = Depends(get_db), user: User = Depends(get_curren
 @router.get("/projects/dashboard-summary")
 def dashboard_summary(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     q = db.query(Project).filter(Project.is_archived == False)  # noqa: E712
-    if user.role == "Client":
-        q = q.filter(Project.client_id == user.client_id)
+    q = scope_by_role(q, db, user)
     projects = q.all()
     return {
         "total_projects": len(projects),
         "ongoing": sum(1 for p in projects if p.status == "Ongoing"),
+        "completed": sum(1 for p in projects if p.status == "Completed"),
         "with_issues": sum(1 for p in projects if has_active_issues(db, p.id)),
         "total_budget": float(sum(p.budget or 0 for p in projects)),
     }
@@ -101,8 +106,7 @@ def dashboard_charts(db: Session = Depends(get_db), user: User = Depends(get_cur
     from app.crud import compute_percent
     today = date.today()
     q = db.query(Project).filter(Project.is_archived == False)  # noqa: E712
-    if user.role == "Client":
-        q = q.filter(Project.client_id == user.client_id)
+    q = scope_by_role(q, db, user)
     projects = q.order_by(Project.start_date_planned).all()
     pids = [p.id for p in projects]
 

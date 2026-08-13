@@ -22,6 +22,7 @@ import UsersPage from "./features/projectPlanning/pages/UsersPage";
 import VendorsPage from "./features/projectPlanning/pages/VendorsPage";
 import BidComparisonPage from "./features/projectPlanning/pages/BidComparisonPage";
 import VendorPortalPage from "./features/projectPlanning/pages/VendorPortalPage";
+import VendorDashboardPage from "./features/projectPlanning/pages/VendorDashboardPage";
 import VendorBidPackagePage from "./features/projectPlanning/pages/VendorBidPackagePage";
 import SiteEngineerPortalPage from "./features/projectPlanning/pages/SiteEngineerPortalPage";
 
@@ -43,7 +44,7 @@ const ProtectedRoute = ({ children }) => {
 
 const AdminHome = () => {
   const { user } = useAuth();
-  if (user?.role === "Vendor") return <Navigate to="/portal/vendor/bid-packages" replace />;
+  if (user?.role === "Vendor") return <Navigate to="/portal/vendor/dashboard" replace />;
   return <DashboardPage />;
 };
 
@@ -69,6 +70,7 @@ function App() {
             <Route path="/admin/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
             <Route path="/admin/procurement/vendors" element={<ProtectedRoute><VendorsPage /></ProtectedRoute>} />
             <Route path="/admin/procurement/bid-packages/:id/comparison" element={<ProtectedRoute><BidComparisonPage /></ProtectedRoute>} />
+            <Route path="/portal/vendor/dashboard" element={<ProtectedRoute><VendorDashboardPage /></ProtectedRoute>} />
             <Route path="/portal/vendor/bid-packages" element={<ProtectedRoute><VendorPortalPage /></ProtectedRoute>} />
             <Route path="/portal/vendor/bid-packages/:id" element={<ProtectedRoute><VendorBidPackagePage /></ProtectedRoute>} />
             <Route path="/portal/site-engineer" element={<ProtectedRoute><SiteEngineerPortalPage /></ProtectedRoute>} />

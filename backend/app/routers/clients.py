@@ -138,9 +138,9 @@ def list_users(db: Session = Depends(get_db), role: str = None,
 
 @router.get("/stats")
 def stats(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    from app.routers.projects import scope_by_role
     q = db.query(Project).filter(Project.is_archived == False)  # noqa: E712
-    if user.role == "Client":
-        q = q.filter(Project.client_id == user.client_id)
+    q = scope_by_role(q, db, user)
     projects = q.all()
     by_status = {}
     issues = 0

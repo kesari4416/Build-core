@@ -97,6 +97,16 @@
   - Sidebar "Workflow Guide" link (workflow-guide-link, BookOpen icon, all roles) opens PDF in new tab
   - ENV: PostgreSQL wiped AGAIN by container reset; created one-command recovery script /app/scripts/restore_postgres.sh (reinstalls postgres, sets password, creates DB, restarts backend). Use it whenever backend 500s / port 5432 dead.
 
+- Bug batch: SE scoping + Vendor dashboard + Completed cards + form gaps (2026-06, SELF-TESTED via curl+screenshots per user's "Dont testing"):
+  - SITEENGINEER/DASHBOARD_002 + PROJECTS_002: new scope_by_role() helper in projects.py applied to /api/stats (clients.py), /projects, /projects/dashboard-summary, /projects/dashboard-charts — SE now sees only assigned projects (verified: SE 3 projects/74.5Cr vs Admin 5/89.5Cr; cards match list)
+  - SITEENGINEER/FIELDOPS_001: GET /api/employees org register scoped for SE to employees of their projects (verified 4 vs admin 6)
+  - VENDOR/DASHBOARD_001: new GET /api/vendor/dashboard (quotation.py, Vendor role, linked_vendor_id) + VendorDashboardPage at /portal/vendor/dashboard (now vendor landing page + nav item): portfolio, PO/subcontract status, delivery performance, material supply, invoices/pay-apps, upcoming deliveries. SE gets 403
+  - ACCOUNTANT/DASHBOARD_001 + PROJECTS_001: "Completed" stat card added to admin Dashboard (stat-completed) and Projects page (stat-card-completed, click-filters status=Completed); dashboard-summary now returns completed count
+  - ADMIN/FIELDOPS_008: joining_date already existed in employee form; added CategoryManagerModal (rename/enable/disable/add categories via existing PATCH /employee-categories/{id}) with "Categories" button on Field Ops (Admin/Accountant)
+  - ADMIN/VENDORS_006: VendorFormModal now includes Address + GST/Tax ID (backend already accepted them)
+  - ADMIN/CLIENDS_005: client form already had address; client detail already shows projects/invoices — no change needed
+  - ADMIN/PROJECT_002 (Activities/Schedule/BOQ/Quality/Safety/Risks/RFIs/Reports modules): NOT BUILT — this is a large new ERP feature set, flagged to user as roadmap decision
+
 ## Backlog / Next
 - P1: Milestones UI (backend ready); edit progress updates
 - P2: Replace window.prompt/confirm dialogs (record payment, reset password, delete user, award) with shadcn Dialogs; email channel for alerts (needs Resend/SendGrid key); Gantt view; export reports; invoice PDF export

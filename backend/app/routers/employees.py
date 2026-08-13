@@ -213,6 +213,12 @@ def employee_in_project(db: Session, employee: Employee, project_id: int) -> boo
 def list_all_employees(db: Session = Depends(get_db), user: User = Depends(INTERNAL),
                        status: Optional[str] = None, search: Optional[str] = None):
     q = db.query(Employee)
+    if user.role == "SiteEngineer":
+        from app.routers.projects import scope_by_role
+        pids = [p.id for p in scope_by_role(
+            db.query(Project).filter(Project.is_archived == False), db, user).all()]  # noqa: E712
+        conds = [project_employee_filter(db, pid) for pid in pids]
+        q = q.filter(or_(*conds)) if conds else q.filter(Employee.id == -1)
     if status:
         q = q.filter(Employee.status == status)
     if search:
