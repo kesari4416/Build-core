@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../compo
 import { Skeleton } from "../../../components/ui/skeleton";
 import { useProcSummary, useCommitments, useBudgetBreakdownProc } from "../hooks/useProcurement";
 import { useProject } from "../hooks/useProjects";
+import { VendorQuotationsSection } from "../components/VendorQuotationsSection";
 
 const fmtCr = (n) => `${n < 0 ? "−" : ""}₹${(Math.abs(n || 0) / 10000000).toFixed(2)} Cr`;
 
@@ -115,6 +116,8 @@ export default function ProcurementDashboardPage() {
           </table>
         </div>
       )}
+
+      <VendorQuotationsSection projectId={id} />
 
       <Dialog open={budgetOpen} onOpenChange={setBudgetOpen}>
         <DialogContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md max-w-lg" data-testid="variance-breakdown-dialog">

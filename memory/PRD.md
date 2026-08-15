@@ -107,6 +107,12 @@
   - ADMIN/CLIENDS_005: client form already had address; client detail already shows projects/invoices — no change needed
   - ADMIN/PROJECT_002 (Activities/Schedule/BOQ/Quality/Safety/Risks/RFIs/Reports modules): NOT BUILT — this is a large new ERP feature set, flagged to user as roadmap decision
 
+- Vendor Products & Quotations module (2026-06, APPROVED by user, SELF-TESTED all 11 TCs via curl + UI screenshots):
+  - Models (procurement.py): VendorProduct (vendor_id, name, unit, unit_price, is_active), VendorQuotation (project_id, vendor_id, quote_number VQ-{pid}-{seq}, status Draft->Approved->Paid, total_amount, expense_entry_id), VendorQuotationItem (product snapshot, qty, line_total)
+  - Router /app/backend/app/routers/vendor_products.py: POST/GET /vendors/{id}/products, PATCH /vendor-products/{id} (Admin/PO); GET+POST /projects/{id}/vendor-quotations (create: Admin/PO/SE, empty items & inactive products -> 422); POST /vendor-quotations/{id}/approve (Admin); POST /vendor-quotations/{id}/pay (Admin/Accountant) -> creates ExpenseEntry category "Vendor Payment" -> flows to ledger/balance sheets automatically
+  - Frontend: VendorsPage "Add Product" button per vendor row -> VendorProductsModal (list/add/price-edit-on-blur/enable-disable); ProcurementDashboardPage -> VendorQuotationsSection (Make Quotation modal: vendor select -> product qty inputs -> live total; quotation cards with Approve/Record Payment buttons)
+  - Verified: TC-VP-01..04 + TC-VQ-01..07 all pass (incl. cost_to_date +156000 after pay, ledger debit entry "Expense — Vendor Payment: VQ-1-001 — Apex Steel Works")
+
 ## Backlog / Next
 - P1: Milestones UI (backend ready); edit progress updates
 - P2: Replace window.prompt/confirm dialogs (record payment, reset password, delete user, award) with shadcn Dialogs; email channel for alerts (needs Resend/SendGrid key); Gantt view; export reports; invoice PDF export

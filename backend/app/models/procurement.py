@@ -223,3 +223,44 @@ class ProcurementDocument(Base):
     uploaded_at = Column(DateTime(timezone=True), default=utcnow)
     is_client_visible = Column(Boolean, default=False, nullable=False)
     uploader = relationship("User", foreign_keys=[uploaded_by])
+
+
+class VendorProduct(Base):
+    __tablename__ = "vendor_products"
+    id = Column(Integer, primary_key=True)
+    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False, index=True)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    unit = Column(String, default="unit")
+    unit_price = Column(Numeric(14, 2), nullable=False, default=0)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
+class VendorQuotation(Base):
+    __tablename__ = "vendor_quotations"
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False, index=True)
+    quote_number = Column(String, nullable=False)
+    status = Column(String, default="Draft", nullable=False)
+    notes = Column(Text, nullable=True)
+    total_amount = Column(Numeric(14, 2), nullable=False, default=0)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+    approved_at = Column(DateTime(timezone=True), nullable=True)
+    paid_at = Column(DateTime(timezone=True), nullable=True)
+    expense_entry_id = Column(Integer, nullable=True)
+    items = relationship("VendorQuotationItem", cascade="all, delete-orphan")
+
+
+class VendorQuotationItem(Base):
+    __tablename__ = "vendor_quotation_items"
+    id = Column(Integer, primary_key=True)
+    quotation_id = Column(Integer, ForeignKey("vendor_quotations.id"), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey("vendor_products.id"), nullable=True)
+    product_name = Column(String, nullable=False)
+    unit = Column(String, default="unit")
+    quantity = Column(Numeric(12, 2), nullable=False, default=1)
+    unit_price = Column(Numeric(14, 2), nullable=False, default=0)
+    line_total = Column(Numeric(14, 2), nullable=False, default=0)

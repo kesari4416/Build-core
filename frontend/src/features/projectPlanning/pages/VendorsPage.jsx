@@ -1,16 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import { Truck, ShieldAlert, ShieldCheck, Star, Scale, ArrowRight, Plus } from "lucide-react";
+import { Truck, ShieldAlert, ShieldCheck, Star, Scale, ArrowRight, Plus, Package } from "lucide-react";
 import api from "../../../api/client";
 import { useAuth } from "../../../context/AuthContext";
 import { Button } from "../../../components/ui/button";
 import { CommitmentStatusBadge } from "../components/CommitmentStatusBadge";
 import { VendorFormModal } from "../components/VendorFormModal";
+import { VendorProductsModal } from "../components/VendorProductsModal";
 
 export default function VendorsPage() {
   const { user } = useAuth();
   const [vendorModal, setVendorModal] = useState(false);
+  const [productVendor, setProductVendor] = useState(null);
   const canAdd = ["Admin", "SiteEngineer"].includes(user?.role);
   const { data: vendors } = useQuery({
     queryKey: ["vendors"],
@@ -47,6 +49,7 @@ export default function VendorsPage() {
               <th className="px-4 py-3">Insurance</th>
               <th className="px-4 py-3 text-center">Rating</th>
               <th className="px-4 py-3 text-center">Status</th>
+              <th className="px-4 py-3 text-center">Products</th>
             </tr>
           </thead>
           <tbody>
@@ -80,10 +83,17 @@ export default function VendorsPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-center"><CommitmentStatusBadge status={v.status} /></td>
+                <td className="px-4 py-3 text-center">
+                  <Button size="sm" variant="outline" data-testid={`add-product-button-${v.id}`}
+                    onClick={() => setProductVendor(v)}
+                    className="rounded-md border-slate-300 dark:border-slate-700 text-xs font-semibold">
+                    <Package size={13} strokeWidth={2.5} /> Add Product
+                  </Button>
+                </td>
               </tr>
             ))}
             {(vendors || []).length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500 dark:text-slate-400">No vendors yet.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-500 dark:text-slate-400">No vendors yet.</td></tr>
             )}
           </tbody>
         </table>
@@ -115,6 +125,7 @@ export default function VendorsPage() {
         )}
       </div>
       <VendorFormModal open={vendorModal} onOpenChange={setVendorModal} />
+      <VendorProductsModal vendor={productVendor} open={!!productVendor} onOpenChange={(o) => !o && setProductVendor(null)} />
     </div>
   );
 }
