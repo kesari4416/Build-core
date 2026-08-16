@@ -141,6 +141,7 @@
 - BUG FIX: Client approve mechanism not visible (2026-06, SELF-TESTED E2E as client): root cause — NotificationBell ("Alerts") in Layout.jsx was role-gated to Admin/SiteEngineer, so clients never saw "Change order awaiting your review" notifications (backend was creating them correctly). Fix: bell shown for ALL roles; ChangeOrder notifications now deep-link to /admin/projects/{id}?tab=variations; ProjectDetailPage reads ?tab= via useSearchParams for initial tab. Verified: client login -> alert badge -> click notification -> lands on Change Orders tab -> approve with confirm -> status Approved + activity log entry.
 
 ## Backlog / Next
+- RECURRING ENV ISSUE (count ~7): container resets wipe PostgreSQL binaries+data. Recovery: `sudo bash /app/scripts/restore_postgres.sh` (reinstalls PG, recreates DB, reseeds, restarts backend; create_all rebuilds ALL tables incl. income_entries/extended expense_entries automatically). 2026-06-16: user-reported "Error in Finance module add income/expense" was this — verified post-restore that income credits + expense debits flow to project & org balance sheets.
 - P1: Milestones UI (backend ready); edit progress updates
 - P1 (user previously asked "how", pivoted away — re-confirm interest): true double-entry accounting layer (Chart of Accounts, vouchers, Trial Balance, Day Book)
 - P2: Replace window.prompt/confirm dialogs (record payment, reset password, delete user, award, CO approve/reject) with shadcn Dialogs; email channel for alerts (needs Resend/SendGrid key); Gantt view; export reports; invoice PDF export
