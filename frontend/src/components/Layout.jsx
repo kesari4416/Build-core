@@ -26,12 +26,14 @@ export default function Layout({ children }) {
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <aside className="w-60 shrink-0 border-r border-slate-800 bg-slate-900 flex flex-col fixed inset-y-0" data-testid="sidebar">
         <div className="h-16 flex items-center gap-2.5 px-5 border-b border-slate-800">
-          <img src="/sitera-logo.png" alt="Sitera logo" className="w-9 h-9 object-contain" data-testid="sidebar-logo" />
+          <div className="bg-white rounded-md p-1 w-10 h-10 flex items-center justify-center shrink-0">
+            <img src="/sitera-logo.png" alt="Sitera logo" className="w-8 h-8 object-contain" data-testid="sidebar-logo" />
+          </div>
           <div>
             <div className="font-heading font-bold text-xl tracking-tight leading-none text-white">
               SITE<span className="text-amber-400">RA</span>
             </div>
-            <div className="text-[9px] uppercase tracking-[0.25em] text-slate-500 mt-0.5">sitera.in</div>
+            <div className="text-[8px] uppercase tracking-[0.22em] text-slate-500 mt-0.5">Building Excellence</div>
           </div>
         </div>
         <nav className="flex-1 py-6 px-3 space-y-1">

@@ -54,12 +54,8 @@ export default function LoginPage() {
           className="absolute top-6 right-6 p-2 rounded-md border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-amber-400 transition-colors">
           {theme === "dark" ? <Sun size={15} strokeWidth={2.5} /> : <Moon size={15} strokeWidth={2.5} />}
         </button>
-        <div className="flex items-center gap-3 mb-10">
-          <img src="/sitera-logo.png" alt="Sitera logo" className="w-11 h-11 object-contain" data-testid="login-logo" />
-          <div>
-            <span className="font-heading font-bold text-2xl tracking-tight">SITE<span className="text-amber-500">RA</span></span>
-            <div className="text-[10px] uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">sitera.in</div>
-          </div>
+        <div className="mb-10 dark:bg-white dark:rounded-md dark:p-4 dark:inline-block">
+          <img src="/sitera-logo-full.png" alt="Sitera — Building Excellence" className="h-20 w-auto object-contain" data-testid="login-logo" />
         </div>
         <h2 className="font-heading font-bold text-3xl tracking-tight mb-1">Sign in</h2>
         <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">Access your project command center</p>
