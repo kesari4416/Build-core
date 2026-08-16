@@ -130,8 +130,11 @@ def expense_out(e):
 
 
 def project_finance(db, project):
+    from app.models.finance import IncomeEntry
     income = f(db.query(func.coalesce(func.sum(Payment.amount), 0))
                .filter(Payment.project_id == project.id).scalar())
+    income += f(db.query(func.coalesce(func.sum(IncomeEntry.amount), 0))
+                .filter(IncomeEntry.project_id == project.id).scalar())
     pos = db.query(PurchaseOrder).filter_by(project_id=project.id).all()
     subs = db.query(Subcontract).filter_by(project_id=project.id).all()
     committed = sum(committed_amount(db, "po", p) for p in pos if p.status != "Cancelled") + \
@@ -148,6 +151,9 @@ def project_finance(db, project):
     revenue_1y = f(db.query(func.coalesce(func.sum(Payment.amount), 0))
                    .filter(Payment.project_id == project.id,
                            Payment.payment_date >= cutoff).scalar())
+    revenue_1y += f(db.query(func.coalesce(func.sum(IncomeEntry.amount), 0))
+                    .filter(IncomeEntry.project_id == project.id,
+                            IncomeEntry.income_date >= cutoff).scalar())
     expenses_1y = f(db.query(func.coalesce(func.sum(ExpenseEntry.amount), 0))
                     .filter(ExpenseEntry.project_id == project.id,
                             ExpenseEntry.expense_date >= cutoff).scalar())
@@ -232,6 +238,12 @@ def project_ledger(project_id: int, db: Session = Depends(get_db), user: User = 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     entries = []
+    from app.models.finance import IncomeEntry
+    for inc in db.query(IncomeEntry).filter(IncomeEntry.project_id == project_id).all():
+        entries.append({"date": d(inc.income_date), "type": "credit",
+                        "description": f"Income — {inc.payment_type}"
+                                       + (f" · {inc.phase}" if inc.phase else ""),
+                        "amount": f(inc.amount)})
     for p in db.query(Payment).filter(Payment.project_id == project_id).all():
         inv = db.get(Invoice, p.invoice_id) if p.invoice_id else None
         entries.append({"date": d(p.payment_date), "type": "credit",
@@ -478,8 +490,11 @@ def project_labour_total(db, project_id):
 
 
 def balance_row(db, p):
+    from app.models.finance import IncomeEntry
     credit = f(db.query(func.coalesce(func.sum(Payment.amount), 0))
                .filter(Payment.project_id == p.id).scalar())
+    credit += f(db.query(func.coalesce(func.sum(IncomeEntry.amount), 0))
+                .filter(IncomeEntry.project_id == p.id).scalar())
     payroll = f(db.query(func.coalesce(func.sum(PayrollEntry.net_pay), 0))
                 .filter(PayrollEntry.project_id == p.id).scalar())
     labour = project_labour_total(db, p.id)

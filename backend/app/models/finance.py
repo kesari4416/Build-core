@@ -76,6 +76,30 @@ class ExpenseEntry(Base):
     description = Column(Text)
     recorded_by = Column(Integer, ForeignKey("users.id"))
     receipt_file_url = Column(String, nullable=True)
+    phase_id = Column(Integer, ForeignKey("phases.id"), nullable=True, index=True)
+    source_type = Column(String, nullable=True)
+    source_id = Column(Integer, nullable=True)
+    product_id = Column(Integer, nullable=True)
+    payment_type = Column(String, nullable=True)
+    balance_after = Column(Numeric(14, 2), nullable=True)
+    quotation_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
+class IncomeEntry(Base):
+    __tablename__ = "income_entries"
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    phase = Column(String, nullable=True)
+    amount = Column(Numeric(14, 2), nullable=False)
+    payment_type = Column(String, nullable=False, default="Partial Payment")
+    balance = Column(Numeric(14, 2), nullable=True)
+    balance_auto = Column(Numeric(14, 2), nullable=True)
+    override_old = Column(Numeric(14, 2), nullable=True)
+    override_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    override_at = Column(DateTime(timezone=True), nullable=True)
+    income_date = Column(Date, nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utcnow)
 
 

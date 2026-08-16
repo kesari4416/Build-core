@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { IndianRupee, TrendingDown, TrendingUp, Receipt, ArrowRight, Banknote, Printer, MessageCircle, Mail } from "lucide-react";
+import { IndianRupee, TrendingDown, TrendingUp, Receipt, ArrowRight, Banknote, Printer, MessageCircle, Mail, Plus, Minus } from "lucide-react";
 import api from "../../../api/client";
+import { AddIncomeModal } from "../components/AddIncomeModal";
+import { AddExpenseModal } from "../components/AddExpenseModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import { DashboardStatCard } from "../components/DashboardStatCard";
 import { CommitmentStatusBadge } from "../components/CommitmentStatusBadge";
@@ -13,6 +16,8 @@ const fmtCr = (n) => `${n < 0 ? "−" : ""}₹${(Math.abs(n || 0) / 10000000).to
 const triggerCls = "rounded-md px-5 py-2.5 text-xs uppercase tracking-[0.15em] font-semibold data-[state=active]:bg-white dark:bg-slate-900 data-[state=active]:text-slate-900 dark:text-slate-100 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none text-slate-500 dark:text-slate-400 border-b-2 border-transparent";
 
 export default function FinancePage() {
+  const [incomeModal, setIncomeModal] = useState(false);
+  const [expenseModal, setExpenseModal] = useState(false);
   const { data: s } = useQuery({
     queryKey: ["orgFinance"],
     queryFn: () => api.get("/finance/dashboard-summary").then((r) => r.data),
@@ -29,10 +34,20 @@ export default function FinancePage() {
           <div className="text-blue-600 dark:text-blue-400 text-[11px] uppercase tracking-[0.3em] font-semibold mb-1">Organization</div>
           <h1 className="font-heading font-bold text-4xl sm:text-5xl tracking-tight leading-none">Finance</h1>
         </div>
-        <Link to="/admin/finance/payroll" data-testid="payroll-link"
-          className="flex items-center gap-2 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-xs uppercase tracking-[0.15em] font-semibold text-slate-600 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-400 transition-colors">
-          <Banknote size={15} strokeWidth={2.5} /> Payroll <ArrowRight size={13} strokeWidth={2.5} />
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <button data-testid="add-income-button" onClick={() => setIncomeModal(true)}
+            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 text-xs uppercase tracking-[0.15em] font-bold transition-colors rounded-md">
+            <Plus size={15} strokeWidth={3} /> Add Income
+          </button>
+          <button data-testid="add-expense-button" onClick={() => setExpenseModal(true)}
+            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 text-xs uppercase tracking-[0.15em] font-bold transition-colors rounded-md">
+            <Minus size={15} strokeWidth={3} /> Add Expense
+          </button>
+          <Link to="/admin/finance/payroll" data-testid="payroll-link"
+            className="flex items-center gap-2 border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-xs uppercase tracking-[0.15em] font-semibold text-slate-600 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-400 transition-colors">
+            <Banknote size={15} strokeWidth={2.5} /> Payroll <ArrowRight size={13} strokeWidth={2.5} />
+          </Link>
+        </div>
       </div>
 
       <Tabs defaultValue="overview">
@@ -94,6 +109,8 @@ export default function FinancePage() {
           <OrgBalanceSheetTab />
         </TabsContent>
       </Tabs>
+      <AddIncomeModal open={incomeModal} onOpenChange={setIncomeModal} />
+      <AddExpenseModal open={expenseModal} onOpenChange={setExpenseModal} />
     </div>
   );
 }

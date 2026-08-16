@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, TrendingUp, TrendingDown, IndianRupee, Receipt, Tag, Pencil, Trash2, Printer, MessageCircle, Mail } from "lucide-react";
+import { ArrowLeft, Plus, Minus, TrendingUp, TrendingDown, IndianRupee, Receipt, Tag, Pencil, Trash2, Printer, MessageCircle, Mail } from "lucide-react";
 import { printInvoice, shareInvoiceWhatsApp, shareInvoiceEmail } from "../utils/invoiceShare";
+import { AddIncomeModal } from "../components/AddIncomeModal";
+import { AddExpenseModal } from "../components/AddExpenseModal";
 import api, { formatApiErrorDetail } from "../../../api/client";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
@@ -68,6 +70,8 @@ export default function ProjectFinancePage() {
   const [invForm, setInvForm] = useState({ amount: "", due_date: "", description: "" });
   const [expForm, setExpForm] = useState({ category: "", amount: "" });
   const [newCat, setNewCat] = useState("");
+  const [incomeModal, setIncomeModal] = useState(false);
+  const [expenseModal, setExpenseModal] = useState(false);
 
   const refresh = () => ["projFinance", "invoices", "expenses", "orgFinance", "expenseCategories", "ledger"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
   const run = async (fn, ok) => {
@@ -92,7 +96,23 @@ export default function ProjectFinancePage() {
       <Link to={`/admin/projects/${id}`} className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] font-semibold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-400 mb-4">
         <ArrowLeft size={14} strokeWidth={2.5} /> {project?.name || "Project"}
       </Link>
-      <h1 className="font-heading font-bold text-4xl sm:text-5xl tracking-tight leading-none mb-8">Project Finance</h1>
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
+        <h1 className="font-heading font-bold text-4xl sm:text-5xl tracking-tight leading-none">Project Finance</h1>
+        {(canFin || user?.role === "SiteEngineer") && (
+          <div className="flex gap-3">
+            {canFin && (
+              <button data-testid="pf-add-income-button" onClick={() => setIncomeModal(true)}
+                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 text-xs uppercase tracking-[0.15em] font-bold transition-colors rounded-md">
+                <Plus size={15} strokeWidth={3} /> Add Income
+              </button>
+            )}
+            <button data-testid="pf-add-expense-button" onClick={() => setExpenseModal(true)}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 text-xs uppercase tracking-[0.15em] font-bold transition-colors rounded-md">
+              <Minus size={15} strokeWidth={3} /> Add Expense
+            </button>
+          </div>
+        )}
+      </div>
       {s && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <ProjectFinanceSummaryCard label="Revenue from Client" value={fmtCr(s.revenue_last_year)}
@@ -228,6 +248,8 @@ export default function ProjectFinancePage() {
           </div>
         </div>
       )}
+      <AddIncomeModal open={incomeModal} onOpenChange={setIncomeModal} defaultProjectId={Number(id)} />
+      <AddExpenseModal open={expenseModal} onOpenChange={setExpenseModal} defaultProjectId={Number(id)} />
     </div>
   );
 }
