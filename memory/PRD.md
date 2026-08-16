@@ -113,6 +113,11 @@
   - Frontend: VendorsPage "Add Product" button per vendor row -> VendorProductsModal (list/add/price-edit-on-blur/enable-disable); ProcurementDashboardPage -> VendorQuotationsSection (Make Quotation modal: vendor select -> product qty inputs -> live total; quotation cards with Approve/Record Payment buttons)
   - Verified: TC-VP-01..04 + TC-VQ-01..07 all pass (incl. cost_to_date +156000 after pay, ledger debit entry "Expense — Vendor Payment: VQ-1-001 — Apex Steel Works")
 
+- Phase Description Notes (2026-06, APPROVED by user, TESTED 100% iter 16-17):
+  - PhaseNote model (phase_notes table); PhaseCreate/PhaseUpdate accept description; add_phase/update_phase pop description -> record_phase_note (dated note + PhaseNote notification to Admins & project SE via notify_flag); phase_notes_map attaches notes to list_phases, add/update responses AND get_project detail (iter-16 critical fix: PhaseTimeline reads project.phases from GET /projects/{id}); delete_phase deletes notes first (was FK 500)
+  - Frontend: PhaseFormModal description textarea (phase-description-input, resets each open = each save appends a NEW dated note); PhaseTimeline renders notes below each phase (phase-notes-{id}, newest first with date + author); fixed sed artifact in phase progress bar colors
+  - All 7 approved test cases pass (iter_17: backend 9/9, frontend 100%)
+
 ## Backlog / Next
 - P1: Milestones UI (backend ready); edit progress updates
 - P2: Replace window.prompt/confirm dialogs (record payment, reset password, delete user, award) with shadcn Dialogs; email channel for alerts (needs Resend/SendGrid key); Gantt view; export reports; invoice PDF export

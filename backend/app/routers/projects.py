@@ -161,7 +161,12 @@ def get_project(project_id: int, db: Session = Depends(get_db),
                 user: User = Depends(get_current_user)):
     project = get_project_or_404(db, project_id)
     check_read_access(user, project)
-    return project_out(db, project, detail=True)
+    out = project_out(db, project, detail=True)
+    if "phases" in out:
+        notes = phase_notes_map(db, project_id)
+        for ph in out["phases"]:
+            ph["notes"] = notes.get(ph["id"], [])
+    return out
 
 
 @router.patch("/projects/{project_id}")
@@ -212,20 +217,50 @@ def reorder_phases(project_id: int, body: PhaseReorder, db: Session = Depends(ge
     return [phase_out(phases[pid]) for pid in body.phase_ids]
 
 
+def record_phase_note(db, phase, project, user, text):
+    from app.models import PhaseNote
+    from app.routers.notifications import notify_flag
+    note = PhaseNote(phase_id=phase.id, project_id=project.id, text=text.strip(), created_by=user.id)
+    db.add(note)
+    db.commit()
+    notify_flag(db, project, user, "PhaseNote",
+                f"Phase note: {phase.name}",
+                f"{user.name} added a description on phase '{phase.name}' ({project.name}): {text.strip()[:180]}",
+                phase_id=phase.id)
+
+
+def phase_notes_map(db, project_id):
+    from app.models import PhaseNote
+    users = {u.id: u.name for u in db.query(User).all()}
+    by_phase = {}
+    for n in (db.query(PhaseNote).filter(PhaseNote.project_id == project_id)
+              .order_by(PhaseNote.created_at.desc()).all()):
+        by_phase.setdefault(n.phase_id, []).append({
+            "id": n.id, "text": n.text, "by": users.get(n.created_by),
+            "date": n.created_at.date().isoformat() if n.created_at else None})
+    return by_phase
+
+
 @router.post("/projects/{project_id}/phases", status_code=201)
 def add_phase(project_id: int, body: PhaseCreate, db: Session = Depends(get_db),
               user: User = Depends(get_current_user)):
     project = get_project_or_404(db, project_id)
     check_write_access(user, project)
+    data = body.model_dump()
+    description = (data.pop("description", None) or "").strip()
     dup = db.query(Phase).filter(Phase.project_id == project_id,
                                  Phase.sequence_order == body.sequence_order).first()
     if dup:
         raise HTTPException(status_code=409, detail="sequence_order already used in this project")
-    phase = Phase(project_id=project_id, **body.model_dump())
+    phase = Phase(project_id=project_id, **data)
     db.add(phase)
     db.commit()
     db.refresh(phase)
-    return phase_out(phase)
+    if description:
+        record_phase_note(db, phase, project, user, description)
+    out = phase_out(phase)
+    out["notes"] = phase_notes_map(db, project_id).get(phase.id, [])
+    return out
 
 
 @router.get("/projects/{project_id}/phases")
@@ -235,7 +270,13 @@ def list_phases(project_id: int, db: Session = Depends(get_db),
     check_read_access(user, project)
     phases = (db.query(Phase).filter(Phase.project_id == project_id)
               .order_by(Phase.sequence_order.asc()).all())
-    return [phase_out(p) for p in phases]
+    notes = phase_notes_map(db, project_id)
+    out = []
+    for p in phases:
+        o = phase_out(p)
+        o["notes"] = notes.get(p.id, [])
+        out.append(o)
+    return out
 
 
 @router.patch("/phases/{phase_id}")
@@ -247,6 +288,7 @@ def update_phase(phase_id: int, body: PhaseUpdate, db: Session = Depends(get_db)
         raise HTTPException(status_code=404, detail="Phase not found")
     check_write_access(user, phase.project)
     data = body.model_dump(exclude_unset=True)
+    description = (data.pop("description", None) or "").strip()
     old_status = phase.status
     if "sequence_order" in data and data["sequence_order"] != phase.sequence_order:
         dup = db.query(Phase).filter(Phase.project_id == phase.project_id,
@@ -258,13 +300,17 @@ def update_phase(phase_id: int, body: PhaseUpdate, db: Session = Depends(get_db)
         setattr(phase, k, v)
     db.commit()
     db.refresh(phase)
+    if description:
+        record_phase_note(db, phase, phase.project, user, description)
     if phase.status in ("Blocked", "Delayed") and phase.status != old_status:
         from app.routers.notifications import notify_flag
         notify_flag(db, phase.project, user, f"Phase{phase.status}",
                     f"Phase {phase.status}: {phase.name}",
                     f"{user.name} set phase '{phase.name}' to {phase.status} on {phase.project.name}.",
                     phase_id=phase.id)
-    return phase_out(phase)
+    out = phase_out(phase)
+    out["notes"] = phase_notes_map(db, phase.project_id).get(phase.id, [])
+    return out
 
 
 @router.delete("/phases/{phase_id}", status_code=204)
@@ -274,6 +320,8 @@ def delete_phase(phase_id: int, db: Session = Depends(get_db),
     if not phase:
         raise HTTPException(status_code=404, detail="Phase not found")
     check_write_access(user, phase.project)
+    from app.models import PhaseNote
+    db.query(PhaseNote).filter(PhaseNote.phase_id == phase_id).delete()
     db.delete(phase)
     db.commit()
 

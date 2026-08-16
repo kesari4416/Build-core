@@ -73,6 +73,7 @@ class PhaseCreate(BaseModel):
     actual_end: Optional[date] = None
     status: PhaseStatus = "NotStarted"
     percent_complete: int = Field(default=0, ge=0, le=100)
+    description: Optional[str] = None
 
     @model_validator(mode="after")
     def check_dates(self):
@@ -90,6 +91,7 @@ class PhaseUpdate(BaseModel):
     actual_end: Optional[date] = None
     status: Optional[PhaseStatus] = None
     percent_complete: Optional[int] = Field(default=None, ge=0, le=100)
+    description: Optional[str] = None
 
 
 class ProgressUpdateCreate(BaseModel):

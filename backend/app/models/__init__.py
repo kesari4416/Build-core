@@ -85,6 +85,16 @@ class Phase(Base):
     project = relationship("Project", back_populates="phases")
 
 
+class PhaseNote(Base):
+    __tablename__ = "phase_notes"
+    id = Column(Integer, primary_key=True)
+    phase_id = Column(Integer, ForeignKey("phases.id"), nullable=False, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    text = Column(Text, nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
 class ProgressUpdate(Base):
     __tablename__ = "progress_updates"
     id = Column(Integer, primary_key=True)

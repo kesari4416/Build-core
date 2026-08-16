@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 import { Input } from "../../../components/ui/input";
+import { Textarea } from "../../../components/ui/textarea";
 import { Label } from "../../../components/ui/label";
 import { Button } from "../../../components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
@@ -9,7 +10,7 @@ import { formatApiErrorDetail } from "../../../api/client";
 import { useAddPhase, useUpdatePhase, useDeletePhase } from "../hooks/useProjects";
 
 const STATUSES = ["NotStarted", "InProgress", "Completed", "Delayed", "Blocked"];
-const empty = { name: "", sequence_order: "", planned_start: "", planned_end: "", status: "NotStarted", percent_complete: 0 };
+const empty = { name: "", sequence_order: "", planned_start: "", planned_end: "", status: "NotStarted", percent_complete: 0, description: "" };
 
 export const PhaseFormModal = ({ open, onOpenChange, projectId, phase, nextOrder }) => {
   const [form, setForm] = useState(empty);
@@ -24,7 +25,7 @@ export const PhaseFormModal = ({ open, onOpenChange, projectId, phase, nextOrder
       setForm(phase ? {
         name: phase.name, sequence_order: phase.sequence_order,
         planned_start: phase.planned_start || "", planned_end: phase.planned_end || "",
-        status: phase.status, percent_complete: phase.percent_complete,
+        status: phase.status, percent_complete: phase.percent_complete, description: "",
       } : { ...empty, sequence_order: nextOrder || 1 });
     }
   }, [open, phase, nextOrder]);
@@ -50,6 +51,7 @@ export const PhaseFormModal = ({ open, onOpenChange, projectId, phase, nextOrder
       name: form.name.trim(), sequence_order: Number(form.sequence_order),
       planned_start: form.planned_start || null, planned_end: form.planned_end || null,
       status: form.status, percent_complete: Number(form.percent_complete),
+      ...(form.description.trim() ? { description: form.description.trim() } : {}),
     };
     try {
       if (phase) {
@@ -122,6 +124,13 @@ export const PhaseFormModal = ({ open, onOpenChange, projectId, phase, nextOrder
               <Input data-testid="phase-percent-input" type="number" min="0" max="100" value={form.percent_complete} onChange={(e) => set("percent_complete", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
               {errors.percent_complete && <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.percent_complete}</p>}
             </div>
+          </div>
+          <div>
+            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Description</Label>
+            <Textarea data-testid="phase-description-input" rows={3} value={form.description}
+              onChange={(e) => set("description", e.target.value)}
+              placeholder="Add a description note — it will be recorded below the phase with today's date and alerted"
+              className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
           </div>
           <div className="flex justify-between pt-2">
             {phase ? (

@@ -42,10 +42,20 @@ export const PhaseTimeline = ({ phases, canWrite, onEdit }) => {
                   </div>
                   <div className="flex items-center gap-2 mt-2">
                     <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-800">
-                      <div className={`h-full ${ph.status === "Delayed" ? "bg-red-50 dark:bg-red-500/100" : ph.status === "Completed" ? "bg-emerald-50 dark:bg-emerald-500/100" : "bg-blue-600"}`} style={{ width: `${ph.percent_complete}%` }} />
+                      <div className={`h-full ${ph.status === "Delayed" ? "bg-red-500" : ph.status === "Completed" ? "bg-emerald-500" : "bg-blue-600"}`} style={{ width: `${ph.percent_complete}%` }} />
                     </div>
                     <span className="text-xs text-slate-500 dark:text-slate-400">{ph.percent_complete}%</span>
                   </div>
+                  {(ph.notes || []).length > 0 && (
+                    <div className="mt-3 space-y-1.5" data-testid={`phase-notes-${ph.id}`}>
+                      {ph.notes.map((n) => (
+                        <div key={n.id} className="border-l-2 border-blue-400 bg-slate-50 dark:bg-slate-800/60 rounded-r-md px-2.5 py-1.5" data-testid={`phase-note-${n.id}`}>
+                          <div className="text-xs text-slate-700 dark:text-slate-300 leading-snug">{n.text}</div>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{n.date}{n.by ? ` · ${n.by}` : ""}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {canWrite && <PhaseCrew phaseId={ph.id} />}
                 </div>
               </div>
