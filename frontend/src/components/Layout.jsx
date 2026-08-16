@@ -58,11 +58,9 @@ export default function Layout({ children }) {
               </NavLink>
             ))}
         </nav>
-        {["Admin", "SiteEngineer"].includes(user?.role) && (
-          <div className="px-3 pb-2">
-            <NotificationBell />
-          </div>
-        )}
+        <div className="px-3 pb-2">
+          <NotificationBell />
+        </div>
         <div className="border-t border-slate-800 p-4">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 bg-slate-800 border border-slate-700 rounded-md flex items-center justify-center font-heading font-bold text-amber-400">

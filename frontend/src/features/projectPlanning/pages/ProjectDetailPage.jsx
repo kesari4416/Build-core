@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../../api/client";
 import { ArrowLeft, Pencil, Plus, AlertTriangle, MapPin, IndianRupee, CalendarDays, UserRound, Users } from "lucide-react";
@@ -32,6 +32,8 @@ const InfoCell = ({ icon: Icon, label, value, testId }) => (
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const initialTab = ["overview", "phases", "tracking", "variations", "employees", "balancesheet"].includes(searchParams.get("tab")) ? searchParams.get("tab") : "overview";
   const projectId = Number(id);
   const { user, canWrite: roleCanWrite, isAdmin } = useAuth();
   const { data: project, isLoading, isError } = useProject(projectId);
@@ -108,7 +110,7 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue={initialTab}>
         <TabsList className="bg-transparent border-b border-slate-200 dark:border-slate-800 rounded-md w-full justify-start h-auto p-0 gap-1">
           {["overview", "phases", "tracking", ...(user?.role !== "Vendor" ? ["variations"] : []), ...(user?.role !== "Client" && user?.role !== "Vendor" ? ["employees", "balancesheet"] : [])].map((t) => (
             <TabsTrigger key={t} value={t} data-testid={`tab-${t}`}

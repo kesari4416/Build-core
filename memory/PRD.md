@@ -138,6 +138,8 @@
   - BUG FIXED post-iter20: Radix Select fired spurious onValueChange("") wiping inline-created vendor selection — fixed with `if (!v) return;` guard on all 3 selects + optimistic qc.setQueryData appends. Self-verified E2E: inline vendor -> inline product -> submit -> quotation generated
   - SPEC FLAGS: expense balance uses PROJECT-level budget_remaining (phase budgets don't exist); income phase free-text vs expense phase dropdown naming inconsistency flagged for later cleanup
 
+- BUG FIX: Client approve mechanism not visible (2026-06, SELF-TESTED E2E as client): root cause — NotificationBell ("Alerts") in Layout.jsx was role-gated to Admin/SiteEngineer, so clients never saw "Change order awaiting your review" notifications (backend was creating them correctly). Fix: bell shown for ALL roles; ChangeOrder notifications now deep-link to /admin/projects/{id}?tab=variations; ProjectDetailPage reads ?tab= via useSearchParams for initial tab. Verified: client login -> alert badge -> click notification -> lands on Change Orders tab -> approve with confirm -> status Approved + activity log entry.
+
 ## Backlog / Next
 - P1: Milestones UI (backend ready); edit progress updates
 - P1 (user previously asked "how", pivoted away — re-confirm interest): true double-entry accounting layer (Chart of Accounts, vouchers, Trial Balance, Day Book)

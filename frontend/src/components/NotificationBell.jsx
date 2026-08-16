@@ -38,7 +38,7 @@ export const NotificationBell = () => {
   const onClickNotif = async (n) => {
     if (!n.is_read) { try { await api.post(`/notifications/${n.id}/read`); } catch (e) { /* ignore */ } refresh(); }
     setOpen(false);
-    if (n.project_id) navigate(`/admin/projects/${n.project_id}`);
+    if (n.project_id) navigate(`/admin/projects/${n.project_id}${n.type === "ChangeOrder" ? "?tab=variations" : ""}`);
   };
 
   const markAll = async () => {
