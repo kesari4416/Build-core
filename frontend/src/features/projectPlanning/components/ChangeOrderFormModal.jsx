@@ -17,15 +17,44 @@ export const ChangeOrderFormModal = ({ open, onOpenChange, projectId, phases, co
   const [form, setForm] = useState(empty);
   const [submitNow, setSubmitNow] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [attachments, setAttachments] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef(null);
   const qc = useQueryClient();
   const isRevise = Boolean(co);
 
   useEffect(() => {
     if (open) {
       setSubmitNow(true);
+      setAttachments([]);
       setForm(co ? { ...empty, estimated_cost: String(co.estimated_cost ?? ""), estimated_time_impact_days: String(co.estimated_time_impact_days ?? 0) } : empty);
     }
   }, [open, co]);
+
+  const onFiles = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setUploading(true);
+    try {
+      const uploaded = [];
+      for (const file of files) {
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error(`${file.name}: exceeds 10MB`);
+          continue;
+        }
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await api.post("/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
+        uploaded.push({ url: res.data.url, filename: res.data.filename || file.name });
+      }
+      setAttachments((prev) => [...prev, ...uploaded]);
+    } catch (err) {
+      toast.error(formatApiErrorDetail(err.response?.data?.detail) || err.message);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const cost = Number(form.estimated_cost);

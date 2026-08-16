@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, ChevronDown, ChevronUp, GitBranch, CalendarClock, FileDiff, Paperclip, FileText } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, GitBranch, CalendarClock, FileDiff, Paperclip, FileText, FileDown, FileSpreadsheet, Info } from "lucide-react";
 import api, { assetUrl, formatApiErrorDetail } from "../../../api/client";
+import { downloadFile } from "../utils/downloadFile";
 import { useAuth } from "../../../context/AuthContext";
 import { Button } from "../../../components/ui/button";
 import { ChangeOrderStatusBadge } from "./ChangeOrderStatusBadge";
@@ -145,13 +146,14 @@ export const ChangeOrdersTab = ({ projectId, phases }) => {
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [phaseFilter, setPhaseFilter] = useState("");
   const [modal, setModal] = useState({ open: false, co: null });
   const { user } = useAuth();
   const role = user?.role;
   const { data } = useQuery({
-    queryKey: ["changeOrders", projectId, statusFilter, categoryFilter],
+    queryKey: ["changeOrders", projectId, statusFilter, categoryFilter, phaseFilter],
     queryFn: () => api.get(`/projects/${projectId}/change-orders`, {
-      params: { ...(statusFilter && { status: statusFilter }), ...(categoryFilter && { category: categoryFilter }) },
+      params: { ...(statusFilter && { status: statusFilter }), ...(categoryFilter && { category: categoryFilter }), ...(phaseFilter && { phase_id: phaseFilter }) },
     }).then((r) => r.data),
   });
 
@@ -181,9 +183,29 @@ export const ChangeOrdersTab = ({ projectId, phases }) => {
 
   const s = data?.summary;
   const filterCls = "bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md h-9 text-sm text-slate-700 dark:text-slate-300 px-2";
+  const exportParams = () => {
+    const p = new URLSearchParams();
+    if (statusFilter) p.set("status", statusFilter);
+    if (categoryFilter) p.set("category", categoryFilter);
+    if (phaseFilter) p.set("phase_id", phaseFilter);
+    const qs = p.toString();
+    return qs ? `&${qs}` : "";
+  };
+  const exportCOs = (fmt) =>
+    downloadFile(`/projects/${projectId}/change-orders/export?fmt=${fmt}${exportParams()}`, `change-orders.${fmt === "pdf" ? "pdf" : "xlsx"}`)
+      .catch(() => toast.error("Export failed"));
 
   return (
     <div data-testid="change-orders-tab">
+      {s && s.approved_count > 0 && (
+        <div className="border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 p-4 mb-5 flex items-start gap-3" data-testid="co-impact-banner">
+          <Info size={16} strokeWidth={2.5} className="text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+          <p className="text-sm text-amber-800 dark:text-amber-300">
+            Your project cost has increased by <span className="font-bold">{fmt(s.approved_variations)}</span> ({s.increase_pct}%) due to <span className="font-bold">{s.approved_count}</span> approved modification{s.approved_count !== 1 ? "s" : ""}.
+            Revised contract value: <span className="font-bold">{fmt(s.revised_contract_value)}</span>.
+          </p>
+        </div>
+      )}
       {s && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <SummaryCell label="Original Contract" value={fmt(s.original_budget)} testId="co-sum-original" />
@@ -198,6 +220,10 @@ export const ChangeOrdersTab = ({ projectId, phases }) => {
           <FileDiff size={13} strokeWidth={2.5} /> Change Orders · {data?.change_orders?.length ?? 0}
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
+          <select data-testid="co-phase-filter" value={phaseFilter} onChange={(e) => setPhaseFilter(e.target.value)} className={filterCls}>
+            <option value="">All phases</option>
+            {(phases || []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
           <select data-testid="co-status-filter" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={filterCls}>
             <option value="">All statuses</option>
             {STATUSES.map((st) => <option key={st} value={st}>{st}</option>)}
@@ -206,6 +232,14 @@ export const ChangeOrdersTab = ({ projectId, phases }) => {
             <option value="">All categories</option>
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
+          <button data-testid="co-export-pdf" title="Export PDF (respects filters)" onClick={() => exportCOs("pdf")}
+            className="flex items-center gap-1.5 border border-slate-300 dark:border-slate-700 px-2.5 h-9 text-[10px] uppercase tracking-[0.12em] font-semibold text-slate-600 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            <FileDown size={13} strokeWidth={2.5} /> PDF
+          </button>
+          <button data-testid="co-export-excel" title="Export Excel (respects filters)" onClick={() => exportCOs("xlsx")}
+            className="flex items-center gap-1.5 border border-slate-300 dark:border-slate-700 px-2.5 h-9 text-[10px] uppercase tracking-[0.12em] font-semibold text-slate-600 dark:text-slate-400 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+            <FileSpreadsheet size={13} strokeWidth={2.5} /> Excel
+          </button>
           {canContract && (
             <Button data-testid="new-change-order-button" size="sm" onClick={() => setModal({ open: true, co: null })}
               className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-[0.12em] h-9">
@@ -221,7 +255,7 @@ export const ChangeOrdersTab = ({ projectId, phases }) => {
         ))}
         {data && data.change_orders.length === 0 && (
           <div className="border border-slate-200 dark:border-slate-800 p-10 text-center text-xs text-slate-500 dark:text-slate-400" data-testid="change-orders-empty">
-            No change orders {statusFilter || categoryFilter ? "match the selected filters" : "yet — client modifications and scope variations will appear here, separate from the base contract"}.
+            No change orders {statusFilter || categoryFilter || phaseFilter ? "match the selected filters" : "yet — client modifications and scope variations will appear here, separate from the base contract"}.
           </div>
         )}
       </div>

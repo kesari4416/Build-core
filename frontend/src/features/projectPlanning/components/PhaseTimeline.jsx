@@ -2,7 +2,7 @@ import { Check, Pencil } from "lucide-react";
 import { PHASE_COLORS } from "./ProjectStatusBadge";
 import { PhaseCrew } from "./PhaseCrew";
 
-export const PhaseTimeline = ({ phases, canWrite, onEdit }) => {
+export const PhaseTimeline = ({ phases, canWrite, onEdit, coByPhase }) => {
   if (!phases?.length)
     return (
       <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-12 text-center text-slate-500 dark:text-slate-400" data-testid="phases-empty-state">
@@ -46,6 +46,11 @@ export const PhaseTimeline = ({ phases, canWrite, onEdit }) => {
                     </div>
                     <span className="text-xs text-slate-500 dark:text-slate-400">{ph.percent_complete}%</span>
                   </div>
+                  {coByPhase?.[ph.id] && (
+                    <div className="mt-2 inline-flex items-center gap-1.5 border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 px-2 py-1 text-[10px] uppercase tracking-[0.1em] font-bold" data-testid={`phase-variation-chip-${ph.id}`}>
+                      + ₹{coByPhase[ph.id].amount.toLocaleString("en-IN")} · {coByPhase[ph.id].count} variation{coByPhase[ph.id].count !== 1 ? "s" : ""}
+                    </div>
+                  )}
                   {(ph.notes || []).length > 0 && (
                     <div className="mt-3 space-y-1.5" data-testid={`phase-notes-${ph.id}`}>
                       {ph.notes.map((n) => (

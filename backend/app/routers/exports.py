@@ -16,6 +16,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 
 from app.database import get_db
 from app.models import User
+from app.core.security import get_current_user
 from app.routers.finance import FIN, STAFF, org_balance_sheet, project_balance_sheet
 
 router = APIRouter(tags=["exports"])
@@ -247,3 +248,111 @@ def export_project_balance_sheet(project_id: int, fmt: Literal["pdf", "xlsx"] = 
     story.append(styled_table(trows, col_widths=[22 * mm, 88 * mm, 35 * mm, 35 * mm],
                               bold_last=True, left_cols=2))
     return pdf_response(story, f"{slug}-balance-sheet-{today}.pdf")
+
+
+@router.get("/projects/{project_id}/change-orders/export")
+def export_change_orders(project_id: int, fmt: Literal["pdf", "xlsx"] = "pdf",
+                         phase_id: int = None, category: str = None, status: str = None,
+                         db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    from app.models import Phase, Project, ProjectChangeOrder
+    from app.routers.change_orders import check_co_access, co_totals, f as cf
+
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    check_co_access(user, project)
+    q = db.query(ProjectChangeOrder).filter(ProjectChangeOrder.project_id == project_id)
+    if phase_id:
+        q = q.filter(ProjectChangeOrder.phase_id == phase_id)
+    if category:
+        q = q.filter(ProjectChangeOrder.category == category)
+    if status:
+        q = q.filter(ProjectChangeOrder.status == status)
+    cos = q.order_by(ProjectChangeOrder.created_at.desc()).all()
+    phases = {p.id: p.name for p in db.query(Phase).filter(Phase.project_id == project_id).all()}
+    approved, pending, n_approved = co_totals(db, project_id)
+    budget = cf(project.budget or 0)
+    today = date.today().isoformat()
+    slug = "".join(ch if ch.isalnum() else "-" for ch in project.name.lower()).strip("-")
+
+    def eff_cost(c):
+        return cf(c.approved_cost if c.status == "Approved" and c.approved_cost is not None else c.estimated_cost)
+
+    summary = [("Original Contract (Baseline)", budget),
+               ("Approved Variations", approved),
+               ("Revised Contract Value", round(budget + approved, 2)),
+               ("Pending Review (not committed)", pending)]
+    by_cat, by_phase = {}, {}
+    for c in cos:
+        if c.status == "Approved":
+            by_cat[c.category] = by_cat.get(c.category, 0) + eff_cost(c)
+            pname = phases.get(c.phase_id, "Unassigned")
+            by_phase[pname] = by_phase.get(pname, 0) + eff_cost(c)
+    filters_note = ", ".join(x for x in [
+        f"Phase: {phases.get(phase_id, phase_id)}" if phase_id else "",
+        f"Category: {category}" if category else "",
+        f"Status: {status}" if status else ""] if x) or "All change orders"
+    headers = ["CO #", "Title", "Phase", "Category", "Status", "Requested", "Est. Cost", "Approved Cost", "Days"]
+
+    def rowvals(c):
+        return [c.co_number, c.title, phases.get(c.phase_id, "-"), c.category, c.status,
+                c.date_requested.isoformat() if c.date_requested else "-",
+                cf(c.estimated_cost), cf(c.approved_cost) if c.approved_cost is not None else None,
+                c.estimated_time_impact_days or 0]
+
+    if fmt == "xlsx":
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Summary"
+        ws["A1"] = f"BUILDCORE — Change Orders / Variations: {project.name}"
+        ws["A1"].font = TITLE_FONT
+        ws["A2"] = f"Generated {today} · Filter: {filters_note}"
+        for i, (k, v) in enumerate(summary, start=4):
+            ws.cell(row=i, column=1, value=k).font = BOLD
+            ws.cell(row=i, column=2, value=v).number_format = "#,##0.00"
+        r0 = 9
+        ws.cell(row=r0, column=1, value="Approved Variations by Category").font = BOLD
+        for i, (k, v) in enumerate(sorted(by_cat.items()), start=r0 + 1):
+            ws.cell(row=i, column=1, value=k)
+            ws.cell(row=i, column=2, value=v).number_format = "#,##0.00"
+        r1 = r0 + len(by_cat) + 2
+        ws.cell(row=r1, column=1, value="Approved Variations by Phase").font = BOLD
+        for i, (k, v) in enumerate(sorted(by_phase.items()), start=r1 + 1):
+            ws.cell(row=i, column=1, value=k)
+            ws.cell(row=i, column=2, value=v).number_format = "#,##0.00"
+        ws.column_dimensions["A"].width = 34
+        ws.column_dimensions["B"].width = 18
+        ws2 = wb.create_sheet("Change Orders")
+        ws_header_row(ws2, 1, headers, [13, 36, 18, 18, 20, 12, 14, 14, 7])
+        for j, c in enumerate(cos, start=2):
+            for col, v in enumerate(rowvals(c), start=1):
+                cell = ws2.cell(row=j, column=col, value=v)
+                if col in (7, 8) and v is not None:
+                    cell.number_format = "#,##0.00"
+        return xlsx_response(wb, f"{slug}-change-orders-{today}.xlsx")
+
+    st = _styles()
+    story = [Paragraph(f"BUILDCORE — Change Orders / Variations: {project.name}", st["title"]),
+             Paragraph(f"Generated {today} · Filter: {filters_note}", st["sub"])]
+    story.append(styled_table([[k for k, _ in summary], [money(v) for _, v in summary]],
+                              col_widths=[45 * mm] * 4, left_cols=0))
+    if by_cat:
+        story.append(Paragraph("Approved Variations by Category", st["h2"]))
+        story.append(styled_table([["Category", "Amount"]] + [[k, money(v)] for k, v in sorted(by_cat.items())],
+                                  col_widths=[110 * mm, 40 * mm]))
+    if by_phase:
+        story.append(Paragraph("Approved Variations by Phase", st["h2"]))
+        story.append(styled_table([["Phase", "Amount"]] + [[k, money(v)] for k, v in sorted(by_phase.items())],
+                                  col_widths=[110 * mm, 40 * mm]))
+    story.append(Paragraph("Change Order Register", st["h2"]))
+    trows = [headers]
+    for c in cos:
+        v = rowvals(c)
+        trows.append([v[0], Paragraph(v[1], st["cell"]), Paragraph(v[2], st["cell"]),
+                      Paragraph(v[3], st["cell"]), Paragraph(v[4], st["cell"]), v[5],
+                      money(v[6]), money(v[7]) if v[7] is not None else "-", str(v[8])])
+    if len(trows) == 1:
+        trows.append(["-"] * 9)
+    story.append(styled_table(trows, col_widths=[16 * mm, 34 * mm, 22 * mm, 24 * mm, 24 * mm,
+                                                 18 * mm, 21 * mm, 21 * mm, 10 * mm], left_cols=6))
+    return pdf_response(story, f"{slug}-change-orders-{today}.pdf")

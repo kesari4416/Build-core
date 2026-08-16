@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import api from "../../../api/client";
 import { ArrowLeft, Pencil, Plus, AlertTriangle, MapPin, IndianRupee, CalendarDays, UserRound, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import { Skeleton } from "../../../components/ui/skeleton";
@@ -37,6 +39,18 @@ export default function ProjectDetailPage() {
   const [phaseModal, setPhaseModal] = useState({ open: false, phase: null });
   const [updateModal, setUpdateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
+  const { data: coData } = useQuery({
+    queryKey: ["changeOrders", projectId, "", "", ""],
+    queryFn: () => api.get(`/projects/${projectId}/change-orders`).then((r) => r.data),
+    enabled: user?.role !== "Vendor",
+  });
+  const coByPhase = (coData?.change_orders || []).reduce((m, c) => {
+    if (c.status === "Approved" && c.phase_id) {
+      const amt = c.approved_cost != null ? c.approved_cost : c.estimated_cost;
+      m[c.phase_id] = { amount: (m[c.phase_id]?.amount || 0) + amt, count: (m[c.phase_id]?.count || 0) + 1 };
+    }
+    return m;
+  }, {});
 
   const canWrite = roleCanWrite && (isAdmin || project?.site_engineer_id === user?.id);
 
@@ -125,7 +139,7 @@ export default function ProjectDetailPage() {
               </Button>
             )}
           </div>
-          <PhaseTimeline phases={project.phases} canWrite={canWrite} onEdit={(ph) => setPhaseModal({ open: true, phase: ph })} />
+          <PhaseTimeline phases={project.phases} canWrite={canWrite} onEdit={(ph) => setPhaseModal({ open: true, phase: ph })} coByPhase={coByPhase} />
         </TabsContent>
 
         <TabsContent value="tracking" className="mt-6" data-testid="tracking-tab-content">
