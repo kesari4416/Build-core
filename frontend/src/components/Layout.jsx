@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, LogOut, HardHat, IndianRupee, Truck, UserCog, FileText, ClipboardCheck, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, Building2, Users, LogOut, IndianRupee, Truck, UserCog, FileText, ClipboardCheck, Sun, Moon } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { NotificationBell } from "./NotificationBell";
@@ -26,11 +26,12 @@ export default function Layout({ children }) {
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <aside className="w-60 shrink-0 border-r border-slate-800 bg-slate-900 flex flex-col fixed inset-y-0" data-testid="sidebar">
         <div className="h-16 flex items-center gap-2.5 px-5 border-b border-slate-800">
-          <div className="bg-amber-500 p-1.5 rounded-md">
-            <HardHat size={20} strokeWidth={2.5} className="text-slate-900" />
-          </div>
-          <div className="font-heading font-bold text-xl tracking-tight leading-none text-white">
-            BUILD<span className="text-amber-400">CORE</span>
+          <img src="/sitera-logo.png" alt="Sitera logo" className="w-9 h-9 object-contain" data-testid="sidebar-logo" />
+          <div>
+            <div className="font-heading font-bold text-xl tracking-tight leading-none text-white">
+              SITE<span className="text-amber-400">RA</span>
+            </div>
+            <div className="text-[9px] uppercase tracking-[0.25em] text-slate-500 mt-0.5">sitera.in</div>
           </div>
         </div>
         <nav className="flex-1 py-6 px-3 space-y-1">

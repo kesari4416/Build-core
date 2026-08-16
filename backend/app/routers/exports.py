@@ -111,7 +111,7 @@ def export_org_balance_sheet(fmt: Literal["pdf", "xlsx"] = "pdf",
         wb = Workbook()
         ws = wb.active
         ws.title = "Balance Sheet"
-        ws["A1"] = "BUILDCORE — All Projects Balance Sheet"
+        ws["A1"] = "SITERA — All Projects Balance Sheet"
         ws["A1"].font = TITLE_FONT
         ws["A2"] = f"Generated {today}"
         for i, (k, v) in enumerate([("Total Credit (In)", bs["total_credit"]),
@@ -154,10 +154,10 @@ def export_org_balance_sheet(fmt: Literal["pdf", "xlsx"] = "pdf",
         tc.number_format = "#,##0.00"
         for col, w in (("A", 26), ("B", 16)):
             ws2.column_dimensions[col].width = w
-        return xlsx_response(wb, f"buildcore-balance-sheet-{today}.xlsx")
+        return xlsx_response(wb, f"sitera-balance-sheet-{today}.xlsx")
 
     st = _styles()
-    story = [Paragraph("BUILDCORE — All Projects Balance Sheet", st["title"]),
+    story = [Paragraph("SITERA — All Projects Balance Sheet", st["title"]),
              Paragraph(f"Generated {today}", st["sub"])]
     story.append(styled_table(
         [["Total Credit (In)", "Total Debit (Out)", "Overall Profit", "Overall Loss", "Net"],
@@ -183,7 +183,7 @@ def export_org_balance_sheet(fmt: Literal["pdf", "xlsx"] = "pdf",
     drows += [[f"Labour — {c['category']}", money(c["amount"])] for c in dues["labour_by_category"]]
     drows.append(["TOTAL REQUIRED", money(dues["total_required"])])
     story.append(styled_table(drows, col_widths=[110 * mm, 40 * mm], bold_last=True))
-    return pdf_response(story, f"buildcore-balance-sheet-{today}.pdf")
+    return pdf_response(story, f"sitera-balance-sheet-{today}.pdf")
 
 
 @router.get("/projects/{project_id}/balance-sheet/export")
@@ -203,7 +203,7 @@ def export_project_balance_sheet(project_id: int, fmt: Literal["pdf", "xlsx"] = 
         wb = Workbook()
         ws = wb.active
         ws.title = "Summary"
-        ws["A1"] = f"BUILDCORE — Balance Sheet: {bs['name']}"
+        ws["A1"] = f"SITERA — Balance Sheet: {bs['name']}"
         ws["A1"].font = TITLE_FONT
         ws["A2"] = f"Generated {today}"
         for i, (k, v) in enumerate(summary, start=4):
@@ -231,7 +231,7 @@ def export_project_balance_sheet(project_id: int, fmt: Literal["pdf", "xlsx"] = 
         return xlsx_response(wb, f"{slug}-balance-sheet-{today}.xlsx")
 
     st = _styles()
-    story = [Paragraph(f"BUILDCORE — Balance Sheet: {bs['name']}", st["title"]),
+    story = [Paragraph(f"SITERA — Balance Sheet: {bs['name']}", st["title"]),
              Paragraph(f"Generated {today}", st["sub"])]
     story.append(styled_table([[k for k, _ in summary], [money(v) for _, v in summary]],
                               col_widths=[30 * mm] * 6, left_cols=0))
@@ -304,7 +304,7 @@ def export_change_orders(project_id: int, fmt: Literal["pdf", "xlsx"] = "pdf",
         wb = Workbook()
         ws = wb.active
         ws.title = "Summary"
-        ws["A1"] = f"BUILDCORE — Change Orders / Variations: {project.name}"
+        ws["A1"] = f"SITERA — Change Orders / Variations: {project.name}"
         ws["A1"].font = TITLE_FONT
         ws["A2"] = f"Generated {today} · Filter: {filters_note}"
         for i, (k, v) in enumerate(summary, start=4):
@@ -332,7 +332,7 @@ def export_change_orders(project_id: int, fmt: Literal["pdf", "xlsx"] = "pdf",
         return xlsx_response(wb, f"{slug}-change-orders-{today}.xlsx")
 
     st = _styles()
-    story = [Paragraph(f"BUILDCORE — Change Orders / Variations: {project.name}", st["title"]),
+    story = [Paragraph(f"SITERA — Change Orders / Variations: {project.name}", st["title"]),
              Paragraph(f"Generated {today} · Filter: {filters_note}", st["sub"])]
     story.append(styled_table([[k for k, _ in summary], [money(v) for _, v in summary]],
                               col_widths=[45 * mm] * 4, left_cols=0))
