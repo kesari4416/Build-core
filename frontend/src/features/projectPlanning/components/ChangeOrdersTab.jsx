@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, ChevronDown, ChevronUp, GitBranch, CalendarClock, FileDiff } from "lucide-react";
-import api, { formatApiErrorDetail } from "../../../api/client";
+import { Plus, ChevronDown, ChevronUp, GitBranch, CalendarClock, FileDiff, Paperclip, FileText } from "lucide-react";
+import api, { assetUrl, formatApiErrorDetail } from "../../../api/client";
 import { useAuth } from "../../../context/AuthContext";
 import { Button } from "../../../components/ui/button";
 import { ChangeOrderStatusBadge } from "./ChangeOrderStatusBadge";
@@ -45,6 +45,11 @@ const ChangeOrderRow = ({ co, canDecide, canContract, onAction, onRevise }) => {
           )}
         </div>
         <ChangeOrderStatusBadge status={co.status} />
+        {co.attachments?.length > 0 && (
+          <span className="flex items-center gap-0.5 text-[10px] text-slate-500 dark:text-slate-400" data-testid={`co-attach-count-${co.id}`}>
+            <Paperclip size={11} strokeWidth={2.5} /> {co.attachments.length}
+          </span>
+        )}
         {open ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
       </div>
       {open && (
@@ -53,6 +58,29 @@ const ChangeOrderRow = ({ co, canDecide, canContract, onAction, onRevise }) => {
           {co.status === "Approved" && (
             <div className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold" data-testid={`co-approved-info-${co.id}`}>
               Approved by {co.approved_by} on {co.approval_date?.slice(0, 10)} at {fmt(co.approved_cost)}
+            </div>
+          )}
+          {co.attachments?.length > 0 && (
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 font-semibold mb-1.5 flex items-center gap-1.5">
+                <Paperclip size={11} strokeWidth={2.5} /> Photos & Drawings · {co.attachments.length}
+              </div>
+              <div className="flex flex-wrap gap-2" data-testid={`co-attachments-${co.id}`}>
+                {co.attachments.map((a, i) => (
+                  <a key={i} href={assetUrl(a.url)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}
+                    data-testid={`co-attachment-${co.id}-${i}`} title={a.filename}>
+                    {/\.pdf$/i.test(a.url || "") ? (
+                      <div className="w-24 h-20 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center gap-1 hover:border-blue-400 transition-colors">
+                        <FileText size={20} className="text-red-500" />
+                        <span className="text-[9px] text-slate-500 dark:text-slate-400 px-1 truncate w-full text-center">{a.filename || "Document"}</span>
+                      </div>
+                    ) : (
+                      <img src={assetUrl(a.url)} alt={a.filename || "attachment"}
+                        className="w-24 h-20 object-cover border border-slate-200 dark:border-slate-700 hover:border-blue-400 transition-colors" />
+                    )}
+                  </a>
+                ))}
+              </div>
             </div>
           )}
           {co.revisions?.length > 0 && (
