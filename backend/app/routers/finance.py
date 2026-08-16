@@ -449,7 +449,15 @@ def delete_expense(expense_id: int, db: Session = Depends(get_db), user: User = 
 
 @router.get("/projects/{project_id}/finance/summary")
 def finance_summary(project_id: int, db: Session = Depends(get_db), user: User = Depends(STAFF)):
-    return project_finance(db, get_project_or_404(db, project_id))
+    from app.routers.change_orders import co_totals
+    project = get_project_or_404(db, project_id)
+    out = project_finance(db, project)
+    approved, pending, n = co_totals(db, project_id)
+    budget = f(project.budget or 0)
+    out.update({"original_budget": budget, "approved_variations": approved,
+                "revised_contract_value": round(budget + approved, 2),
+                "pending_co_value": pending, "approved_co_count": n})
+    return out
 
 
 DAY_VALUE = {"present": 1.0, "half_day": 0.5}
@@ -550,7 +558,14 @@ def project_balance_sheet(project_id: int, db: Session = Depends(get_db),
     entries.sort(key=lambda x: x["date"] or "", reverse=True)
     total_credit = round(sum(x["amount"] for x in entries if x["type"] == "credit"), 2)
     total_debit = round(sum(x["amount"] for x in entries if x["type"] == "debit"), 2)
+    from app.routers.change_orders import co_totals, approved_co_entries
+    approved, pending, n = co_totals(db, project_id)
+    entries = approved_co_entries(db, project_id) + entries
+    entries.sort(key=lambda x: x["date"] or "", reverse=True)
     return {"project_id": project_id, "name": project.name, "budget": row["budget"],
+            "original_budget": row["budget"], "approved_variations": approved,
+            "revised_contract_value": round(row["budget"] + approved, 2),
+            "pending_co_value": pending,
             "client_paid": row["credit"], "client_outstanding": outstanding,
             "released": row["breakdown"], "total_released": row["debit"],
             "balance": round(row["credit"] - row["debit"], 2),

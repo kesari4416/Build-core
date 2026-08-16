@@ -107,6 +107,24 @@ export default function ProjectFinancePage() {
           <ProjectFinanceSummaryCard label="Outstanding" value={fmtCr(s.outstanding_invoices)} icon={Receipt} accent="text-sky-600 dark:text-sky-400" testId="pf-outstanding" />
         </div>
       )}
+      {s && (
+        <div className="border border-amber-200 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-500/5 p-4 mb-8" data-testid="pf-variations-panel">
+          <div className="text-[11px] uppercase tracking-[0.2em] text-amber-700 dark:text-amber-400 font-semibold mb-3">Contract Value & Approved Variations (Change Orders)</div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            {[
+              ["Original Contract", fmt(s.original_budget), "pf-var-original", ""],
+              ["Approved Variations", `+${fmt(s.approved_variations)} (${s.approved_co_count})`, "pf-var-approved", "text-amber-700 dark:text-amber-400"],
+              ["Revised Contract Value", fmt(s.revised_contract_value), "pf-var-revised", "text-blue-700 dark:text-blue-400"],
+              ["Pending Client Review", fmt(s.pending_co_value), "pf-var-pending", "text-sky-700 dark:text-sky-400"],
+            ].map(([label, val, tid, cls]) => (
+              <div key={tid} data-testid={tid}>
+                <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 font-semibold">{label}</div>
+                <div className={`font-heading font-bold text-lg mt-1 ${cls || "text-slate-900 dark:text-slate-100"}`}>{val}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-3">
           <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Invoices & Payments</div>

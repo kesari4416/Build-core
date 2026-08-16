@@ -14,6 +14,7 @@ import { ProjectFormModal } from "../components/ProjectFormModal";
 import { DocumentsPanel } from "../components/DocumentsPanel";
 import { EmployeesTab } from "../components/EmployeesTab";
 import { ProjectBalanceSheetTab } from "../components/ProjectBalanceSheetTab";
+import { ChangeOrdersTab } from "../components/ChangeOrdersTab";
 import { useAuth } from "../../../context/AuthContext";
 
 const fmtBudget = (b) => (b == null ? "—" : `₹${(b / 10000000).toFixed(2)} Cr`);
@@ -95,10 +96,10 @@ export default function ProjectDetailPage() {
 
       <Tabs defaultValue="overview">
         <TabsList className="bg-transparent border-b border-slate-200 dark:border-slate-800 rounded-md w-full justify-start h-auto p-0 gap-1">
-          {["overview", "phases", "tracking", ...(user?.role !== "Client" && user?.role !== "Vendor" ? ["employees", "balancesheet"] : [])].map((t) => (
+          {["overview", "phases", "tracking", ...(user?.role !== "Vendor" ? ["variations"] : []), ...(user?.role !== "Client" && user?.role !== "Vendor" ? ["employees", "balancesheet"] : [])].map((t) => (
             <TabsTrigger key={t} value={t} data-testid={`tab-${t}`}
               className="rounded-md px-5 py-2.5 text-xs uppercase tracking-[0.15em] font-semibold data-[state=active]:bg-white dark:bg-slate-900 data-[state=active]:text-slate-900 dark:text-slate-100 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none text-slate-500 dark:text-slate-400 border-b-2 border-transparent">
-              {t === "balancesheet" ? "balance sheet" : t}
+              {t === "balancesheet" ? "balance sheet" : t === "variations" ? "change orders" : t}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -148,6 +149,12 @@ export default function ProjectDetailPage() {
             <DocumentsPanel projectId={projectId} canWrite={canWrite} isAdmin={isAdmin} />
           </div>
         </TabsContent>
+
+        {user?.role !== "Vendor" && (
+          <TabsContent value="variations" className="mt-6" data-testid="variations-tab-content">
+            <ChangeOrdersTab projectId={projectId} phases={project.phases} />
+          </TabsContent>
+        )}
 
         {user?.role !== "Client" && user?.role !== "Vendor" && (
           <>

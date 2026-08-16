@@ -40,7 +40,7 @@ export const ProjectBalanceSheetTab = ({ projectId }) => {
         </button>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card label="Total Budget" value={fmtCr(bs.budget)} icon={IndianRupee} accent="text-sky-600 dark:text-sky-400" testId="pbs-budget" />
+        <Card label="Total Budget" value={fmtCr(bs.budget)} sub={bs.approved_variations > 0 ? `Revised contract: ${fmt(bs.revised_contract_value)} (incl. variations +${fmt(bs.approved_variations)})` : undefined} icon={IndianRupee} accent="text-sky-600 dark:text-sky-400" testId="pbs-budget" />
         <Card label="Client Payment (In)" value={fmtCr(bs.client_paid)} sub={`Outstanding from client: ${fmt(bs.client_outstanding)}`} icon={TrendingUp} accent="text-emerald-600 dark:text-emerald-400" testId="pbs-client-paid" />
         <Card label="Payment Released (Out)" value={fmtCr(bs.total_released)} icon={TrendingDown} accent="text-red-600 dark:text-red-400" testId="pbs-released" />
         <Card label="Balance (In − Out)" value={fmtCr(bs.balance)} sub={`Budget remaining: ${fmtCr(bs.budget_remaining)}`} icon={Wallet} accent={bs.balance < 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"} testId="pbs-balance" />
@@ -82,8 +82,11 @@ export const ProjectBalanceSheetTab = ({ projectId }) => {
             {bs.entries.map((en, i) => (
               <tr key={i} className="border-b border-slate-100 dark:border-slate-800/60" data-testid={`pbs-tx-row-${i}`}>
                 <td className="px-4 py-2.5 text-xs text-slate-500 dark:text-slate-400">{en.date || "—"}</td>
-                <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{en.description}</td>
-                <td className="px-4 py-2.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">{en.type === "credit" ? fmt(en.amount) : ""}</td>
+                <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">
+                  {en.type === "variation" && <span className="border border-amber-300 dark:border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wide font-bold mr-2">Variation</span>}
+                  {en.description}
+                </td>
+                <td className="px-4 py-2.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">{en.type === "credit" ? fmt(en.amount) : en.type === "variation" ? <span className="text-amber-600 dark:text-amber-400">+{fmt(en.amount)}</span> : ""}</td>
                 <td className="px-4 py-2.5 text-right font-semibold text-red-600 dark:text-red-400">{en.type === "debit" ? fmt(en.amount) : ""}</td>
               </tr>
             ))}

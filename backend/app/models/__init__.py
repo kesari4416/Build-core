@@ -157,3 +157,50 @@ class ProjectDocument(Base):
 
     project = relationship("Project")
     uploader = relationship("User", foreign_keys=[uploaded_by])
+
+
+class ProjectChangeOrder(Base):
+    __tablename__ = "project_change_orders"
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    phase_id = Column(Integer, ForeignKey("phases.id"), nullable=True, index=True)
+    co_number = Column(String, nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String, nullable=False, default="Client Modification")
+    requested_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    date_requested = Column(Date, nullable=True)
+    estimated_cost = Column(Numeric(14, 2), nullable=False, default=0)
+    estimated_time_impact_days = Column(Integer, default=0)
+    status = Column(String, nullable=False, default="Draft")
+    approved_cost = Column(Numeric(14, 2), nullable=True)
+    approval_date = Column(DateTime(timezone=True), nullable=True)
+    approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    attachments = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+    revisions = relationship("ProjectChangeOrderRevision", cascade="all, delete-orphan",
+                             order_by="ProjectChangeOrderRevision.version")
+    events = relationship("ProjectChangeOrderEvent", cascade="all, delete-orphan",
+                          order_by="ProjectChangeOrderEvent.created_at")
+
+
+class ProjectChangeOrderRevision(Base):
+    __tablename__ = "project_change_order_revisions"
+    id = Column(Integer, primary_key=True)
+    change_order_id = Column(Integer, ForeignKey("project_change_orders.id"), nullable=False, index=True)
+    version = Column(Integer, nullable=False)
+    estimated_cost = Column(Numeric(14, 2), nullable=False)
+    estimated_time_impact_days = Column(Integer, default=0)
+    note = Column(Text, nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
+class ProjectChangeOrderEvent(Base):
+    __tablename__ = "project_change_order_events"
+    id = Column(Integer, primary_key=True)
+    change_order_id = Column(Integer, ForeignKey("project_change_orders.id"), nullable=False, index=True)
+    action = Column(String, nullable=False)
+    comment = Column(Text, nullable=True)
+    actor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
