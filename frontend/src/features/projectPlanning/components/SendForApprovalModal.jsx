@@ -71,7 +71,9 @@ export const SendForApprovalModal = ({ open, onOpenChange, estimate }) => {
               {result.email_sent ? <CheckCircle2 size={16} className="mt-0.5 shrink-0" /> : <AlertTriangle size={16} className="mt-0.5 shrink-0" />}
               {result.email_sent
                 ? <span>Approval request sent to <b>{result.client_email}</b>. Status is now "Awaiting client response".</span>
-                : <span>Email failed to send — copy the links below and share them with the client directly.</span>}
+                : <span>Email failed to send — copy the links below and share them with the client directly.
+                    {result.email_error && <span className="block mt-1 text-[11px] opacity-80" data-testid="email-error-detail">Reason: {String(result.email_error).slice(0, 180)}</span>}
+                  </span>}
             </div>
             {[["Approve", result.approve_url], ["Reject", result.reject_url]].map(([label, url]) => (
               <div key={label} className="flex items-center gap-2">

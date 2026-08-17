@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from email.mime.text import MIMEText
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
@@ -165,6 +165,8 @@ def send_approval_email(estimate, approve_url, reject_url):
     port = int(os.environ.get("SMTP_PORT", "465"))
     sender = os.environ.get("SMTP_EMAIL")
     password = os.environ.get("SMTP_PASSWORD")
+    if not (host and sender and password):
+        raise RuntimeError("SMTP not configured — set SMTP_HOST, SMTP_PORT, SMTP_EMAIL, SMTP_PASSWORD in backend/.env")
     drawing = ""
     if estimate.drawing_url:
         base = os.environ.get("FRONTEND_URL", "")
@@ -205,8 +207,8 @@ class SendApprovalIn(BaseModel):
 
 
 @router.post("/estimates/{estimate_id}/send-approval")
-def send_for_approval(estimate_id: int, body: SendApprovalIn, db: Session = Depends(get_db),
-                      user: User = Depends(STAFF)):
+def send_for_approval(estimate_id: int, body: SendApprovalIn, request: Request,
+                      db: Session = Depends(get_db), user: User = Depends(STAFF)):
     e = get_estimate_or_404(db, estimate_id)
     if e.linked_project_id:
         raise HTTPException(status_code=422, detail="A project has already been created from this estimate")
@@ -220,14 +222,20 @@ def send_for_approval(estimate_id: int, body: SendApprovalIn, db: Session = Depe
     e.approved_at = None
     e.rejected_at = None
     e.rejection_reason = None
-    base = os.environ.get("FRONTEND_URL", "").rstrip("/")
+    base = (os.environ.get("FRONTEND_URL")
+            or request.headers.get("origin")
+            or (f"{request.headers.get('x-forwarded-proto', request.url.scheme)}://{request.headers.get('x-forwarded-host') or request.headers.get('host', '')}")
+            ).rstrip("/")
     approve_url = f"{base}/estimate-approval/{e.id}/{token}?action=approve"
     reject_url = f"{base}/estimate-approval/{e.id}/{token}?action=reject"
     email_sent, email_error = True, None
     try:
         send_approval_email(e, approve_url, reject_url)
     except Exception as ex:
-        email_sent, email_error = False, str(ex)
+        email_sent = False
+        email_error = str(ex)
+        if "535" in email_error or "BadCredentials" in email_error:
+            email_error = "Email login rejected by the mail server (check SMTP_EMAIL / SMTP_PASSWORD — Gmail requires an App Password with 2-Step Verification)"
     log_event(db, e.id, "sent for approval" + ("" if email_sent else " (email failed — link shared manually)"),
               user.name, f"to {body.client_email}")
     db.commit()
