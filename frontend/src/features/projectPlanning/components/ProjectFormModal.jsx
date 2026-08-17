@@ -12,7 +12,7 @@ import { useCreateProject, useUpdateProject, useClients, useEngineers } from "..
 const STATUSES = ["Planning", "Ongoing", "OnHold", "Completed", "Cancelled"];
 const empty = { name: "", client_id: "", site_engineer_id: "", location: "", budget: "", start_date_planned: "", end_date_planned: "", status: "Planning" };
 
-export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId }) => {
+export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId, fromEstimate, onCreated }) => {
   const [form, setForm] = useState(empty);
   const [errors, setErrors] = useState({});
   const [detecting, setDetecting] = useState(false);
@@ -53,9 +53,14 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId 
         start_date_planned: project.start_date_planned || "",
         end_date_planned: project.end_date_planned || "",
         status: project.status || "Planning",
-      } : { ...empty, client_id: defaultClientId ? String(defaultClientId) : "" });
+      } : {
+        ...empty,
+        client_id: defaultClientId ? String(defaultClientId) : "",
+        name: fromEstimate?.project_name || "",
+        budget: fromEstimate?.total_amount ?? "",
+      });
     }
-  }, [open, project, defaultClientId]);
+  }, [open, project, defaultClientId, fromEstimate]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -88,8 +93,9 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId 
         await update.mutateAsync({ id: project.id, data: payload });
         toast.success("Project updated");
       } else {
-        await create.mutateAsync(payload);
-        toast.success("Project created");
+        const created = await create.mutateAsync(payload);
+        if (fromEstimate && onCreated) onCreated(created);
+        else toast.success("Project created");
       }
       onOpenChange(false);
     } catch (err) {
@@ -105,6 +111,11 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId 
             {project ? "Edit Project" : "New Project"}
           </DialogTitle>
         </DialogHeader>
+        {!project && fromEstimate && (
+          <div className="border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-300" data-testid="from-estimate-banner">
+            These details were auto-filled from <b>Estimate #{fromEstimate.id}</b> ({fromEstimate.category}{fromEstimate.phase ? ` · ${fromEstimate.phase}` : ""}{fromEstimate.client_email ? ` · client: ${fromEstimate.client_email}` : ""}). Please verify before creating the project.
+          </div>
+        )}
         <form onSubmit={submit} className="space-y-4">
           <div>
             <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Project Name *</Label>
@@ -181,7 +192,7 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId 
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300 dark:border-slate-700" data-testid="project-form-cancel">Cancel</Button>
             <Button type="submit" disabled={create.isPending || update.isPending} data-testid="project-form-submit" className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">
-              {project ? "Save Changes" : "Create Project"}
+              {project ? "Save Changes" : fromEstimate ? "Confirm & Create Project" : "Create Project"}
             </Button>
           </div>
         </form>

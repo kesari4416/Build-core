@@ -1,10 +1,14 @@
 import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, FileText, Trash2, Calculator } from "lucide-react";
+import { Plus, FileText, Trash2, Calculator, Send, Building2 } from "lucide-react";
 import api, { assetUrl, formatApiErrorDetail } from "../../../api/client";
 import { useAuth } from "../../../context/AuthContext";
 import { EstimateFormModal } from "../components/EstimateFormModal";
+import { SendForApprovalModal } from "../components/SendForApprovalModal";
+import { ApprovalActionButtons } from "../components/ApprovalActionButtons";
+import { ProjectFormModal } from "../components/ProjectFormModal";
 
 const fmt = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 const STATUS_COLOR = {
@@ -13,11 +17,25 @@ const STATUS_COLOR = {
   "Pending Approval": "border-amber-300 dark:border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10",
 };
 
+const ApprovalBadge = ({ e }) => {
+  if (e.approval_state === "approved")
+    return <span data-testid={`approval-badge-${e.id}`} className="inline-block border border-emerald-300 dark:border-emerald-500/40 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] font-bold">Approved</span>;
+  if (e.approval_state === "rejected")
+    return <span data-testid={`approval-badge-${e.id}`} title={e.rejection_reason || ""} className="inline-block border border-red-300 dark:border-red-500/40 text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] font-bold cursor-help">Rejected{e.rejection_reason ? " *" : ""}</span>;
+  if (e.awaiting_response)
+    return <span data-testid={`approval-badge-${e.id}`} className="inline-block border border-sky-300 dark:border-sky-500/40 text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] font-bold">Awaiting client response</span>;
+  return <span data-testid={`approval-badge-${e.id}`} className="inline-block border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] font-bold">Not sent</span>;
+};
+
 export default function EstimatesPage() {
   const [modal, setModal] = useState(false);
+  const [sendModal, setSendModal] = useState({ open: false, estimate: null });
+  const [projectModal, setProjectModal] = useState({ open: false, estimate: null });
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const canDelete = ["Admin", "Accountant"].includes(user?.role);
+  const isAdmin = user?.role === "Admin";
 
   const { data: estimates } = useQuery({ queryKey: ["estimates"], queryFn: () => api.get("/estimates").then((r) => r.data) });
   const { data: categories } = useQuery({ queryKey: ["estimateCategories"], queryFn: () => api.get("/estimate-categories").then((r) => r.data) });
@@ -31,6 +49,17 @@ export default function EstimatesPage() {
       qc.invalidateQueries({ queryKey: ["estimates"] });
     } catch (err) {
       toast.error(formatApiErrorDetail(err.response?.data?.detail) || err.message);
+    }
+  };
+
+  const linkProject = async (estimate, project) => {
+    try {
+      await api.post(`/estimates/${estimate.id}/link-project`, { project_id: project.id });
+      toast.success(`Project created from Estimate #${estimate.id}`);
+      qc.invalidateQueries({ queryKey: ["estimates"] });
+      navigate(`/admin/projects/${project.id}`);
+    } catch (e) {
+      toast.error(formatApiErrorDetail(e.response?.data?.detail) || e.message);
     }
   };
 
@@ -56,7 +85,8 @@ export default function EstimatesPage() {
               <th className="px-4 py-3">Project Name</th><th className="px-4 py-3">Phase</th>
               <th className="px-4 py-3">Category</th><th className="px-4 py-3">Drawing</th>
               <th className="px-4 py-3 text-right">Total Amount</th><th className="px-4 py-3 text-center">Current Status</th>
-              <th className="px-4 py-3 text-right">Created</th>
+              <th className="px-4 py-3 text-center">Approval</th>
+              <th className="px-4 py-3">Actions</th>
               {canDelete && <th className="px-4 py-3" />}
             </tr>
           </thead>
@@ -86,7 +116,33 @@ export default function EstimatesPage() {
                     {e.current_status}
                   </span>
                 </td>
-                <td className="px-4 py-2.5 text-right text-xs text-slate-500 dark:text-slate-400">{e.created_at?.slice(0, 10)}</td>
+                <td className="px-4 py-2.5 text-center">
+                  <ApprovalBadge e={e} />
+                </td>
+                <td className="px-4 py-2.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {!e.linked_project_id && (
+                      <button data-testid={`send-approval-${e.id}`} onClick={() => setSendModal({ open: true, estimate: e })}
+                        title={e.sent_at ? "Re-send (issues a new link, resets to pending)" : "Send for Approval"}
+                        className="inline-flex items-center gap-1 border border-blue-400/60 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 px-2 py-1 text-[10px] uppercase tracking-[0.1em] font-bold transition-colors">
+                        <Send size={11} strokeWidth={2.5} /> {e.sent_at ? "Re-send" : "Send for Approval"}
+                      </button>
+                    )}
+                    {!e.linked_project_id && e.approval_state !== "approved" && <ApprovalActionButtons estimate={e} onApproved={(est) => setProjectModal({ open: true, estimate: est })} />}
+                    {e.approval_state === "approved" && !e.linked_project_id && isAdmin && (
+                      <button data-testid={`create-project-from-estimate-${e.id}`} onClick={() => setProjectModal({ open: true, estimate: e })}
+                        className="inline-flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 text-[10px] uppercase tracking-[0.1em] font-bold transition-colors">
+                        <Building2 size={11} strokeWidth={2.5} /> Create Project
+                      </button>
+                    )}
+                    {e.linked_project_id && (
+                      <Link to={`/admin/projects/${e.linked_project_id}`} data-testid={`linked-project-${e.id}`}
+                        className="inline-flex items-center gap-1 border border-emerald-400/60 text-emerald-600 dark:text-emerald-400 px-2 py-1 text-[10px] uppercase tracking-[0.1em] font-bold hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors">
+                        <Building2 size={11} strokeWidth={2.5} /> Project #{e.linked_project_id}
+                      </Link>
+                    )}
+                  </div>
+                </td>
                 {canDelete && (
                   <td className="px-4 py-2.5 text-right">
                     <button data-testid={`delete-estimate-${e.id}`} title="Delete" onClick={() => remove(e)}
@@ -96,7 +152,7 @@ export default function EstimatesPage() {
               </tr>
             ))}
             {estimates && estimates.length === 0 && (
-              <tr><td colSpan={canDelete ? 8 : 7} className="px-4 py-12 text-center text-slate-500 dark:text-slate-400" data-testid="estimates-empty">
+              <tr><td colSpan={canDelete ? 9 : 8} className="px-4 py-12 text-center text-slate-500 dark:text-slate-400" data-testid="estimates-empty">
                 No estimates yet — click "Create Estimate" to add your first one.
               </td></tr>
             )}
@@ -105,6 +161,9 @@ export default function EstimatesPage() {
       </div>
 
       <EstimateFormModal open={modal} onOpenChange={setModal} categories={categories} statuses={statuses} />
+      <SendForApprovalModal open={sendModal.open} onOpenChange={(o) => setSendModal({ open: o, estimate: o ? sendModal.estimate : null })} estimate={sendModal.estimate} />
+      <ProjectFormModal open={projectModal.open} onOpenChange={(o) => setProjectModal({ open: o, estimate: o ? projectModal.estimate : null })}
+        fromEstimate={projectModal.estimate} onCreated={(project) => { setProjectModal({ open: false, estimate: null }); linkProject(projectModal.estimate, project); }} />
     </div>
   );
 }

@@ -156,6 +156,13 @@
   - Frontend: /admin/estimates page + sidebar nav (Calculator icon); EstimatesPage list (drawing thumbnail or red PDF link, status badges, delete); EstimateFormModal (drawing upload w/ preview, amount validation error, cancel); REUSABLE InlineAddSelect component ('+ Add New' inline create+auto-select, used for both category & status — correct setQueryData pattern)
   - Regression file: /app/backend/tests/test_iter21_estimates.py
 
+- Estimate Approval -> Project Creation workflow (2026-06, TESTED iter_22: backend 14/14 + 22/22 regression, frontend 20/20):
+  - Estimate schema additions: approval_state (pending/approved/rejected, system-controlled), client_email, sent_at/approved_at/rejected_at, rejection_reason, linked_project_id FK, approval_token (secrets.token_urlsafe(32), compare_digest), token_expires_at (14d), token_used; EstimateApprovalEvent audit table (action, actor, detail, at)
+  - estimates.py: POST /estimates/{id}/send-approval (SMTP email via env SMTP_HOST/PORT/EMAIL/PASSWORD, graceful fallback returns approve_url/reject_url + email_sent flag); public no-auth GET/POST /public/estimate-approval/{id}/{token} (403 wrong, 410 used/expired); POST /estimates/{id}/decision (manual override, STAFF); POST /estimates/{id}/link-project (Admin only, must be approved & unlinked); GET /estimates/{id}/events; re-send resets state + new token invalidates old
+  - Frontend: EstimatesPage approval badges + actions (Send/Re-send, reusable ApprovalActionButtons, Create Project button when approved+unlinked, linked Project chip); SendForApprovalModal (email + copyable links fallback); public EstimateApprovalPage /estimate-approval/:id/:token (Sitera-branded, reject reason prompt, single-use); ProjectFormModal fromEstimate prefill (name+budget) + verification banner + "Confirm & Create Project" + onCreated -> link + navigate
+  - KNOWN ISSUE: SMTP creds (sales@sparkcurv.com / app password) REJECTED by Google (535 BadCredentials) — email sending fails gracefully; user asked to provide corrected Gmail App Password (needs 2-Step Verification on the Workspace account). Update backend/.env SMTP_PASSWORD when received
+  - Regression file: /app/backend/tests/test_iter22_estimate_approval.py
+
 ## Backlog / Next
 - RECURRING ENV ISSUE (count ~7): container resets wipe PostgreSQL binaries+data. Recovery: `sudo bash /app/scripts/restore_postgres.sh` (reinstalls PG, recreates DB, reseeds, restarts backend; create_all rebuilds ALL tables incl. income_entries/extended expense_entries automatically). 2026-06-16: user-reported "Error in Finance module add income/expense" was this — verified post-restore that income credits + expense debits flow to project & org balance sheets.
 - P1: Milestones UI (backend ready); edit progress updates

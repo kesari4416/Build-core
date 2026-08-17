@@ -1,13 +1,18 @@
+import os
+import secrets
+import smtplib
+from datetime import datetime, timedelta, timezone
+from email.mime.text import MIMEText
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
 from app.core.security import require_roles
 from app.database import get_db
-from app.models import User
-from app.models.finance import Estimate, EstimateCategory, EstimateStatus
+from app.models import Project, User
+from app.models.finance import Estimate, EstimateApprovalEvent, EstimateCategory, EstimateStatus
 
 router = APIRouter(tags=["estimates"])
 STAFF = require_roles("Admin", "Accountant", "SiteEngineer", "ProcurementOfficer")
@@ -81,12 +86,21 @@ class EstimateCreate(BaseModel):
     status_id: int
 
 
-def estimate_out(e):
+def estimate_out(e, events=None):
     return {"id": e.id, "project_name": e.project_name, "phase": e.phase,
             "category_id": e.category_id, "category": e.category.name if e.category else None,
             "drawing_url": e.drawing_url, "drawing_filename": e.drawing_filename,
             "total_amount": float(e.total_amount),
             "status_id": e.status_id, "current_status": e.status.name if e.status else None,
+            "approval_state": e.approval_state or "pending",
+            "client_email": e.client_email,
+            "sent_at": e.sent_at.isoformat() if e.sent_at else None,
+            "approved_at": e.approved_at.isoformat() if e.approved_at else None,
+            "rejected_at": e.rejected_at.isoformat() if e.rejected_at else None,
+            "rejection_reason": e.rejection_reason,
+            "linked_project_id": e.linked_project_id,
+            "awaiting_response": bool(e.sent_at and (e.approval_state or "pending") == "pending"),
+            "events": events or [],
             "created_at": e.created_at.isoformat() if e.created_at else None,
             "updated_at": e.updated_at.isoformat() if e.updated_at else None}
 
@@ -120,5 +134,204 @@ def delete_estimate(estimate_id: int, db: Session = Depends(get_db),
     e = db.get(Estimate, estimate_id)
     if not e:
         raise HTTPException(status_code=404, detail="Estimate not found")
+    db.query(EstimateApprovalEvent).filter(EstimateApprovalEvent.estimate_id == estimate_id).delete()
     db.delete(e)
     db.commit()
+
+
+# ---------- Approval workflow ----------
+
+def log_event(db, estimate_id, action, actor, detail=None):
+    db.add(EstimateApprovalEvent(estimate_id=estimate_id, action=action, actor=actor, detail=detail))
+
+
+def now_utc():
+    return datetime.now(timezone.utc)
+
+
+def get_estimate_or_404(db, estimate_id):
+    e = db.get(Estimate, estimate_id)
+    if not e:
+        raise HTTPException(status_code=404, detail="Estimate not found")
+    return e
+
+
+def fmt_inr(n):
+    return f"Rs. {float(n):,.2f}"
+
+
+def send_approval_email(estimate, approve_url, reject_url):
+    host = os.environ.get("SMTP_HOST")
+    port = int(os.environ.get("SMTP_PORT", "465"))
+    sender = os.environ.get("SMTP_EMAIL")
+    password = os.environ.get("SMTP_PASSWORD")
+    drawing = ""
+    if estimate.drawing_url:
+        base = os.environ.get("FRONTEND_URL", "")
+        drawing = f'<p><b>Drawing:</b> <a href="{base}/api/uploads/{estimate.drawing_url.split("/")[-1]}">{estimate.drawing_filename or "View drawing"}</a></p>'
+    html = f"""
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border:1px solid #e2e8f0">
+      <div style="background:#0f172a;color:#fff;padding:18px 24px">
+        <h2 style="margin:0">SITERA <span style="color:#f59e0b">— Estimate Approval Request</span></h2>
+      </div>
+      <div style="padding:24px">
+        <p>You have received a project estimate for review:</p>
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <tr><td style="padding:6px 0;color:#64748b">Project Name</td><td style="padding:6px 0"><b>{estimate.project_name}</b></td></tr>
+          <tr><td style="padding:6px 0;color:#64748b">Phase</td><td style="padding:6px 0">{estimate.phase or "—"}</td></tr>
+          <tr><td style="padding:6px 0;color:#64748b">Category</td><td style="padding:6px 0">{estimate.category.name if estimate.category else "—"}</td></tr>
+          <tr><td style="padding:6px 0;color:#64748b">Status</td><td style="padding:6px 0">{estimate.status.name if estimate.status else "—"}</td></tr>
+          <tr><td style="padding:6px 0;color:#64748b">Total Amount</td><td style="padding:6px 0"><b style="font-size:16px">{fmt_inr(estimate.total_amount)}</b></td></tr>
+        </table>
+        {drawing}
+        <div style="margin:28px 0;text-align:center">
+          <a href="{approve_url}" style="background:#059669;color:#fff;padding:12px 28px;text-decoration:none;font-weight:bold;margin-right:12px">APPROVE</a>
+          <a href="{reject_url}" style="background:#dc2626;color:#fff;padding:12px 28px;text-decoration:none;font-weight:bold">REJECT</a>
+        </div>
+        <p style="color:#94a3b8;font-size:12px">These links are single-use and expire in 14 days. No login required.</p>
+      </div>
+    </div>"""
+    msg = MIMEText(html, "html")
+    msg["Subject"] = f"Estimate approval request — {estimate.project_name} ({fmt_inr(estimate.total_amount)})"
+    msg["From"] = f"Sitera <{sender}>"
+    msg["To"] = estimate.client_email
+    with smtplib.SMTP_SSL(host, port, timeout=20) as server:
+        server.login(sender, password)
+        server.sendmail(sender, [estimate.client_email], msg.as_string())
+
+
+class SendApprovalIn(BaseModel):
+    client_email: EmailStr
+
+
+@router.post("/estimates/{estimate_id}/send-approval")
+def send_for_approval(estimate_id: int, body: SendApprovalIn, db: Session = Depends(get_db),
+                      user: User = Depends(STAFF)):
+    e = get_estimate_or_404(db, estimate_id)
+    if e.linked_project_id:
+        raise HTTPException(status_code=422, detail="A project has already been created from this estimate")
+    token = secrets.token_urlsafe(32)
+    e.client_email = body.client_email
+    e.approval_token = token
+    e.token_expires_at = now_utc() + timedelta(days=14)
+    e.token_used = False
+    e.approval_state = "pending"
+    e.sent_at = now_utc()
+    e.approved_at = None
+    e.rejected_at = None
+    e.rejection_reason = None
+    base = os.environ.get("FRONTEND_URL", "").rstrip("/")
+    approve_url = f"{base}/estimate-approval/{e.id}/{token}?action=approve"
+    reject_url = f"{base}/estimate-approval/{e.id}/{token}?action=reject"
+    email_sent, email_error = True, None
+    try:
+        send_approval_email(e, approve_url, reject_url)
+    except Exception as ex:
+        email_sent, email_error = False, str(ex)
+    log_event(db, e.id, "sent for approval" + ("" if email_sent else " (email failed — link shared manually)"),
+              user.name, f"to {body.client_email}")
+    db.commit()
+    db.refresh(e)
+    return {**estimate_out(e), "email_sent": email_sent, "email_error": email_error,
+            "approve_url": approve_url, "reject_url": reject_url}
+
+
+def check_token(e, token):
+    if not e.approval_token or not secrets.compare_digest(e.approval_token, token):
+        raise HTTPException(status_code=403, detail="Invalid approval link")
+    if e.token_used:
+        raise HTTPException(status_code=410, detail="This approval link has already been used")
+    if e.token_expires_at and now_utc() > e.token_expires_at:
+        raise HTTPException(status_code=410, detail="This approval link has expired")
+
+
+@router.get("/public/estimate-approval/{estimate_id}/{token}")
+def public_estimate_view(estimate_id: int, token: str, db: Session = Depends(get_db)):
+    e = get_estimate_or_404(db, estimate_id)
+    check_token(e, token)
+    return {"id": e.id, "project_name": e.project_name, "phase": e.phase,
+            "category": e.category.name if e.category else None,
+            "current_status": e.status.name if e.status else None,
+            "total_amount": float(e.total_amount),
+            "drawing_url": e.drawing_url, "drawing_filename": e.drawing_filename,
+            "approval_state": e.approval_state}
+
+
+class PublicDecisionIn(BaseModel):
+    action: str
+    reason: Optional[str] = None
+
+
+def apply_decision(db, e, action, actor, reason=None):
+    if action == "approve":
+        e.approval_state = "approved"
+        e.approved_at = now_utc()
+        e.rejected_at = None
+        e.rejection_reason = None
+        log_event(db, e.id, "approved", actor)
+    else:
+        e.approval_state = "rejected"
+        e.rejected_at = now_utc()
+        e.approved_at = None
+        e.rejection_reason = (reason or "").strip() or None
+        log_event(db, e.id, "rejected", actor, e.rejection_reason)
+
+
+@router.post("/public/estimate-approval/{estimate_id}/{token}")
+def public_estimate_decision(estimate_id: int, token: str, body: PublicDecisionIn,
+                             db: Session = Depends(get_db)):
+    if body.action not in ("approve", "reject"):
+        raise HTTPException(status_code=422, detail="action must be approve or reject")
+    e = get_estimate_or_404(db, estimate_id)
+    check_token(e, token)
+    e.token_used = True
+    apply_decision(db, e, body.action, f"Client via email link ({e.client_email})", body.reason)
+    db.commit()
+    return {"approval_state": e.approval_state, "project_name": e.project_name,
+            "rejection_reason": e.rejection_reason}
+
+
+@router.post("/estimates/{estimate_id}/decision")
+def manual_decision(estimate_id: int, body: PublicDecisionIn, db: Session = Depends(get_db),
+                    user: User = Depends(STAFF)):
+    if body.action not in ("approve", "reject"):
+        raise HTTPException(status_code=422, detail="action must be approve or reject")
+    e = get_estimate_or_404(db, estimate_id)
+    if e.linked_project_id:
+        raise HTTPException(status_code=422, detail="A project has already been created from this estimate")
+    apply_decision(db, e, body.action, f"{user.name} (manual override)", body.reason)
+    e.token_used = True
+    db.commit()
+    db.refresh(e)
+    return estimate_out(e)
+
+
+class LinkProjectIn(BaseModel):
+    project_id: int
+
+
+@router.post("/estimates/{estimate_id}/link-project")
+def link_project(estimate_id: int, body: LinkProjectIn, db: Session = Depends(get_db),
+                 user: User = Depends(require_roles("Admin"))):
+    e = get_estimate_or_404(db, estimate_id)
+    if e.approval_state != "approved":
+        raise HTTPException(status_code=422, detail="Estimate must be approved before creating a project")
+    if e.linked_project_id:
+        raise HTTPException(status_code=422, detail="Estimate already linked to a project")
+    if not db.get(Project, body.project_id):
+        raise HTTPException(status_code=404, detail="Project not found")
+    e.linked_project_id = body.project_id
+    log_event(db, e.id, "project created", user.name, f"project #{body.project_id}")
+    db.commit()
+    db.refresh(e)
+    return estimate_out(e)
+
+
+@router.get("/estimates/{estimate_id}/events")
+def estimate_events(estimate_id: int, db: Session = Depends(get_db), user: User = Depends(STAFF)):
+    get_estimate_or_404(db, estimate_id)
+    return [{"action": ev.action, "actor": ev.actor, "detail": ev.detail,
+             "at": ev.created_at.isoformat() if ev.created_at else None}
+            for ev in db.query(EstimateApprovalEvent)
+            .filter(EstimateApprovalEvent.estimate_id == estimate_id)
+            .order_by(EstimateApprovalEvent.created_at.desc()).all()]

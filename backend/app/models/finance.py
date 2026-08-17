@@ -108,11 +108,31 @@ class Estimate(Base):
     drawing_filename = Column(String, nullable=True)
     total_amount = Column(Numeric(14, 2), nullable=False)
     status_id = Column(Integer, ForeignKey("estimate_statuses.id"), nullable=False)
+    approval_state = Column(String, nullable=False, default="pending")
+    client_email = Column(String, nullable=True)
+    sent_at = Column(DateTime(timezone=True), nullable=True)
+    approved_at = Column(DateTime(timezone=True), nullable=True)
+    rejected_at = Column(DateTime(timezone=True), nullable=True)
+    rejection_reason = Column(Text, nullable=True)
+    linked_project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
+    approval_token = Column(String, nullable=True)
+    token_expires_at = Column(DateTime(timezone=True), nullable=True)
+    token_used = Column(Boolean, default=False)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utcnow)
     updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
     category = relationship("EstimateCategory")
     status = relationship("EstimateStatus")
+
+
+class EstimateApprovalEvent(Base):
+    __tablename__ = "estimate_approval_events"
+    id = Column(Integer, primary_key=True)
+    estimate_id = Column(Integer, ForeignKey("estimates.id"), nullable=False, index=True)
+    action = Column(String, nullable=False)
+    actor = Column(String, nullable=False)
+    detail = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
 
 
 class IncomeEntry(Base):

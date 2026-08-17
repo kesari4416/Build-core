@@ -26,6 +26,7 @@ import VendorDashboardPage from "./features/projectPlanning/pages/VendorDashboar
 import VendorBidPackagePage from "./features/projectPlanning/pages/VendorBidPackagePage";
 import SiteEngineerPortalPage from "./features/projectPlanning/pages/SiteEngineerPortalPage";
 import EstimatesPage from "./features/projectPlanning/pages/EstimatesPage";
+import EstimateApprovalPage from "./features/projectPlanning/pages/EstimateApprovalPage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -57,6 +58,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/estimate-approval/:id/:token" element={<EstimateApprovalPage />} />
             <Route path="/admin" element={<ProtectedRoute><AdminHome /></ProtectedRoute>} />
             <Route path="/admin/projects" element={<ProtectedRoute><ProjectListPage /></ProtectedRoute>} />
             <Route path="/admin/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
