@@ -7,7 +7,7 @@ import { Label } from "../../../components/ui/label";
 import { Button } from "../../../components/ui/button";
 import api, { formatApiErrorDetail } from "../../../api/client";
 
-const empty = { name: "", company: "", email: "", phone: "", address: "" };
+const empty = { name: "", email: "", phone: "", address: "" };
 
 export const ClientFormModal = ({ open, onOpenChange, client }) => {
   const qc = useQueryClient();
@@ -17,7 +17,7 @@ export const ClientFormModal = ({ open, onOpenChange, client }) => {
   useEffect(() => {
     if (open)
       setForm(client ? {
-        name: client.name || "", company: client.company || "", email: client.email || "",
+        name: client.name || "", email: client.email || "",
         phone: client.phone || "", address: client.address || "",
       } : empty);
   }, [open, client]);
@@ -57,18 +57,12 @@ export const ClientFormModal = ({ open, onOpenChange, client }) => {
             <Input data-testid="client-name-input" value={form.name} onChange={(e) => set("name", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
           </div>
           <div>
-            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Company</Label>
-            <Input data-testid="client-company-input" value={form.company} onChange={(e) => set("company", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
+            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Phone No</Label>
+            <Input data-testid="client-phone-input" value={form.phone} onChange={(e) => set("phone", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Email</Label>
-              <Input data-testid="client-email-input" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
-            </div>
-            <div>
-              <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Phone</Label>
-              <Input data-testid="client-phone-input" value={form.phone} onChange={(e) => set("phone", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
-            </div>
+          <div>
+            <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Email</Label>
+            <Input data-testid="client-email-input" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
           </div>
           <div>
             <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Address</Label>

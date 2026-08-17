@@ -148,6 +148,8 @@
 
 - Running Balance column in project Balance Sheet "All Transactions" (2026-06, SELF-TESTED): backend project_balance_sheet computes chronological running balance per entry (credit +, debit −; variation rows balance=None shown as —); top row balance == total_credit − total_debit (verified with test credit ₹3L + debit ₹50k, math validated programmatically, test entries removed). Frontend ProjectBalanceSheetTab: new Balance column (bs-balance-{i}), red when negative.
 
+- Client form simplified (2026-06, SELF-TESTED): ClientFormModal now has only Name*, Phone No, Email, Address (Company field removed; backend still accepts/stores company for old records). Verified create flow E2E via UI.
+
 ## Backlog / Next
 - RECURRING ENV ISSUE (count ~7): container resets wipe PostgreSQL binaries+data. Recovery: `sudo bash /app/scripts/restore_postgres.sh` (reinstalls PG, recreates DB, reseeds, restarts backend; create_all rebuilds ALL tables incl. income_entries/extended expense_entries automatically). 2026-06-16: user-reported "Error in Finance module add income/expense" was this — verified post-restore that income credits + expense debits flow to project & org balance sheets.
 - P1: Milestones UI (backend ready); edit progress updates
