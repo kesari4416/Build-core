@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Pencil, UserX, HardHat, IndianRupee } from "lucide-react";
+import { Plus, Pencil, UserX, HardHat, IndianRupee, Banknote } from "lucide-react";
 import api, { formatApiErrorDetail } from "../../../api/client";
 import { useAuth } from "../../../context/AuthContext";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { EmployeeFormModal } from "./EmployeeFormModal";
+import { LabourPaymentModal } from "./LabourPaymentModal";
 import { DailyAttendanceCard } from "./DailyAttendanceCard";
 import { AttendanceMarkGrid } from "./AttendanceMarkGrid";
 
@@ -29,6 +30,7 @@ export const EmployeesTab = ({ projectId }) => {
   const { user } = useAuth();
   const canManageWage = ["Admin", "Accountant"].includes(user?.role);
   const [modal, setModal] = useState({ open: false, employee: null });
+  const [payModal, setPayModal] = useState({ open: false, row: null });
   const [range, setRange] = useState({ from: monthStart(), to: todayIso() });
   const dates = lastNDays(7);
   const today = todayIso();
@@ -158,7 +160,9 @@ export const EmployeesTab = ({ projectId }) => {
             <thead>
               <tr className="text-left text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                 <th className="px-4 py-3">Employee</th><th className="px-4 py-3 text-center">Days Present</th>
-                <th className="px-4 py-3 text-right">Daily Wage</th><th className="px-4 py-3 text-right">Amount</th>
+                <th className="px-4 py-3 text-right">Daily Wage</th><th className="px-4 py-3 text-right">Earned</th>
+                <th className="px-4 py-3 text-right">Paid</th><th className="px-4 py-3 text-right">Due</th>
+                {canManageWage && <th className="px-4 py-3 text-right">Payment</th>}
               </tr>
             </thead>
             <tbody>
@@ -171,11 +175,29 @@ export const EmployeesTab = ({ projectId }) => {
                   <td className="px-4 py-2.5 text-center font-heading font-bold text-lg text-slate-700 dark:text-slate-300">{r.days_present}</td>
                   <td className="px-4 py-2.5 text-right text-slate-500 dark:text-slate-400">{r.daily_wage != null ? fmt(r.daily_wage) : "—"}</td>
                   <td className="px-4 py-2.5 text-right font-semibold text-slate-900 dark:text-slate-100">{r.amount != null ? fmt(r.amount) : <span className="text-slate-400 dark:text-slate-500 text-xs">manual ({r.wage_type})</span>}</td>
+                  <td className="px-4 py-2.5 text-right text-emerald-600 dark:text-emerald-400 font-semibold" data-testid={`labour-paid-${r.employee_id}`}>{fmt(r.paid)}</td>
+                  <td className="px-4 py-2.5 text-right font-semibold" data-testid={`labour-due-${r.employee_id}`}>
+                    {r.due == null ? <span className="text-slate-400 dark:text-slate-500">—</span>
+                      : r.due > 0 ? <span className="text-red-600 dark:text-red-400">{fmt(r.due)}</span>
+                      : r.due < 0 ? <span className="text-sky-600 dark:text-sky-400">Adv {fmt(-r.due)}</span>
+                      : <span className="text-emerald-600 dark:text-emerald-400">Settled</span>}
+                  </td>
+                  {canManageWage && (
+                    <td className="px-4 py-2.5 text-right">
+                      <button data-testid={`make-payment-${r.employee_id}`} onClick={() => setPayModal({ open: true, row: r })}
+                        className="inline-flex items-center gap-1.5 border border-blue-400/60 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] font-bold transition-colors">
+                        <Banknote size={12} strokeWidth={2.5} /> Make Payment
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
               <tr className="bg-white dark:bg-slate-900">
-                <td colSpan={3} className="px-4 py-3 text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 font-semibold">Total Labour Cost · {labour?.date_from} → {labour?.date_to}</td>
+                <td colSpan={3} className="px-4 py-3 text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 font-semibold">Total · {labour?.date_from} → {labour?.date_to}</td>
                 <td className="px-4 py-3 text-right font-heading font-bold text-xl text-blue-600 dark:text-blue-400" data-testid="labour-total">{fmt(labour?.total_amount)}</td>
+                <td className="px-4 py-3 text-right font-heading font-bold text-base text-emerald-600 dark:text-emerald-400" data-testid="labour-total-paid">{fmt(labour?.total_paid)}</td>
+                <td className="px-4 py-3 text-right font-heading font-bold text-base text-red-600 dark:text-red-400" data-testid="labour-total-due">{fmt(labour?.total_due)}</td>
+                {canManageWage && <td />}
               </tr>
             </tbody>
           </table>
@@ -184,6 +206,8 @@ export const EmployeesTab = ({ projectId }) => {
 
       <EmployeeFormModal open={modal.open} onOpenChange={(o) => setModal({ open: o, employee: o ? modal.employee : null })}
         projectId={projectId} employee={modal.employee} />
+      <LabourPaymentModal open={payModal.open} onOpenChange={(o) => setPayModal({ open: o, row: o ? payModal.row : null })}
+        projectId={projectId} row={payModal.row} />
     </div>
   );
 };

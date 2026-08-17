@@ -140,6 +140,12 @@
 
 - BUG FIX: Client approve mechanism not visible (2026-06, SELF-TESTED E2E as client): root cause — NotificationBell ("Alerts") in Layout.jsx was role-gated to Admin/SiteEngineer, so clients never saw "Change order awaiting your review" notifications (backend was creating them correctly). Fix: bell shown for ALL roles; ChangeOrder notifications now deep-link to /admin/projects/{id}?tab=variations; ProjectDetailPage reads ?tab= via useSearchParams for initial tab. Verified: client login -> alert badge -> click notification -> lands on Change Orders tab -> approve with confirm -> status Approved + activity log entry.
 
+- Employee Labour Payments (2026-06, APPROVED option a, SELF-TESTED E2E via curl + UI screenshots):
+  - Labour Cost Report now has Earned (range) / Paid / Due (all-time) columns + totals; "Make Payment" button per employee (Admin/Accountant) -> LabourPaymentModal (prefilled due, payment-type radios, note)
+  - Backend: POST /projects/{id}/labour-payments (employees.py) creates ExpenseEntry(category "Employee Payment", source_type Employee) -> DEBIT in project + org balance sheets + employee payment history (/employees/{id}/payments); labour_cost returns paid/due/earned_total
+  - ACCOUNTING NETTING (finance.py): attendance accrual now nets out payments per-employee to avoid DOUBLE-COUNTING — project_labour_total = sum(max(earned-paid,0)); balance-sheet daily entries labeled "Labour wages due — N workers (attendance, unpaid)" consume payments chronologically; org employee_dues labour_by_category is unpaid-only. Verified: mark present (+800 debit) -> pay 800 -> debit UNCHANGED, payment shows as its own debit line, due -> Settled
+  - Postgres wiped twice more during this task (restored via script both times)
+
 ## Backlog / Next
 - RECURRING ENV ISSUE (count ~7): container resets wipe PostgreSQL binaries+data. Recovery: `sudo bash /app/scripts/restore_postgres.sh` (reinstalls PG, recreates DB, reseeds, restarts backend; create_all rebuilds ALL tables incl. income_entries/extended expense_entries automatically). 2026-06-16: user-reported "Error in Finance module add income/expense" was this — verified post-restore that income credits + expense debits flow to project & org balance sheets.
 - P1: Milestones UI (backend ready); edit progress updates

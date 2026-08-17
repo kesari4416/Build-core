@@ -484,9 +484,20 @@ def project_labour_rows(db, project_id):
                     Employee.daily_wage.isnot(None)).all())
 
 
+def labour_paid_by_emp(db, project_id):
+    rows = (db.query(ExpenseEntry.source_id, func.coalesce(func.sum(ExpenseEntry.amount), 0))
+            .filter(ExpenseEntry.project_id == project_id,
+                    ExpenseEntry.source_type == "Employee")
+            .group_by(ExpenseEntry.source_id).all())
+    return {sid: f(total) for sid, total in rows if sid is not None}
+
+
 def project_labour_total(db, project_id):
-    return round(sum(DAY_VALUE.get(a.status, 0.0) * float(e.daily_wage)
-                     for a, e in project_labour_rows(db, project_id)), 2)
+    earned = {}
+    for a, e in project_labour_rows(db, project_id):
+        earned[e.id] = earned.get(e.id, 0.0) + DAY_VALUE.get(a.status, 0.0) * float(e.daily_wage)
+    paid = labour_paid_by_emp(db, project_id)
+    return round(sum(max(amt - paid.get(eid, 0.0), 0.0) for eid, amt in earned.items()), 2)
 
 
 def balance_row(db, p):
@@ -526,14 +537,25 @@ def org_balance_sheet(db: Session = Depends(get_db), user: User = Depends(FIN)):
     payroll_pending = f(db.query(func.coalesce(func.sum(PayrollEntry.net_pay), 0))
                         .filter(PayrollEntry.payment_status != "Paid").scalar())
     by_cat = {}
+    earned_emp, cat_emp = {}, {}
     for a, e in (db.query(Attendance, Employee)
                  .join(Employee, Attendance.employee_id == Employee.id)
                  .filter(Employee.wage_type == "daily", Employee.daily_wage.isnot(None)).all()):
         day = DAY_VALUE.get(a.status, 0.0)
         if not day:
             continue
-        cat = e.category.name if e.category else (e.role_title or "General")
-        by_cat[cat] = by_cat.get(cat, 0.0) + day * float(e.daily_wage)
+        earned_emp[e.id] = earned_emp.get(e.id, 0.0) + day * float(e.daily_wage)
+        cat_emp[e.id] = e.category.name if e.category else (e.role_title or "General")
+    paid_all = {sid: f(total) for sid, total in
+                (db.query(ExpenseEntry.source_id, func.coalesce(func.sum(ExpenseEntry.amount), 0))
+                 .filter(ExpenseEntry.source_type == "Employee")
+                 .group_by(ExpenseEntry.source_id).all()) if sid is not None}
+    for eid, amt in earned_emp.items():
+        due = max(amt - paid_all.get(eid, 0.0), 0.0)
+        if due <= 0:
+            continue
+        cat = cat_emp[eid]
+        by_cat[cat] = by_cat.get(cat, 0.0) + due
     labour_by_category = [{"category": k, "amount": round(v, 2)} for k, v in sorted(by_cat.items())]
     labour_total = round(sum(x["amount"] for x in labour_by_category), 2)
     return {"projects": rows, "total_credit": total_credit, "total_debit": total_debit,
@@ -559,16 +581,27 @@ def project_balance_sheet(project_id: int, db: Session = Depends(get_db),
     ledger = project_ledger(project_id, db, user)
     entries = list(ledger["entries"])
     daily = {}
+    per_emp = {}
     for a, e in project_labour_rows(db, project_id):
         day = DAY_VALUE.get(a.status, 0.0)
         if not day:
             continue
-        key = d(a.attendance_date)
-        amt, cnt = daily.get(key, (0.0, 0))
-        daily[key] = (amt + day * float(e.daily_wage), cnt + 1)
+        per_emp.setdefault(e.id, []).append((a.attendance_date, day * float(e.daily_wage)))
+    paid_map = labour_paid_by_emp(db, project_id)
+    for eid, days in per_emp.items():
+        remaining = paid_map.get(eid, 0.0)
+        for att_date, wage in sorted(days, key=lambda x: x[0]):
+            consumed = min(remaining, wage)
+            remaining -= consumed
+            unpaid = wage - consumed
+            if unpaid <= 0:
+                continue
+            key = d(att_date)
+            amt, cnt = daily.get(key, (0.0, 0))
+            daily[key] = (amt + unpaid, cnt + 1)
     for k, (amt, cnt) in daily.items():
         entries.append({"date": k, "type": "debit",
-                        "description": f"Labour wages — {cnt} worker{'s' if cnt != 1 else ''} (attendance)",
+                        "description": f"Labour wages due — {cnt} worker{'s' if cnt != 1 else ''} (attendance, unpaid)",
                         "amount": round(amt, 2)})
     entries.sort(key=lambda x: x["date"] or "", reverse=True)
     total_credit = round(sum(x["amount"] for x in entries if x["type"] == "credit"), 2)

@@ -4,12 +4,12 @@ from typing import Optional, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import User, Project, Phase
-from app.models.finance import Employee, Attendance, EmployeeCategory, ProjectAssignment, PhaseEmployee
+from app.models.finance import Employee, Attendance, EmployeeCategory, ProjectAssignment, PhaseEmployee, ExpenseEntry
 from app.core.security import require_roles
 
 router = APIRouter(tags=["employees"])
@@ -465,18 +465,75 @@ def labour_cost(project_id: int, db: Session = Depends(get_db), user: User = Dep
     days_by_emp = {}
     for a in atts:
         days_by_emp[a.employee_id] = days_by_emp.get(a.employee_id, 0.0) + DAY_VALUE.get(a.status, 0.0)
+    all_atts = db.query(Attendance).filter(Attendance.project_id == project_id).all()
+    all_days = {}
+    for a in all_atts:
+        all_days[a.employee_id] = all_days.get(a.employee_id, 0.0) + DAY_VALUE.get(a.status, 0.0)
+    paid_map = {sid: float(total) for sid, total in
+                (db.query(ExpenseEntry.source_id, func.coalesce(func.sum(ExpenseEntry.amount), 0))
+                 .filter(ExpenseEntry.project_id == project_id, ExpenseEntry.source_type == "Employee")
+                 .group_by(ExpenseEntry.source_id).all()) if sid is not None}
     rows = []
     total = 0.0
+    total_paid = 0.0
+    total_due = 0.0
     for e in employees:
         days = round(days_by_emp.get(e.id, 0.0), 1)
         amount = None
+        earned_total = None
+        paid = round(paid_map.get(e.id, 0.0), 2)
+        due = None
         if e.wage_type == "daily" and e.daily_wage is not None:
             amount = round(days * float(e.daily_wage), 2)
+            earned_total = round(all_days.get(e.id, 0.0) * float(e.daily_wage), 2)
+            due = round(earned_total - paid, 2)
             total += amount
+            total_due += max(due, 0.0)
+        total_paid += paid
         rows.append({"employee_id": e.id, "name": e.name,
                      "role_title": e.category.name if e.category else e.role_title,
                      "status": e.status, "wage_type": e.wage_type,
                      "daily_wage": float(e.daily_wage) if e.daily_wage is not None else None,
-                     "days_present": days, "amount": amount})
+                     "days_present": days, "amount": amount,
+                     "earned_total": earned_total, "paid": paid, "due": due})
     return {"project_id": project_id, "date_from": d(date_from), "date_to": d(date_to),
-            "rows": rows, "total_amount": round(total, 2)}
+            "rows": rows, "total_amount": round(total, 2),
+            "total_paid": round(total_paid, 2), "total_due": round(total_due, 2)}
+
+
+class LabourPaymentIn(BaseModel):
+    employee_id: int
+    amount: float = Field(gt=0)
+    payment_type: str = "Partial Payment"
+    note: Optional[str] = None
+
+
+@router.post("/projects/{project_id}/labour-payments", status_code=201)
+def make_labour_payment(project_id: int, body: LabourPaymentIn, db: Session = Depends(get_db),
+                        user: User = Depends(require_roles("Admin", "Accountant"))):
+    if body.payment_type not in ("Advance Payment", "Partial Payment", "Full Payment"):
+        raise HTTPException(status_code=422, detail="Invalid payment_type")
+    project = get_project_or_404(db, project_id)
+    emp = db.get(Employee, body.employee_id)
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    from app.routers.transactions import budget_remaining
+    desc = f"Wage payment — {emp.name} ({body.payment_type})"
+    if body.note and body.note.strip():
+        desc += f": {body.note.strip()}"
+    exp = ExpenseEntry(project_id=project.id, category="Employee Payment", amount=body.amount,
+                       expense_date=date.today(), description=desc, recorded_by=user.id,
+                       source_type="Employee", source_id=emp.id, payment_type=body.payment_type,
+                       balance_after=round(budget_remaining(db, project) - body.amount, 2))
+    db.add(exp)
+    db.commit()
+    db.refresh(exp)
+    paid = float(db.query(func.coalesce(func.sum(ExpenseEntry.amount), 0))
+                 .filter(ExpenseEntry.project_id == project_id,
+                         ExpenseEntry.source_type == "Employee",
+                         ExpenseEntry.source_id == emp.id).scalar())
+    return {"id": exp.id, "employee_id": emp.id, "employee_name": emp.name,
+            "amount": body.amount, "payment_type": body.payment_type,
+            "description": desc, "date": exp.expense_date.isoformat(),
+            "total_paid_to_employee": round(paid, 2),
+            "project_budget_remaining": budget_remaining(db, project)}
