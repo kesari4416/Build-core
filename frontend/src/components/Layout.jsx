@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, LogOut, IndianRupee, Truck, UserCog, FileText, ClipboardCheck, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, Building2, Users, LogOut, IndianRupee, Truck, UserCog, FileText, ClipboardCheck, Sun, Moon, Calculator } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { NotificationBell } from "./NotificationBell";
@@ -11,6 +11,7 @@ const navItems = [
   { to: "/portal/site-engineer", label: "Field Ops", icon: ClipboardCheck, roles: ["Admin", "SiteEngineer", "Client"] },
   { to: "/admin/clients", label: "Clients", icon: Users, roles: ["Admin", "SiteEngineer", "Accountant"] },
   { to: "/admin/finance", label: "Finance", icon: IndianRupee, roles: ["Admin", "Accountant"] },
+  { to: "/admin/estimates", label: "Estimates", icon: Calculator, roles: ["Admin", "Accountant", "SiteEngineer", "ProcurementOfficer"] },
   { to: "/admin/procurement/vendors", label: "Vendors", icon: Truck, roles: ["Admin", "SiteEngineer", "ProcurementOfficer"] },
   { to: "/admin/users", label: "Users", icon: UserCog, roles: ["Admin"] },
   { to: "/portal/vendor/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["Vendor"] },

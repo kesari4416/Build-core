@@ -25,6 +25,7 @@ import VendorPortalPage from "./features/projectPlanning/pages/VendorPortalPage"
 import VendorDashboardPage from "./features/projectPlanning/pages/VendorDashboardPage";
 import VendorBidPackagePage from "./features/projectPlanning/pages/VendorBidPackagePage";
 import SiteEngineerPortalPage from "./features/projectPlanning/pages/SiteEngineerPortalPage";
+import EstimatesPage from "./features/projectPlanning/pages/EstimatesPage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -66,6 +67,7 @@ function App() {
             <Route path="/admin/clients/:id" element={<ProtectedRoute><ClientDetailPage /></ProtectedRoute>} />
             <Route path="/admin/clients/:id/projects" element={<ProtectedRoute><ClientProjectsPage /></ProtectedRoute>} />
             <Route path="/admin/finance" element={<ProtectedRoute><FinancePage /></ProtectedRoute>} />
+            <Route path="/admin/estimates" element={<ProtectedRoute><EstimatesPage /></ProtectedRoute>} />
             <Route path="/admin/finance/payroll" element={<ProtectedRoute><PayrollPage /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
             <Route path="/admin/procurement/vendors" element={<ProtectedRoute><VendorsPage /></ProtectedRoute>} />

@@ -86,6 +86,35 @@ class ExpenseEntry(Base):
     created_at = Column(DateTime(timezone=True), default=utcnow)
 
 
+class EstimateCategory(Base):
+    __tablename__ = "estimate_categories"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+
+
+class EstimateStatus(Base):
+    __tablename__ = "estimate_statuses"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+
+
+class Estimate(Base):
+    __tablename__ = "estimates"
+    id = Column(Integer, primary_key=True)
+    project_name = Column(String, nullable=False)
+    phase = Column(String, nullable=True)
+    category_id = Column(Integer, ForeignKey("estimate_categories.id"), nullable=False)
+    drawing_url = Column(String, nullable=True)
+    drawing_filename = Column(String, nullable=True)
+    total_amount = Column(Numeric(14, 2), nullable=False)
+    status_id = Column(Integer, ForeignKey("estimate_statuses.id"), nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+    updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+    category = relationship("EstimateCategory")
+    status = relationship("EstimateStatus")
+
+
 class IncomeEntry(Base):
     __tablename__ = "income_entries"
     id = Column(Integer, primary_key=True)

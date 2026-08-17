@@ -150,6 +150,12 @@
 
 - Client form simplified (2026-06, SELF-TESTED): ClientFormModal now has only Name*, Phone No, Email, Address (Company field removed; backend still accepts/stores company for old records). Verified create flow E2E via UI.
 
+- Estimates module (2026-06, TESTED iter_21: backend 22/22, frontend 14/14 — zero bugs):
+  - Tables: estimates (project_name, phase, category_id FK, drawing_url/filename, total_amount, status_id FK, created_by, timestamps) + estimate_categories + estimate_statuses lookups (defaults auto-seed on first GET: Civil/Electrical/Plumbing/Interior/Structural; Draft/Pending Approval/Approved/Rejected)
+  - Router estimates.py: GET/POST /estimates (Field(gt=0) amount validation), GET/POST /estimate-categories & /estimate-statuses (case-insensitive dedup), DELETE /estimates/{id} (Admin/Accountant). STAFF roles: Admin/Accountant/SE/PO; Client/Vendor 403. uploads.py roles broadened to include Accountant + PO
+  - Frontend: /admin/estimates page + sidebar nav (Calculator icon); EstimatesPage list (drawing thumbnail or red PDF link, status badges, delete); EstimateFormModal (drawing upload w/ preview, amount validation error, cancel); REUSABLE InlineAddSelect component ('+ Add New' inline create+auto-select, used for both category & status — correct setQueryData pattern)
+  - Regression file: /app/backend/tests/test_iter21_estimates.py
+
 ## Backlog / Next
 - RECURRING ENV ISSUE (count ~7): container resets wipe PostgreSQL binaries+data. Recovery: `sudo bash /app/scripts/restore_postgres.sh` (reinstalls PG, recreates DB, reseeds, restarts backend; create_all rebuilds ALL tables incl. income_entries/extended expense_entries automatically). 2026-06-16: user-reported "Error in Finance module add income/expense" was this — verified post-restore that income credits + expense debits flow to project & org balance sheets.
 - P1: Milestones UI (backend ready); edit progress updates

@@ -15,7 +15,7 @@ ALLOWED = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".pdf"}
 
 @router.post("/upload", status_code=201)
 async def upload_file(file: UploadFile = File(...),
-                      user=Depends(require_roles("Admin", "SiteEngineer"))):
+                      user=Depends(require_roles("Admin", "SiteEngineer", "Accountant", "ProcurementOfficer"))):
     ext = Path(file.filename or "file").suffix.lower()
     if ext not in ALLOWED:
         raise HTTPException(status_code=422, detail=f"File type {ext} not allowed")
