@@ -146,6 +146,8 @@
   - ACCOUNTING NETTING (finance.py): attendance accrual now nets out payments per-employee to avoid DOUBLE-COUNTING — project_labour_total = sum(max(earned-paid,0)); balance-sheet daily entries labeled "Labour wages due — N workers (attendance, unpaid)" consume payments chronologically; org employee_dues labour_by_category is unpaid-only. Verified: mark present (+800 debit) -> pay 800 -> debit UNCHANGED, payment shows as its own debit line, due -> Settled
   - Postgres wiped twice more during this task (restored via script both times)
 
+- Running Balance column in project Balance Sheet "All Transactions" (2026-06, SELF-TESTED): backend project_balance_sheet computes chronological running balance per entry (credit +, debit −; variation rows balance=None shown as —); top row balance == total_credit − total_debit (verified with test credit ₹3L + debit ₹50k, math validated programmatically, test entries removed). Frontend ProjectBalanceSheetTab: new Balance column (bs-balance-{i}), red when negative.
+
 ## Backlog / Next
 - RECURRING ENV ISSUE (count ~7): container resets wipe PostgreSQL binaries+data. Recovery: `sudo bash /app/scripts/restore_postgres.sh` (reinstalls PG, recreates DB, reseeds, restarts backend; create_all rebuilds ALL tables incl. income_entries/extended expense_entries automatically). 2026-06-16: user-reported "Error in Finance module add income/expense" was this — verified post-restore that income credits + expense debits flow to project & org balance sheets.
 - P1: Milestones UI (backend ready); edit progress updates

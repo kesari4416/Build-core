@@ -610,6 +610,16 @@ def project_balance_sheet(project_id: int, db: Session = Depends(get_db),
     approved, pending, n = co_totals(db, project_id)
     entries = approved_co_entries(db, project_id) + entries
     entries.sort(key=lambda x: x["date"] or "", reverse=True)
+    running = 0.0
+    for en in reversed(entries):
+        if en["type"] == "credit":
+            running += en["amount"]
+        elif en["type"] == "debit":
+            running -= en["amount"]
+        else:
+            en["balance"] = None
+            continue
+        en["balance"] = round(running, 2)
     return {"project_id": project_id, "name": project.name, "budget": row["budget"],
             "original_budget": row["budget"], "approved_variations": approved,
             "revised_contract_value": round(row["budget"] + approved, 2),

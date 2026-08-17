@@ -76,6 +76,7 @@ export const ProjectBalanceSheetTab = ({ projectId }) => {
             <tr className="text-left text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
               <th className="px-4 py-3">Date</th><th className="px-4 py-3">Description</th>
               <th className="px-4 py-3 text-right">Credit (In)</th><th className="px-4 py-3 text-right">Debit (Out)</th>
+              <th className="px-4 py-3 text-right">Balance</th>
             </tr>
           </thead>
           <tbody>
@@ -88,10 +89,14 @@ export const ProjectBalanceSheetTab = ({ projectId }) => {
                 </td>
                 <td className="px-4 py-2.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">{en.type === "credit" ? fmt(en.amount) : en.type === "variation" ? <span className="text-amber-600 dark:text-amber-400">+{fmt(en.amount)}</span> : ""}</td>
                 <td className="px-4 py-2.5 text-right font-semibold text-red-600 dark:text-red-400">{en.type === "debit" ? fmt(en.amount) : ""}</td>
+                <td className="px-4 py-2.5 text-right font-bold" data-testid={`bs-balance-${i}`}>
+                  {en.balance == null ? <span className="text-slate-400 dark:text-slate-500">—</span>
+                    : <span className={en.balance < 0 ? "text-red-600 dark:text-red-400" : "text-slate-900 dark:text-slate-100"}>{fmt(en.balance)}</span>}
+                </td>
               </tr>
             ))}
             {bs.entries.length === 0 && (
-              <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400" data-testid="pbs-tx-empty">No transactions yet.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400" data-testid="pbs-tx-empty">No transactions yet.</td></tr>
             )}
           </tbody>
         </table>
