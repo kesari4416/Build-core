@@ -101,7 +101,8 @@ class EstimateStatus(Base):
 class Estimate(Base):
     __tablename__ = "estimates"
     id = Column(Integer, primary_key=True)
-    project_name = Column(String, nullable=False)
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
+    project_name = Column(String, nullable=True)
     phase = Column(String, nullable=True)
     category_id = Column(Integer, ForeignKey("estimate_categories.id"), nullable=False)
     drawing_url = Column(String, nullable=True)

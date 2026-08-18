@@ -45,7 +45,7 @@ export const SendForApprovalModal = ({ open, onOpenChange, estimate }) => {
         <DialogHeader>
           <DialogTitle className="font-heading text-2xl uppercase tracking-wide">Send for Approval</DialogTitle>
           <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
-            Emails the client single-use Approve / Reject links for "{estimate.project_name}" (₹{Number(estimate.total_amount).toLocaleString("en-IN")}). Links expire in 14 days.
+            Emails the client single-use Approve / Reject links for "{estimate.project_name || `Estimate #${estimate.id}`}" (₹{Number(estimate.total_amount).toLocaleString("en-IN")}). Links expire in 14 days.
           </DialogDescription>
         </DialogHeader>
         {!result ? (

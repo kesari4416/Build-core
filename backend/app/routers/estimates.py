@@ -77,7 +77,8 @@ def create_status(body: NameIn, db: Session = Depends(get_db), user: User = Depe
 
 
 class EstimateCreate(BaseModel):
-    project_name: str = Field(min_length=1)
+    client_id: int
+    project_name: Optional[str] = None
     phase: Optional[str] = None
     category_id: int
     drawing_url: Optional[str] = None
@@ -86,8 +87,10 @@ class EstimateCreate(BaseModel):
     status_id: int
 
 
-def estimate_out(e, events=None):
+def estimate_out(e, events=None, clients=None):
     return {"id": e.id, "project_name": e.project_name, "phase": e.phase,
+            "client_id": e.client_id,
+            "client_name": (clients or {}).get(e.client_id),
             "category_id": e.category_id, "category": e.category.name if e.category else None,
             "drawing_url": e.drawing_url, "drawing_filename": e.drawing_filename,
             "total_amount": float(e.total_amount),
@@ -108,24 +111,40 @@ def estimate_out(e, events=None):
 @router.get("/estimates")
 def list_estimates(db: Session = Depends(get_db), user: User = Depends(STAFF)):
     ensure_defaults(db)
-    return [estimate_out(e) for e in
+    from app.models import Client
+    clients = {c.id: c.name for c in db.query(Client).all()}
+    return [estimate_out(e, clients=clients) for e in
             db.query(Estimate).order_by(Estimate.created_at.desc()).all()]
+
+
+@router.get("/estimate-clients")
+def estimate_clients(db: Session = Depends(get_db), user: User = Depends(STAFF)):
+    from app.models import Client
+    return [{"id": c.id, "name": c.name, "email": c.email}
+            for c in db.query(Client).order_by(Client.name).all()]
 
 
 @router.post("/estimates", status_code=201)
 def create_estimate(body: EstimateCreate, db: Session = Depends(get_db), user: User = Depends(STAFF)):
+    from app.models import Client
+    client = db.get(Client, body.client_id)
+    if not client:
+        raise HTTPException(status_code=422, detail="Client is required — select a valid client")
     if not db.get(EstimateCategory, body.category_id):
         raise HTTPException(status_code=422, detail="Invalid category")
     if not db.get(EstimateStatus, body.status_id):
         raise HTTPException(status_code=422, detail="Invalid status")
-    e = Estimate(project_name=body.project_name.strip(), phase=(body.phase or "").strip() or None,
+    e = Estimate(client_id=client.id,
+                 project_name=(body.project_name or "").strip() or None,
+                 phase=(body.phase or "").strip() or None,
                  category_id=body.category_id, drawing_url=body.drawing_url,
                  drawing_filename=body.drawing_filename, total_amount=body.total_amount,
-                 status_id=body.status_id, created_by=user.id)
+                 status_id=body.status_id, created_by=user.id,
+                 client_email=client.email or None)
     db.add(e)
     db.commit()
     db.refresh(e)
-    return estimate_out(e)
+    return estimate_out(e, clients={client.id: client.name})
 
 
 @router.delete("/estimates/{estimate_id}", status_code=204)
@@ -160,6 +179,10 @@ def fmt_inr(n):
     return f"Rs. {float(n):,.2f}"
 
 
+def display_name(estimate):
+    return estimate.project_name or f"Estimate #{estimate.id}"
+
+
 def send_approval_email(estimate, approve_url, reject_url):
     host = os.environ.get("SMTP_HOST")
     port = int(os.environ.get("SMTP_PORT", "465"))
@@ -179,7 +202,7 @@ def send_approval_email(estimate, approve_url, reject_url):
       <div style="padding:24px">
         <p>You have received a project estimate for review:</p>
         <table style="width:100%;border-collapse:collapse;font-size:14px">
-          <tr><td style="padding:6px 0;color:#64748b">Project Name</td><td style="padding:6px 0"><b>{estimate.project_name}</b></td></tr>
+          <tr><td style="padding:6px 0;color:#64748b">Project Name</td><td style="padding:6px 0"><b>{display_name(estimate)}</b></td></tr>
           <tr><td style="padding:6px 0;color:#64748b">Phase</td><td style="padding:6px 0">{estimate.phase or "—"}</td></tr>
           <tr><td style="padding:6px 0;color:#64748b">Category</td><td style="padding:6px 0">{estimate.category.name if estimate.category else "—"}</td></tr>
           <tr><td style="padding:6px 0;color:#64748b">Status</td><td style="padding:6px 0">{estimate.status.name if estimate.status else "—"}</td></tr>
@@ -194,7 +217,7 @@ def send_approval_email(estimate, approve_url, reject_url):
       </div>
     </div>"""
     msg = MIMEText(html, "html")
-    msg["Subject"] = f"Estimate approval request — {estimate.project_name} ({fmt_inr(estimate.total_amount)})"
+    msg["Subject"] = f"Estimate approval request — {display_name(estimate)} ({fmt_inr(estimate.total_amount)})"
     msg["From"] = f"Sitera <{sender}>"
     msg["To"] = estimate.client_email
     with smtplib.SMTP_SSL(host, port, timeout=20) as server:
@@ -257,7 +280,7 @@ def check_token(e, token):
 def public_estimate_view(estimate_id: int, token: str, db: Session = Depends(get_db)):
     e = get_estimate_or_404(db, estimate_id)
     check_token(e, token)
-    return {"id": e.id, "project_name": e.project_name, "phase": e.phase,
+    return {"id": e.id, "project_name": display_name(e), "phase": e.phase,
             "category": e.category.name if e.category else None,
             "current_status": e.status.name if e.status else None,
             "total_amount": float(e.total_amount),
@@ -295,7 +318,7 @@ def public_estimate_decision(estimate_id: int, token: str, body: PublicDecisionI
     e.token_used = True
     apply_decision(db, e, body.action, f"Client via email link ({e.client_email})", body.reason)
     db.commit()
-    return {"approval_state": e.approval_state, "project_name": e.project_name,
+    return {"approval_state": e.approval_state, "project_name": display_name(e),
             "rejection_reason": e.rejection_reason}
 
 

@@ -42,7 +42,7 @@ export default function EstimatesPage() {
   const { data: statuses } = useQuery({ queryKey: ["estimateStatuses"], queryFn: () => api.get("/estimate-statuses").then((r) => r.data) });
 
   const remove = async (e) => {
-    if (!window.confirm(`Delete estimate for "${e.project_name}"?`)) return;
+    if (!window.confirm(`Delete estimate ${e.project_name ? `for "${e.project_name}"` : `#${e.id}`}?`)) return;
     try {
       await api.delete(`/estimates/${e.id}`);
       toast.success("Estimate deleted");
@@ -82,6 +82,7 @@ export default function EstimatesPage() {
         <table className="w-full text-sm" data-testid="estimates-table">
           <thead>
             <tr className="text-left text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+              <th className="px-4 py-3">Client</th>
               <th className="px-4 py-3">Project Name</th><th className="px-4 py-3">Phase</th>
               <th className="px-4 py-3">Category</th><th className="px-4 py-3">Drawing</th>
               <th className="px-4 py-3 text-right">Total Amount</th><th className="px-4 py-3 text-center">Current Status</th>
@@ -93,7 +94,8 @@ export default function EstimatesPage() {
           <tbody>
             {(estimates || []).map((e) => (
               <tr key={e.id} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors" data-testid={`estimate-row-${e.id}`}>
-                <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{e.project_name}</td>
+                <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100" data-testid={`estimate-client-${e.id}`}>{e.client_name || "—"}</td>
+                <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{e.project_name || "—"}</td>
                 <td className="px-4 py-2.5 text-slate-600 dark:text-slate-400">{e.phase || "—"}</td>
                 <td className="px-4 py-2.5 text-slate-600 dark:text-slate-400">{e.category}</td>
                 <td className="px-4 py-2.5">
@@ -152,7 +154,7 @@ export default function EstimatesPage() {
               </tr>
             ))}
             {estimates && estimates.length === 0 && (
-              <tr><td colSpan={canDelete ? 9 : 8} className="px-4 py-12 text-center text-slate-500 dark:text-slate-400" data-testid="estimates-empty">
+              <tr><td colSpan={canDelete ? 10 : 9} className="px-4 py-12 text-center text-slate-500 dark:text-slate-400" data-testid="estimates-empty">
                 No estimates yet — click "Create Estimate" to add your first one.
               </td></tr>
             )}

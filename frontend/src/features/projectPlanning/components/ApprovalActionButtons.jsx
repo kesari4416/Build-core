@@ -6,11 +6,12 @@ import api, { formatApiErrorDetail } from "../../../api/client";
 export const ApprovalActionButtons = ({ estimate, onApproved, size = "sm" }) => {
   const qc = useQueryClient();
   const decide = async (action) => {
+    const label = estimate.project_name || `Estimate #${estimate.id}`;
     let reason = null;
     if (action === "approve") {
-      if (!window.confirm(`Mark estimate "${estimate.project_name}" as APPROVED?\n\nUse this for verbal/phone approvals — it has the same effect as the client's email approval.`)) return;
+      if (!window.confirm(`Mark estimate "${label}" as APPROVED?\n\nUse this for verbal/phone approvals — it has the same effect as the client's email approval.`)) return;
     } else {
-      reason = window.prompt(`Reject estimate "${estimate.project_name}"? Optional reason:`);
+      reason = window.prompt(`Reject estimate "${label}"? Optional reason:`);
       if (reason === null) return;
     }
     try {

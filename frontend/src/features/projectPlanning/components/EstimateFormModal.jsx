@@ -1,16 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, FileText, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Button } from "../../../components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import api, { assetUrl, formatApiErrorDetail } from "../../../api/client";
 import { InlineAddSelect } from "./InlineAddSelect";
 import { labelCls, inputCls } from "./AddIncomeModal";
 
-const empty = { project_name: "", phase: "", category_id: "", total_amount: "", status_id: "" };
+const empty = { client_id: "", project_name: "", phase: "", category_id: "", total_amount: "", status_id: "" };
 
 export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) => {
   const [form, setForm] = useState(empty);
@@ -19,6 +20,11 @@ export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) 
   const [saving, setSaving] = useState(false);
   const fileRef = useRef(null);
   const qc = useQueryClient();
+  const { data: clients } = useQuery({
+    queryKey: ["estimateClients"],
+    queryFn: () => api.get("/estimate-clients").then((r) => r.data),
+    enabled: open,
+  });
 
   useEffect(() => {
     if (open) { setForm(empty); setDrawing(null); }
@@ -26,7 +32,7 @@ export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) 
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const amount = Number(form.total_amount);
-  const valid = form.project_name.trim() && form.category_id && form.status_id && form.total_amount !== "" && amount > 0;
+  const valid = form.client_id && form.category_id && form.status_id && form.total_amount !== "" && amount > 0;
 
   const onFile = async (ev) => {
     const f = ev.target.files?.[0];
@@ -51,7 +57,8 @@ export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) 
     setSaving(true);
     try {
       await api.post("/estimates", {
-        project_name: form.project_name.trim(),
+        client_id: Number(form.client_id),
+        project_name: form.project_name.trim() || null,
         phase: form.phase.trim() || null,
         category_id: Number(form.category_id),
         drawing_url: drawing?.url || null,
@@ -80,7 +87,16 @@ export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) 
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <Label className={labelCls}>Project Name *</Label>
+            <Label className={labelCls}>Client Name *</Label>
+            <Select value={form.client_id} onValueChange={(v) => { if (v) set("client_id", v); }}>
+              <SelectTrigger data-testid="estimate-client-select" className={inputCls}><SelectValue placeholder="Select client" /></SelectTrigger>
+              <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                {(clients || []).map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className={labelCls}>Project Name (optional)</Label>
             <Input data-testid="estimate-project-input" value={form.project_name}
               onChange={(e) => set("project_name", e.target.value)} className={inputCls} />
           </div>
