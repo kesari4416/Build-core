@@ -264,3 +264,54 @@ class VendorQuotationItem(Base):
     quantity = Column(Numeric(12, 2), nullable=False, default=1)
     unit_price = Column(Numeric(14, 2), nullable=False, default=0)
     line_total = Column(Numeric(14, 2), nullable=False, default=0)
+
+
+class Product(Base):
+    __tablename__ = "products"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    unit = Column(String, default="nos")
+    category = Column(String, nullable=True)
+    description = Column(Text, nullable=True)
+    default_price = Column(Numeric(14, 2), nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+    updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
+class Quotation(Base):
+    __tablename__ = "quotations"
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False)
+    status = Column(String, default="draft")
+    quotation_number = Column(String, nullable=False)
+    quotation_date = Column(Date, nullable=True)
+    valid_until = Column(Date, nullable=True)
+    quotation_total = Column(Numeric(14, 2), default=0)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+    updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+    line_items = relationship("QuotationLineItem", cascade="all, delete-orphan", backref="quotation")
+
+
+class QuotationLineItem(Base):
+    __tablename__ = "quotation_line_items"
+    id = Column(Integer, primary_key=True)
+    quotation_id = Column(Integer, ForeignKey("quotations.id"), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    quantity = Column(Numeric(12, 2), nullable=False, default=1)
+    unit_price = Column(Numeric(14, 2), nullable=False, default=0)
+    line_total = Column(Numeric(14, 2), nullable=False, default=0)
+    notes = Column(Text, nullable=True)
+
+
+class QuotationShareLog(Base):
+    __tablename__ = "quotation_share_logs"
+    id = Column(Integer, primary_key=True)
+    quotation_id = Column(Integer, ForeignKey("quotations.id"), nullable=False, index=True)
+    channel = Column(String, nullable=False)
+    sent_to = Column(String, nullable=True)
+    sent_at = Column(DateTime(timezone=True), default=utcnow)
+    sent_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    status = Column(String, default="sent")

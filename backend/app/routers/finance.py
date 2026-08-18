@@ -132,9 +132,13 @@ def expense_out(e):
 def project_finance(db, project):
     from app.models.finance import IncomeEntry
     income = f(db.query(func.coalesce(func.sum(Payment.amount), 0))
-               .filter(Payment.project_id == project.id).scalar())
+               .filter(Payment.project_id == project.id,
+                       func.coalesce(Payment.payment_direction, "incoming") != "outgoing").scalar())
     income += f(db.query(func.coalesce(func.sum(IncomeEntry.amount), 0))
                 .filter(IncomeEntry.project_id == project.id).scalar())
+    vendor_paid = f(db.query(func.coalesce(func.sum(Payment.amount), 0))
+                    .filter(Payment.project_id == project.id,
+                            Payment.payment_direction == "outgoing").scalar())
     pos = db.query(PurchaseOrder).filter_by(project_id=project.id).all()
     subs = db.query(Subcontract).filter_by(project_id=project.id).all()
     committed = sum(committed_amount(db, "po", p) for p in pos if p.status != "Cancelled") + \
@@ -146,10 +150,11 @@ def project_finance(db, project):
     invoices = db.query(Invoice).filter(Invoice.project_id == project.id,
                                         Invoice.status.notin_(["Draft", "Cancelled"])).all()
     outstanding = sum(max(0, f(i.amount) + f(i.tax_amount) - paid_sum(db, i.id)) for i in invoices)
-    cost = committed + payroll + expenses
+    cost = committed + payroll + expenses + vendor_paid
     cutoff = date.today() - timedelta(days=365)
     revenue_1y = f(db.query(func.coalesce(func.sum(Payment.amount), 0))
                    .filter(Payment.project_id == project.id,
+                           func.coalesce(Payment.payment_direction, "incoming") != "outgoing",
                            Payment.payment_date >= cutoff).scalar())
     revenue_1y += f(db.query(func.coalesce(func.sum(IncomeEntry.amount), 0))
                     .filter(IncomeEntry.project_id == project.id,
@@ -157,10 +162,11 @@ def project_finance(db, project):
     expenses_1y = f(db.query(func.coalesce(func.sum(ExpenseEntry.amount), 0))
                     .filter(ExpenseEntry.project_id == project.id,
                             ExpenseEntry.expense_date >= cutoff).scalar())
-    cost_1y = committed + payroll + expenses_1y
+    cost_1y = committed + payroll + expenses_1y + vendor_paid
     profit_1y = revenue_1y - cost_1y
     return {"income_to_date": round(income, 2), "cost_to_date": round(cost, 2),
             "committed_procurement": round(committed, 2), "payroll_allocated": round(payroll, 2),
+            "vendor_payments": round(vendor_paid, 2),
             "expenses_total": round(expenses, 2), "profit": round(income - cost, 2),
             "outstanding_invoices": round(outstanding, 2),
             "period_from": cutoff.isoformat(), "period_to": date.today().isoformat(),
@@ -244,7 +250,16 @@ def project_ledger(project_id: int, db: Session = Depends(get_db), user: User = 
                         "description": f"Income — {inc.payment_type}"
                                        + (f" · {inc.phase}" if inc.phase else ""),
                         "amount": f(inc.amount)})
+    from app.models.procurement import Vendor
     for p in db.query(Payment).filter(Payment.project_id == project_id).all():
+        if (p.payment_direction or "incoming") == "outgoing":
+            v = db.get(Vendor, p.vendor_id) if p.vendor_id else None
+            desc = f"Vendor payment — {v.name}" if v else "Vendor payment"
+            if p.notes:
+                desc = f"{desc}: {p.notes}"
+            entries.append({"date": d(p.payment_date), "type": "debit",
+                            "description": desc, "amount": f(p.amount)})
+            continue
         inv = db.get(Invoice, p.invoice_id) if p.invoice_id else None
         entries.append({"date": d(p.payment_date), "type": "credit",
                         "description": f"Client payment{' — ' + inv.invoice_number if inv else ''}"
@@ -503,9 +518,13 @@ def project_labour_total(db, project_id):
 def balance_row(db, p):
     from app.models.finance import IncomeEntry
     credit = f(db.query(func.coalesce(func.sum(Payment.amount), 0))
-               .filter(Payment.project_id == p.id).scalar())
+               .filter(Payment.project_id == p.id,
+                       func.coalesce(Payment.payment_direction, "incoming") != "outgoing").scalar())
     credit += f(db.query(func.coalesce(func.sum(IncomeEntry.amount), 0))
                 .filter(IncomeEntry.project_id == p.id).scalar())
+    vendor_paid = f(db.query(func.coalesce(func.sum(Payment.amount), 0))
+                    .filter(Payment.project_id == p.id,
+                            Payment.payment_direction == "outgoing").scalar())
     payroll = f(db.query(func.coalesce(func.sum(PayrollEntry.net_pay), 0))
                 .filter(PayrollEntry.project_id == p.id).scalar())
     labour = project_labour_total(db, p.id)
@@ -516,11 +535,12 @@ def balance_row(db, p):
     procurement = round(sum(committed_amount(db, "po", x) for x in pos if x.status != "Cancelled") +
                         sum(committed_amount(db, "subcontract", x) for x in subs
                             if x.status not in ("Cancelled", "Terminated")), 2)
-    debit = round(payroll + labour + expenses + procurement, 2)
+    debit = round(payroll + labour + expenses + procurement + vendor_paid, 2)
     return {"project_id": p.id, "name": p.name, "budget": f(p.budget or 0),
             "credit": round(credit, 2), "debit": debit,
             "breakdown": {"staff_payroll": round(payroll, 2), "labour_wages": labour,
-                          "expenses": round(expenses, 2), "procurement": procurement},
+                          "expenses": round(expenses, 2), "procurement": procurement,
+                          "vendor_payments": round(vendor_paid, 2)},
             "profit_loss": round(credit - debit, 2), "is_loss": credit - debit < 0}
 
 

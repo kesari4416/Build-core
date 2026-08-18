@@ -48,12 +48,13 @@ export const ProjectBalanceSheetTab = ({ projectId }) => {
 
       <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 mb-6" data-testid="pbs-released-breakdown">
         <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold mb-3">Where the money is going — Payment Released Breakdown</div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
           {[
             ["Daily-Wage Labour", r.labour_wages, "pbs-bd-labour"],
             ["Staff Payroll", r.staff_payroll, "pbs-bd-payroll"],
             ["Site Expenses", r.expenses, "pbs-bd-expenses"],
-            ["Procurement / Vendors", r.procurement, "pbs-bd-procurement"],
+            ["Procurement Committed", r.procurement, "pbs-bd-procurement"],
+            ["Vendor Payments", r.vendor_payments, "pbs-bd-vendor-payments"],
           ].map(([label, amt, tid]) => (
             <div key={tid} className="border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3" data-testid={tid}>
               <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 font-semibold">{label}</div>

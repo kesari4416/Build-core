@@ -1,19 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import { Truck, ShieldAlert, ShieldCheck, Star, Scale, ArrowRight, Plus, Package } from "lucide-react";
+import { Truck, ShieldAlert, ShieldCheck, Star, Scale, ArrowRight, Plus } from "lucide-react";
 import api from "../../../api/client";
 import { useAuth } from "../../../context/AuthContext";
 import { Button } from "../../../components/ui/button";
 import { CommitmentStatusBadge } from "../components/CommitmentStatusBadge";
 import { VendorFormModal } from "../components/VendorFormModal";
-import { VendorProductsModal } from "../components/VendorProductsModal";
+import { ProductFormModal } from "../components/ProductFormModal";
+import { ProductListTable } from "../components/ProductListTable";
 
 export default function VendorsPage() {
   const { user } = useAuth();
   const [vendorModal, setVendorModal] = useState(false);
-  const [productVendor, setProductVendor] = useState(null);
+  const [productModal, setProductModal] = useState(false);
+  const [editProduct, setEditProduct] = useState(null);
   const canAdd = ["Admin", "SiteEngineer"].includes(user?.role);
+  const canManageProducts = ["Admin", "SiteEngineer", "Accountant", "ProcurementOfficer"].includes(user?.role);
   const { data: vendors } = useQuery({
     queryKey: ["vendors"],
     queryFn: () => api.get("/vendors").then((r) => r.data),
@@ -49,7 +52,6 @@ export default function VendorsPage() {
               <th className="px-4 py-3">Insurance</th>
               <th className="px-4 py-3 text-center">Rating</th>
               <th className="px-4 py-3 text-center">Status</th>
-              <th className="px-4 py-3 text-center">Products</th>
             </tr>
           </thead>
           <tbody>
@@ -83,20 +85,26 @@ export default function VendorsPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-center"><CommitmentStatusBadge status={v.status} /></td>
-                <td className="px-4 py-3 text-center">
-                  <Button size="sm" variant="outline" data-testid={`add-product-button-${v.id}`}
-                    onClick={() => setProductVendor(v)}
-                    className="rounded-md border-slate-300 dark:border-slate-700 text-xs font-semibold">
-                    <Package size={13} strokeWidth={2.5} /> Add Product
-                  </Button>
-                </td>
               </tr>
             ))}
             {(vendors || []).length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-500 dark:text-slate-400">No vendors yet.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500 dark:text-slate-400">No vendors yet.</td></tr>
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-3" data-testid="products-section-header">
+        <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Products — Global Catalog</div>
+        {canManageProducts && (
+          <Button data-testid="add-product-button" onClick={() => { setEditProduct(null); setProductModal(true); }}
+            className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide">
+            <Plus size={15} strokeWidth={3} /> Add Product
+          </Button>
+        )}
+      </div>
+      <div className="mb-10">
+        <ProductListTable canManage={canManageProducts} onEdit={(p) => { setEditProduct(p); setProductModal(true); }} />
       </div>
 
       <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold mb-3">Bid Packages — Quote Comparison</div>
@@ -125,7 +133,7 @@ export default function VendorsPage() {
         )}
       </div>
       <VendorFormModal open={vendorModal} onOpenChange={setVendorModal} />
-      <VendorProductsModal vendor={productVendor} open={!!productVendor} onOpenChange={(o) => !o && setProductVendor(null)} />
+      <ProductFormModal open={productModal} onOpenChange={setProductModal} product={editProduct} />
     </div>
   );
 }

@@ -15,6 +15,7 @@ import ClientDetailPage from "./features/projectPlanning/pages/ClientDetailPage"
 import ClientProjectsPage from "./features/projectPlanning/pages/ClientProjectsPage";
 import ProcurementDashboardPage from "./features/projectPlanning/pages/ProcurementDashboardPage";
 import CommitmentDetailPage from "./features/projectPlanning/pages/CommitmentDetailPage";
+import QuotationDetailPage from "./features/projectPlanning/pages/QuotationDetailPage";
 import FinancePage from "./features/projectPlanning/pages/FinancePage";
 import PayrollPage from "./features/projectPlanning/pages/PayrollPage";
 import ProjectFinancePage from "./features/projectPlanning/pages/ProjectFinancePage";
@@ -64,6 +65,7 @@ function App() {
             <Route path="/admin/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
             <Route path="/admin/projects/:id/finance" element={<ProtectedRoute><ProjectFinancePage /></ProtectedRoute>} />
             <Route path="/admin/projects/:id/procurement" element={<ProtectedRoute><ProcurementDashboardPage /></ProtectedRoute>} />
+            <Route path="/admin/projects/:id/procurement/quotations/:quotationId" element={<ProtectedRoute><QuotationDetailPage /></ProtectedRoute>} />
             <Route path="/admin/projects/:id/procurement/:type/:commitmentId" element={<ProtectedRoute><CommitmentDetailPage /></ProtectedRoute>} />
             <Route path="/admin/clients" element={<ProtectedRoute><ClientsPage /></ProtectedRoute>} />
             <Route path="/admin/clients/:id" element={<ProtectedRoute><ClientDetailPage /></ProtectedRoute>} />
