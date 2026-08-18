@@ -78,7 +78,30 @@ def startup():
                      "ALTER TABLE clients ADD COLUMN IF NOT EXISTS address VARCHAR",
                      "ALTER TABLE clients ADD COLUMN IF NOT EXISTS tax_id VARCHAR",
                      "ALTER TABLE clients ADD COLUMN IF NOT EXISTS notes TEXT",
-                     "ALTER TABLE clients ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE"]:
+                     "ALTER TABLE clients ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE",
+                     "ALTER TABLE payments ADD COLUMN IF NOT EXISTS vendor_id INTEGER",
+                     "ALTER TABLE payments ADD COLUMN IF NOT EXISTS payment_direction VARCHAR DEFAULT 'incoming'",
+                     "UPDATE payments SET payment_direction = 'incoming' WHERE payment_direction IS NULL",
+                     "ALTER TABLE expense_entries ADD COLUMN IF NOT EXISTS phase_id INTEGER REFERENCES phases(id)",
+                     "ALTER TABLE expense_entries ADD COLUMN IF NOT EXISTS source_type VARCHAR",
+                     "ALTER TABLE expense_entries ADD COLUMN IF NOT EXISTS source_id INTEGER",
+                     "ALTER TABLE expense_entries ADD COLUMN IF NOT EXISTS product_id INTEGER",
+                     "ALTER TABLE expense_entries ADD COLUMN IF NOT EXISTS payment_type VARCHAR",
+                     "ALTER TABLE expense_entries ADD COLUMN IF NOT EXISTS balance_after NUMERIC(14,2)",
+                     "ALTER TABLE expense_entries ADD COLUMN IF NOT EXISTS quotation_id INTEGER",
+                     "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES clients(id)",
+                     "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS approval_state VARCHAR DEFAULT 'pending'",
+                     "UPDATE estimates SET approval_state = 'pending' WHERE approval_state IS NULL",
+                     "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS client_email VARCHAR",
+                     "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ",
+                     "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ",
+                     "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS rejected_at TIMESTAMPTZ",
+                     "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS rejection_reason TEXT",
+                     "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS linked_project_id INTEGER REFERENCES projects(id)",
+                     "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS approval_token VARCHAR",
+                     "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS token_expires_at TIMESTAMPTZ",
+                     "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS token_used BOOLEAN DEFAULT FALSE",
+                     "ALTER TABLE estimates ALTER COLUMN project_name DROP NOT NULL"]:
             conn.execute(text(stmt))
     db = SessionLocal()
     try:
