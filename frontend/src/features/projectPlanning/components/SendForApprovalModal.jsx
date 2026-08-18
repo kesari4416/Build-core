@@ -41,7 +41,7 @@ export const SendForApprovalModal = ({ open, onOpenChange, estimate }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md max-w-md" data-testid="send-approval-modal">
+      <DialogContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md sm:max-w-xl overflow-hidden" data-testid="send-approval-modal">
         <DialogHeader>
           <DialogTitle className="font-heading text-2xl uppercase tracking-wide">Send for Approval</DialogTitle>
           <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
@@ -70,17 +70,18 @@ export const SendForApprovalModal = ({ open, onOpenChange, estimate }) => {
               : "border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300"}`}>
               {result.email_sent ? <CheckCircle2 size={16} className="mt-0.5 shrink-0" /> : <AlertTriangle size={16} className="mt-0.5 shrink-0" />}
               {result.email_sent
-                ? <span>Approval request sent to <b>{result.client_email}</b>. Status is now "Awaiting client response".</span>
-                : <span>Email failed to send — copy the links below and share them with the client directly.
+                ? <span className="min-w-0 break-words">Approval request sent to <b>{result.client_email}</b>. Status is now "Awaiting client response".</span>
+                : <span className="min-w-0 break-words">Email failed to send — copy the links below and share them with the client directly.
                     {result.email_error && <span className="block mt-1 text-[11px] opacity-80" data-testid="email-error-detail">Reason: {String(result.email_error).slice(0, 180)}</span>}
                   </span>}
             </div>
             {[["Approve", result.approve_url], ["Reject", result.reject_url]].map(([label, url]) => (
-              <div key={label} className="flex items-center gap-2">
-                <span className="text-[10px] uppercase tracking-[0.12em] font-bold w-14 text-slate-500 dark:text-slate-400">{label}</span>
-                <code className="flex-1 truncate text-[10px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2 py-1.5 text-slate-600 dark:text-slate-400">{url}</code>
+              <div key={label} className="flex items-center gap-2 min-w-0">
+                <span className="text-[10px] uppercase tracking-[0.12em] font-bold w-14 shrink-0 text-slate-500 dark:text-slate-400">{label}</span>
+                <input readOnly value={url} onFocus={(e) => e.target.select()}
+                  className="flex-1 min-w-0 text-[10px] font-mono bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2 py-1.5 text-slate-600 dark:text-slate-400 outline-none" />
                 <button data-testid={`copy-${label.toLowerCase()}-link`} onClick={() => copy(url, label)}
-                  className="p-1.5 border border-slate-300 dark:border-slate-700 text-slate-500 hover:text-blue-600 hover:border-blue-400 transition-colors"><Copy size={12} /></button>
+                  className="p-1.5 shrink-0 border border-slate-300 dark:border-slate-700 text-slate-500 hover:text-blue-600 hover:border-blue-400 transition-colors"><Copy size={12} /></button>
               </div>
             ))}
             <div className="flex justify-end">
