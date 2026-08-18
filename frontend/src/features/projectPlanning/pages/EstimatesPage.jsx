@@ -64,8 +64,8 @@ export default function EstimatesPage() {
   };
 
   return (
-    <div data-testid="estimates-page">
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
+    <div className="p-8" data-testid="estimates-page">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <div className="text-[11px] uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400 font-semibold mb-1 flex items-center gap-2">
             <Calculator size={13} strokeWidth={2.5} /> Pre-construction
@@ -82,23 +82,23 @@ export default function EstimatesPage() {
         <table className="w-full text-sm" data-testid="estimates-table">
           <thead>
             <tr className="text-left text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-              <th className="px-4 py-3">Client</th>
-              <th className="px-4 py-3">Project Name</th><th className="px-4 py-3">Phase</th>
-              <th className="px-4 py-3">Category</th><th className="px-4 py-3">Drawing</th>
-              <th className="px-4 py-3 text-right">Total Amount</th><th className="px-4 py-3 text-center">Current Status</th>
-              <th className="px-4 py-3 text-center">Approval</th>
-              <th className="px-4 py-3">Actions</th>
-              {canDelete && <th className="px-4 py-3" />}
+              <th className="px-3 py-3">Client</th>
+              <th className="px-3 py-3">Project Name</th><th className="px-3 py-3">Phase</th>
+              <th className="px-3 py-3">Category</th><th className="px-3 py-3">Drawing</th>
+              <th className="px-3 py-3 text-right">Total Amount</th><th className="px-3 py-3 text-center">Current Status</th>
+              <th className="px-3 py-3 text-center">Approval</th>
+              <th className="px-3 py-3">Actions</th>
+              {canDelete && <th className="px-3 py-3" />}
             </tr>
           </thead>
           <tbody>
             {(estimates || []).map((e) => (
               <tr key={e.id} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors" data-testid={`estimate-row-${e.id}`}>
-                <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100" data-testid={`estimate-client-${e.id}`}>{e.client_name || "—"}</td>
-                <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{e.project_name || "—"}</td>
-                <td className="px-4 py-2.5 text-slate-600 dark:text-slate-400">{e.phase || "—"}</td>
-                <td className="px-4 py-2.5 text-slate-600 dark:text-slate-400">{e.category}</td>
-                <td className="px-4 py-2.5">
+                <td className="px-3 py-2.5 font-semibold text-slate-900 dark:text-slate-100" data-testid={`estimate-client-${e.id}`}>{e.client_name || "—"}</td>
+                <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300">{e.project_name || "—"}</td>
+                <td className="px-3 py-2.5 text-slate-600 dark:text-slate-400">{e.phase || "—"}</td>
+                <td className="px-3 py-2.5 text-slate-600 dark:text-slate-400">{e.category}</td>
+                <td className="px-3 py-2.5">
                   {e.drawing_url ? (
                     <a href={assetUrl(e.drawing_url)} target="_blank" rel="noreferrer" data-testid={`estimate-drawing-${e.id}`} title={e.drawing_filename}>
                       {/\.pdf$/i.test(e.drawing_url) ? (
@@ -112,16 +112,16 @@ export default function EstimatesPage() {
                     </a>
                   ) : <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>}
                 </td>
-                <td className="px-4 py-2.5 text-right font-heading font-bold text-slate-900 dark:text-slate-100">{fmt(e.total_amount)}</td>
-                <td className="px-4 py-2.5 text-center">
-                  <span className={`inline-block border px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] font-bold ${STATUS_COLOR[e.current_status] || "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800"}`}>
+                <td className="px-3 py-2.5 text-right font-heading font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">{fmt(e.total_amount)}</td>
+                <td className="px-3 py-2.5 text-center">
+                  <span className={`inline-block border px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] font-bold whitespace-nowrap ${STATUS_COLOR[e.current_status] || "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800"}`}>
                     {e.current_status}
                   </span>
                 </td>
-                <td className="px-4 py-2.5 text-center">
+                <td className="px-3 py-2.5 text-center">
                   <ApprovalBadge e={e} />
                 </td>
-                <td className="px-4 py-2.5">
+                <td className="px-3 py-2.5">
                   <div className="flex flex-wrap items-center gap-1.5">
                     {!e.linked_project_id && (
                       <button data-testid={`send-approval-${e.id}`} onClick={() => setSendModal({ open: true, estimate: e })}
@@ -146,7 +146,7 @@ export default function EstimatesPage() {
                   </div>
                 </td>
                 {canDelete && (
-                  <td className="px-4 py-2.5 text-right">
+                  <td className="px-3 py-2.5 text-right">
                     <button data-testid={`delete-estimate-${e.id}`} title="Delete" onClick={() => remove(e)}
                       className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"><Trash2 size={14} strokeWidth={2.5} /></button>
                   </td>
