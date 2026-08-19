@@ -22,6 +22,9 @@ export const VendorFormModal = ({ open, onOpenChange }) => {
   const submit = async (ev) => {
     ev.preventDefault();
     if (!form.name.trim()) { toast.error("Vendor name is required"); return; }
+    if (form.insurance_expiry && form.insurance_expiry < new Date().toISOString().slice(0, 10)) {
+      toast.error("Insurance expiry date cannot be in the past"); return;
+    }
     setSaving(true);
     try {
       await api.post("/vendors", {
@@ -92,7 +95,7 @@ export const VendorFormModal = ({ open, onOpenChange }) => {
             </div>
             <div>
               <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Insurance Expiry</Label>
-              <Input data-testid="vendor-insurance-input" type="date" value={form.insurance_expiry} onChange={(e) => set("insurance_expiry", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
+              <Input data-testid="vendor-insurance-input" type="date" min={new Date().toISOString().slice(0, 10)} value={form.insurance_expiry} onChange={(e) => set("insurance_expiry", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">

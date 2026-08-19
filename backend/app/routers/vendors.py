@@ -19,6 +19,8 @@ STAFF = require_roles("Admin", "SiteEngineer")
 
 @router.post("/vendors", status_code=201)
 def create_vendor(body: VendorCreate, db: Session = Depends(get_db), user: User = Depends(STAFF)):
+    if body.insurance_expiry and body.insurance_expiry < date.today():
+        raise HTTPException(status_code=422, detail="Insurance expiry date cannot be in the past")
     v = Vendor(**body.model_dump())
     db.add(v)
     db.commit()
