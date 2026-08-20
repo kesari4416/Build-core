@@ -24,7 +24,7 @@ const StatCard = ({ icon: Icon, label, value, accent, testId }) => (
 );
 
 const Card = ({ title, testId, children, className = "" }) => (
-  <div className={`border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 ${className}`} data-testid={testId}>
+  <div className={`border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 min-w-0 overflow-hidden ${className}`} data-testid={testId}>
     <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold mb-4">{title}</div>
     {children}
   </div>
@@ -87,7 +87,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="p-8" data-testid="dashboard-page">
+    <div className="p-4 sm:p-8" data-testid="dashboard-page">
       <div className="mb-8">
         <div className="text-blue-600 dark:text-blue-400 text-[11px] uppercase tracking-[0.3em] font-semibold mb-1">Command Center</div>
         <h1 className="font-heading font-bold text-4xl sm:text-5xl tracking-tight leading-none">
@@ -214,7 +214,7 @@ export default function DashboardPage() {
           </ResponsiveContainer>
         </Card>
 
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 min-w-0">
           <div className="flex items-center justify-between mb-3">
             <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Recent Projects</div>
             <Link to="/admin/projects" data-testid="view-all-projects-link" className="text-xs uppercase tracking-[0.12em] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">View All →</Link>

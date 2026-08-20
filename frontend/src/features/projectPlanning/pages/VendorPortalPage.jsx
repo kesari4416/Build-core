@@ -17,7 +17,7 @@ export default function VendorPortalPage() {
   });
 
   return (
-    <div className="p-8" data-testid="vendor-portal-page">
+    <div className="p-4 sm:p-8" data-testid="vendor-portal-page">
       <div className="mb-8">
         <div className="text-blue-600 dark:text-blue-400 text-[11px] uppercase tracking-[0.3em] font-semibold mb-1">Vendor Portal</div>
         <h1 className="font-heading font-bold text-4xl sm:text-5xl tracking-tight leading-none">Bid Invitations</h1>

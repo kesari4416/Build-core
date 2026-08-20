@@ -46,7 +46,7 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="p-8" data-testid="users-page">
+    <div className="p-4 sm:p-8" data-testid="users-page">
       <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
         <div>
           <div className="text-blue-600 dark:text-blue-400 text-[11px] uppercase tracking-[0.3em] font-semibold mb-1">Administration</div>

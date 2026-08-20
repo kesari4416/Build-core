@@ -45,7 +45,7 @@ export default function ProcurementDashboardPage() {
   const negVariance = (summary?.budget_variance ?? 0) < 0;
 
   return (
-    <div className="p-8" data-testid="procurement-dashboard-page">
+    <div className="p-4 sm:p-8" data-testid="procurement-dashboard-page">
       <Link to={`/admin/projects/${id}`} data-testid="back-to-project" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] font-semibold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-400 transition-colors mb-4">
         <ArrowLeft size={14} strokeWidth={2.5} /> {project?.name || "Project"}
       </Link>

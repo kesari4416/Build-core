@@ -34,12 +34,12 @@ export default function VendorDashboardPage() {
     queryFn: () => api.get("/vendor/dashboard").then((r) => r.data),
   });
 
-  if (!dash) return <div className="p-8 text-sm text-slate-500" data-testid="vendor-dashboard-loading">Loading dashboard…</div>;
+  if (!dash) return <div className="p-4 sm:p-8 text-sm text-slate-500" data-testid="vendor-dashboard-loading">Loading dashboard…</div>;
   const o = dash.overview;
   const dp = dash.delivery_performance;
 
   return (
-    <div className="p-8" data-testid="vendor-dashboard">
+    <div className="p-4 sm:p-8" data-testid="vendor-dashboard">
       <div className="mb-8">
         <div className="text-blue-600 dark:text-blue-400 text-[11px] uppercase tracking-[0.3em] font-semibold mb-1">Vendor Portal</div>
         <h1 className="font-heading font-bold text-4xl sm:text-5xl tracking-tight leading-none">Dashboard</h1>

@@ -57,12 +57,12 @@ export default function ProjectDetailPage() {
   const canWrite = roleCanWrite && (isAdmin || project?.site_engineer_id === user?.id);
 
   if (isLoading)
-    return <div className="p-8 space-y-4"><Skeleton className="h-16 bg-slate-200 dark:bg-slate-800 rounded-md w-1/2" /><Skeleton className="h-64 bg-slate-200 dark:bg-slate-800 rounded-md" /></div>;
+    return <div className="p-4 sm:p-8 space-y-4"><Skeleton className="h-16 bg-slate-200 dark:bg-slate-800 rounded-md w-1/2" /><Skeleton className="h-64 bg-slate-200 dark:bg-slate-800 rounded-md" /></div>;
   if (isError || !project)
-    return <div className="p-8"><div className="border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-8 text-center text-red-600 dark:text-red-400" data-testid="project-error">Project not found or failed to load.</div></div>;
+    return <div className="p-4 sm:p-8"><div className="border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-8 text-center text-red-600 dark:text-red-400" data-testid="project-error">Project not found or failed to load.</div></div>;
 
   return (
-    <div className="p-8" data-testid="project-detail-page">
+    <div className="p-4 sm:p-8" data-testid="project-detail-page">
       <Link to="/admin/projects" data-testid="back-to-projects" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] font-semibold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-400 transition-colors mb-4">
         <ArrowLeft size={14} strokeWidth={2.5} /> All Projects
       </Link>
@@ -111,7 +111,7 @@ export default function ProjectDetailPage() {
       </div>
 
       <Tabs defaultValue={initialTab}>
-        <TabsList className="bg-transparent border-b border-slate-200 dark:border-slate-800 rounded-md w-full justify-start h-auto p-0 gap-1">
+        <TabsList className="bg-transparent border-b border-slate-200 dark:border-slate-800 rounded-md w-full justify-start h-auto p-0 gap-1 overflow-x-auto flex-nowrap [&::-webkit-scrollbar]:h-1">
           {["overview", "phases", "tracking", ...(user?.role !== "Vendor" ? ["variations"] : []), ...(user?.role !== "Client" && user?.role !== "Vendor" ? ["employees", "balancesheet"] : [])].map((t) => (
             <TabsTrigger key={t} value={t} data-testid={`tab-${t}`}
               className="rounded-md px-5 py-2.5 text-xs uppercase tracking-[0.15em] font-semibold data-[state=active]:bg-white dark:bg-slate-900 data-[state=active]:text-slate-900 dark:text-slate-100 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none text-slate-500 dark:text-slate-400 border-b-2 border-transparent">

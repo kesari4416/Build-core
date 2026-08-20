@@ -64,7 +64,7 @@ export default function EstimatesPage() {
   };
 
   return (
-    <div className="p-8" data-testid="estimates-page">
+    <div className="p-4 sm:p-8" data-testid="estimates-page">
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <div className="text-[11px] uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400 font-semibold mb-1 flex items-center gap-2">

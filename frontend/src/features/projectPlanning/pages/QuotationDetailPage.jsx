@@ -96,12 +96,12 @@ export default function QuotationDetailPage() {
     } finally { setPaying(false); }
   };
 
-  if (!q) return <div className="p-8 text-sm text-slate-500 dark:text-slate-400">Loading quotation…</div>;
+  if (!q) return <div className="p-4 sm:p-8 text-sm text-slate-500 dark:text-slate-400">Loading quotation…</div>;
 
   const contact = sendChannel === "whatsapp" ? vendor?.phone : vendor?.email;
 
   return (
-    <div className="p-8" data-testid="quotation-detail-page">
+    <div className="p-4 sm:p-8" data-testid="quotation-detail-page">
       <Link to={`/admin/projects/${id}/procurement`} data-testid="back-to-procurement"
         className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] font-semibold text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors mb-4">
         <ArrowLeft size={14} strokeWidth={2.5} /> Procurement

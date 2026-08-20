@@ -40,12 +40,12 @@ export default function CommitmentDetailPage() {
   };
 
   if (isLoading || !c)
-    return <div className="p-8"><Skeleton className="h-16 bg-slate-200 dark:bg-slate-800 rounded-md w-1/2" /></div>;
+    return <div className="p-4 sm:p-8"><Skeleton className="h-16 bg-slate-200 dark:bg-slate-800 rounded-md w-1/2" /></div>;
 
   const base = type === "po" ? `/purchase-orders/${commitmentId}` : `/subcontracts/${commitmentId}`;
 
   return (
-    <div className="p-8" data-testid="commitment-detail-page">
+    <div className="p-4 sm:p-8" data-testid="commitment-detail-page">
       <Link to={`/admin/projects/${id}/procurement`} data-testid="back-to-procurement" className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] font-semibold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-400 transition-colors mb-4">
         <ArrowLeft size={14} strokeWidth={2.5} /> Procurement
       </Link>

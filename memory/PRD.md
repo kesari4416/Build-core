@@ -180,6 +180,13 @@
   - Send for Approval: now sets Current Status → "Pending Approval"; email includes full summary (client, project, phase, category, status, requirements table w/ prices, total, drawing link); audit events unchanged
   - Testing agent wrote /app/backend/tests/test_iter25_estimates_reqs_phase_sync.py (11 tests, authored but NOT executed — user declined testing); reviewer notes: SMTP 20s timeout in request thread, negative manual total not explicitly rejected when reqs also present
 
+- Mobile responsive portal (2026-08, self-verified via mobile+desktop screenshots & programmatic overflow checks on 12 routes):
+  - Layout.jsx: mobile drawer sidebar (translate-x, overlay, closes on nav) + sticky hamburger topbar (lg:hidden); desktop unchanged; main has min-w-0 (fixes app-wide page overflow)
+  - All 25 pages: p-4 sm:p-8 adaptive padding (bulk sed)
+  - Dashboard: Card gets min-w-0 overflow-hidden (recharts-in-grid overflow), recent-projects col min-w-0
+  - ProjectDetailPage TabsList: overflow-x-auto flex-nowrap (swipeable tabs on mobile)
+  - Estimates: "Send for Approval" → "Send" compact button
+
 ## Backlog / Next
 - RECURRING ENV ISSUE (count ~7): container resets wipe PostgreSQL binaries+data. Recovery: `sudo bash /app/scripts/restore_postgres.sh` (reinstalls PG, recreates DB, reseeds, restarts backend; create_all rebuilds ALL tables incl. income_entries/extended expense_entries automatically). 2026-06-16: user-reported "Error in Finance module add income/expense" was this — verified post-restore that income credits + expense debits flow to project & org balance sheets.
 - P1: Milestones UI (backend ready); edit progress updates
