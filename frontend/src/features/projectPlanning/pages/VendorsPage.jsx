@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import { Truck, ShieldAlert, ShieldCheck, Star, Scale, ArrowRight, Plus } from "lucide-react";
+import { Truck, ShieldAlert, ShieldCheck, Star, Scale, ArrowRight, Plus, Pencil } from "lucide-react";
 import api from "../../../api/client";
 import { useAuth } from "../../../context/AuthContext";
 import { Button } from "../../../components/ui/button";
@@ -13,6 +13,7 @@ import { ProductListTable } from "../components/ProductListTable";
 export default function VendorsPage() {
   const { user } = useAuth();
   const [vendorModal, setVendorModal] = useState(false);
+  const [editVendor, setEditVendor] = useState(null);
   const [productModal, setProductModal] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
   const canAdd = ["Admin", "SiteEngineer"].includes(user?.role);
@@ -34,7 +35,7 @@ export default function VendorsPage() {
           <h1 className="font-heading font-bold text-4xl sm:text-5xl tracking-tight leading-none">Vendors & Quotes</h1>
         </div>
         {canAdd && (
-          <Button data-testid="add-vendor-button" onClick={() => setVendorModal(true)}
+          <Button data-testid="add-vendor-button" onClick={() => { setEditVendor(null); setVendorModal(true); }}
             className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide">
             <Plus size={15} strokeWidth={3} /> Add Vendor
           </Button>
@@ -52,6 +53,7 @@ export default function VendorsPage() {
               <th className="px-4 py-3">Insurance</th>
               <th className="px-4 py-3 text-center">Rating</th>
               <th className="px-4 py-3 text-center">Status</th>
+              {canAdd && <th className="px-4 py-3 text-center">Edit</th>}
             </tr>
           </thead>
           <tbody>
@@ -85,10 +87,17 @@ export default function VendorsPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-center"><CommitmentStatusBadge status={v.status} /></td>
+                {canAdd && (
+                  <td className="px-4 py-3 text-center">
+                    <Button size="sm" variant="outline" data-testid={`edit-vendor-${v.id}`}
+                      onClick={() => { setEditVendor(v); setVendorModal(true); }}
+                      className="rounded-md border-slate-300 dark:border-slate-700 h-8 w-8 p-0"><Pencil size={13} /></Button>
+                  </td>
+                )}
               </tr>
             ))}
             {(vendors || []).length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500 dark:text-slate-400">No vendors yet.</td></tr>
+              <tr><td colSpan={canAdd ? 7 : 6} className="px-4 py-10 text-center text-slate-500 dark:text-slate-400">No vendors yet.</td></tr>
             )}
           </tbody>
         </table>
@@ -132,7 +141,7 @@ export default function VendorsPage() {
           <div className="border border-slate-200 dark:border-slate-800 p-10 text-center text-slate-500 dark:text-slate-400 md:col-span-3">No bid packages yet. Create them from a project's Procurement dashboard.</div>
         )}
       </div>
-      <VendorFormModal open={vendorModal} onOpenChange={setVendorModal} />
+      <VendorFormModal open={vendorModal} onOpenChange={(o) => { setVendorModal(o); if (!o) setEditVendor(null); }} vendor={editVendor} />
       <ProductFormModal open={productModal} onOpenChange={setProductModal} product={editProduct} />
     </div>
   );
