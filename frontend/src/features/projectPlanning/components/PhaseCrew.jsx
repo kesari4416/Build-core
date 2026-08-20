@@ -12,15 +12,16 @@ export const PhaseCrew = ({ phaseId }) => {
     queryFn: () => api.get(`/phases/${phaseId}/employees`).then((r) => r.data),
   });
   const { data: allEmployees } = useQuery({
-    queryKey: ["allEmployees"],
-    queryFn: () => api.get("/employees").then((r) => r.data),
+    queryKey: ["availableEmployees", phaseId],
+    queryFn: () => api.get(`/phases/${phaseId}/available-employees`).then((r) => r.data),
     enabled: adding,
   });
 
   const refresh = () => {
-    qc.invalidateQueries({ queryKey: ["phaseCrew", phaseId] });
+    qc.invalidateQueries({ queryKey: ["phaseCrew"] });
     qc.invalidateQueries({ queryKey: ["employees"] });
     qc.invalidateQueries({ queryKey: ["allEmployees"] });
+    qc.invalidateQueries({ queryKey: ["availableEmployees"] });
   };
   const assign = async (empId) => {
     if (!empId) return;
@@ -36,8 +37,7 @@ export const PhaseCrew = ({ phaseId }) => {
     catch (e) { toast.error(formatApiErrorDetail(e.response?.data?.detail) || e.message); }
   };
 
-  const assignedIds = new Set((crew || []).map((c) => c.employee_id));
-  const options = (allEmployees || []).filter((e) => e.status === "active" && !assignedIds.has(e.id));
+  const options = allEmployees || [];
 
   return (
     <div className="mt-3" data-testid={`phase-crew-${phaseId}`}>
@@ -57,7 +57,7 @@ export const PhaseCrew = ({ phaseId }) => {
           <select autoFocus data-testid={`crew-select-${phaseId}`} defaultValue=""
             onChange={(e) => assign(e.target.value)} onBlur={() => setAdding(false)}
             className="bg-white dark:bg-slate-900 border border-blue-600 text-slate-700 dark:text-slate-300 text-[11px] h-6 px-1">
-            <option value="" disabled>Choose employee…</option>
+            <option value="" disabled>{options.length === 0 ? "No available employees — all assigned" : "Choose employee…"}</option>
             {options.map((e) => <option key={e.id} value={e.id}>{e.name}{e.role_title ? ` (${e.role_title})` : ""}</option>)}
           </select>
         ) : (

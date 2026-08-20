@@ -259,6 +259,21 @@ def create_org_employee(body: EmployeeCreate, db: Session = Depends(get_db),
 
 
 # ---------- Phase crew ----------
+@router.get("/phases/{phase_id}/available-employees")
+def available_phase_employees(phase_id: int, db: Session = Depends(get_db),
+                              user: User = Depends(INTERNAL)):
+    ph = db.get(Phase, phase_id)
+    if not ph:
+        raise HTTPException(status_code=404, detail="Phase not found")
+    check_field_access(db, user, db.get(Project, ph.project_id))
+    assigned_anywhere = db.query(PhaseEmployee.employee_id)
+    rows = (db.query(Employee)
+            .filter(Employee.status == "active", ~Employee.id.in_(assigned_anywhere))
+            .order_by(Employee.name).all())
+    return [{"id": e.id, "name": e.name,
+             "role_title": e.category.name if e.category else e.role_title} for e in rows]
+
+
 @router.get("/phases/{phase_id}/employees")
 def list_phase_employees(phase_id: int, db: Session = Depends(get_db),
                          user: User = Depends(INTERNAL)):
@@ -283,8 +298,16 @@ def assign_phase_employee(phase_id: int, body: dict, db: Session = Depends(get_d
     e = db.get(Employee, body.get("employee_id") or 0)
     if not e:
         raise HTTPException(status_code=422, detail="Employee not found")
-    if db.query(PhaseEmployee).filter_by(phase_id=phase_id, employee_id=e.id).first():
-        raise HTTPException(status_code=409, detail=f"{e.name} is already assigned to this phase")
+    existing = (db.query(PhaseEmployee, Phase).join(Phase, PhaseEmployee.phase_id == Phase.id)
+                .filter(PhaseEmployee.employee_id == e.id).first())
+    if existing:
+        pe0, ph0 = existing
+        if ph0.id == phase_id:
+            raise HTTPException(status_code=409, detail=f"{e.name} is already assigned to this phase")
+        proj0 = db.get(Project, ph0.project_id)
+        raise HTTPException(status_code=409,
+                            detail=f"{e.name} is already assigned to phase '{ph0.name}' in project "
+                                   f"'{proj0.name if proj0 else ph0.project_id}' — unassign them there first")
     pe = PhaseEmployee(phase_id=phase_id, employee_id=e.id, assigned_by=user.id)
     db.add(pe); db.commit(); db.refresh(pe)
     return {"assignment_id": pe.id, "employee_id": e.id, "name": e.name,
