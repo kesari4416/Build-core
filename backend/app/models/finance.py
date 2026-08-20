@@ -100,6 +100,22 @@ class EstimateStatus(Base):
     name = Column(String, nullable=False, unique=True)
 
 
+class RequirementMaster(Base):
+    __tablename__ = "requirements_master"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
+class EstimateRequirement(Base):
+    __tablename__ = "estimate_requirements"
+    id = Column(Integer, primary_key=True)
+    estimate_id = Column(Integer, ForeignKey("estimates.id"), nullable=False, index=True)
+    requirement_name = Column(String, nullable=False)
+    price = Column(Numeric(14, 2), nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
 class Estimate(Base):
     __tablename__ = "estimates"
     id = Column(Integer, primary_key=True)

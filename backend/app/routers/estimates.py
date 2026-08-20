@@ -12,7 +12,8 @@ from sqlalchemy.orm import Session
 from app.core.security import require_roles
 from app.database import get_db
 from app.models import Project, User
-from app.models.finance import Estimate, EstimateApprovalEvent, EstimateCategory, EstimateStatus
+from app.models.finance import (Estimate, EstimateApprovalEvent, EstimateCategory, EstimateStatus,
+                                EstimateRequirement, RequirementMaster)
 
 router = APIRouter(tags=["estimates"])
 STAFF = require_roles("Admin", "Accountant", "SiteEngineer", "ProcurementOfficer")
@@ -83,11 +84,62 @@ class EstimateCreate(BaseModel):
     category_id: int
     drawing_url: Optional[str] = None
     drawing_filename: Optional[str] = None
-    total_amount: float = Field(gt=0)
+    total_amount: Optional[float] = None
     status_id: int
+    requirements: Optional[list["RequirementRow"]] = None
 
 
-def estimate_out(e, events=None, clients=None):
+class RequirementRow(BaseModel):
+    requirement_name: str = Field(min_length=1, max_length=200)
+    price: float = Field(gt=0)
+
+
+@router.get("/requirements-master")
+def list_requirements_master(db: Session = Depends(get_db), user: User = Depends(STAFF)):
+    return [{"id": r.id, "name": r.name} for r in
+            db.query(RequirementMaster).order_by(RequirementMaster.name).all()]
+
+
+@router.get("/estimate-phase-options")
+def estimate_phase_options(project_name: str = "", db: Session = Depends(get_db),
+                           user: User = Depends(STAFF)):
+    name = (project_name or "").strip()
+    if not name:
+        return {"project_id": None, "phases": []}
+    from app.models import Phase
+    project = db.query(Project).filter(Project.name.ilike(name)).first()
+    if not project:
+        return {"project_id": None, "phases": []}
+    phases = db.query(Phase).filter(Phase.project_id == project.id).order_by(Phase.sequence_order).all()
+    return {"project_id": project.id, "project_name": project.name,
+            "phases": [p.name for p in phases]}
+
+
+def upsert_requirement_master(db, name):
+    if not db.query(RequirementMaster).filter(RequirementMaster.name.ilike(name)).first():
+        db.add(RequirementMaster(name=name))
+
+
+def sync_phase_to_project(db, project_name, phase_name):
+    if not (project_name and phase_name):
+        return None
+    from app.models import Phase
+    project = db.query(Project).filter(Project.name.ilike(project_name.strip())).first()
+    if not project:
+        return None
+    existing = db.query(Phase).filter(Phase.project_id == project.id,
+                                      Phase.name.ilike(phase_name.strip())).first()
+    if existing:
+        return existing.id
+    max_seq = max([p.sequence_order for p in
+                   db.query(Phase).filter(Phase.project_id == project.id).all()] or [0])
+    ph = Phase(project_id=project.id, name=phase_name.strip(), sequence_order=max_seq + 1)
+    db.add(ph)
+    db.flush()
+    return ph.id
+
+
+def estimate_out(e, events=None, clients=None, reqs=None):
     return {"id": e.id, "project_name": e.project_name, "phase": e.phase,
             "client_id": e.client_id,
             "client_name": (clients or {}).get(e.client_id),
@@ -104,6 +156,7 @@ def estimate_out(e, events=None, clients=None):
             "linked_project_id": e.linked_project_id,
             "awaiting_response": bool(e.sent_at and (e.approval_state or "pending") == "pending"),
             "events": events or [],
+            "requirements": reqs or [],
             "created_at": e.created_at.isoformat() if e.created_at else None,
             "updated_at": e.updated_at.isoformat() if e.updated_at else None}
 
@@ -113,7 +166,11 @@ def list_estimates(db: Session = Depends(get_db), user: User = Depends(STAFF)):
     ensure_defaults(db)
     from app.models import Client
     clients = {c.id: c.name for c in db.query(Client).all()}
-    return [estimate_out(e, clients=clients) for e in
+    req_map = {}
+    for r in db.query(EstimateRequirement).order_by(EstimateRequirement.id).all():
+        req_map.setdefault(r.estimate_id, []).append(
+            {"requirement_name": r.requirement_name, "price": float(r.price)})
+    return [estimate_out(e, clients=clients, reqs=req_map.get(e.id)) for e in
             db.query(Estimate).order_by(Estimate.created_at.desc()).all()]
 
 
@@ -134,17 +191,35 @@ def create_estimate(body: EstimateCreate, db: Session = Depends(get_db), user: U
         raise HTTPException(status_code=422, detail="Invalid category")
     if not db.get(EstimateStatus, body.status_id):
         raise HTTPException(status_code=422, detail="Invalid status")
+    reqs = body.requirements or []
+    if reqs:
+        total = round(sum(r.price for r in reqs), 2)
+    else:
+        total = body.total_amount or 0
+    if not total or total <= 0:
+        raise HTTPException(status_code=422,
+                            detail="Add at least one requirement with a price, or enter a total amount greater than 0")
     e = Estimate(client_id=client.id,
                  project_name=(body.project_name or "").strip() or None,
                  phase=(body.phase or "").strip() or None,
                  category_id=body.category_id, drawing_url=body.drawing_url,
-                 drawing_filename=body.drawing_filename, total_amount=body.total_amount,
+                 drawing_filename=body.drawing_filename, total_amount=total,
                  status_id=body.status_id, created_by=user.id,
                  client_email=client.email or None)
     db.add(e)
+    db.flush()
+    out_reqs = []
+    for r in reqs:
+        name = r.requirement_name.strip()
+        db.add(EstimateRequirement(estimate_id=e.id, requirement_name=name, price=r.price))
+        upsert_requirement_master(db, name)
+        out_reqs.append({"requirement_name": name, "price": r.price})
+    synced_phase_id = sync_phase_to_project(db, e.project_name, e.phase)
     db.commit()
     db.refresh(e)
-    return estimate_out(e, clients={client.id: client.name})
+    out = estimate_out(e, clients={client.id: client.name}, reqs=out_reqs)
+    out["synced_phase_id"] = synced_phase_id
+    return out
 
 
 @router.delete("/estimates/{estimate_id}", status_code=204)
@@ -183,7 +258,7 @@ def display_name(estimate):
     return estimate.project_name or f"Estimate #{estimate.id}"
 
 
-def send_approval_email(estimate, approve_url, reject_url):
+def send_approval_email(estimate, approve_url, reject_url, reqs=None, client_name=None):
     host = os.environ.get("SMTP_HOST")
     port = int(os.environ.get("SMTP_PORT", "465"))
     sender = os.environ.get("SMTP_EMAIL")
@@ -194,6 +269,21 @@ def send_approval_email(estimate, approve_url, reject_url):
     if estimate.drawing_url:
         base = os.environ.get("FRONTEND_URL", "")
         drawing = f'<p><b>Drawing:</b> <a href="{base}/api/uploads/{estimate.drawing_url.split("/")[-1]}">{estimate.drawing_filename or "View drawing"}</a></p>'
+    req_html = ""
+    if reqs:
+        rows = "".join(
+            f'<tr><td style="padding:6px 10px;border:1px solid #e2e8f0">{r["requirement_name"]}</td>'
+            f'<td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:right">{fmt_inr(r["price"])}</td></tr>'
+            for r in reqs)
+        req_html = f"""
+        <p style="margin-bottom:6px"><b>Requirements</b></p>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <tr><th style="padding:6px 10px;border:1px solid #e2e8f0;background:#f8fafc;text-align:left">Requirement</th>
+              <th style="padding:6px 10px;border:1px solid #e2e8f0;background:#f8fafc;text-align:right">Price</th></tr>
+          {rows}
+          <tr><td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:right"><b>Total</b></td>
+              <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:right"><b>{fmt_inr(estimate.total_amount)}</b></td></tr>
+        </table>"""
     html = f"""
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border:1px solid #e2e8f0">
       <div style="background:#0f172a;color:#fff;padding:18px 24px">
@@ -202,12 +292,14 @@ def send_approval_email(estimate, approve_url, reject_url):
       <div style="padding:24px">
         <p>You have received a project estimate for review:</p>
         <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <tr><td style="padding:6px 0;color:#64748b">Client</td><td style="padding:6px 0"><b>{client_name or "—"}</b></td></tr>
           <tr><td style="padding:6px 0;color:#64748b">Project Name</td><td style="padding:6px 0"><b>{display_name(estimate)}</b></td></tr>
           <tr><td style="padding:6px 0;color:#64748b">Phase</td><td style="padding:6px 0">{estimate.phase or "—"}</td></tr>
           <tr><td style="padding:6px 0;color:#64748b">Category</td><td style="padding:6px 0">{estimate.category.name if estimate.category else "—"}</td></tr>
           <tr><td style="padding:6px 0;color:#64748b">Status</td><td style="padding:6px 0">{estimate.status.name if estimate.status else "—"}</td></tr>
           <tr><td style="padding:6px 0;color:#64748b">Total Amount</td><td style="padding:6px 0"><b style="font-size:16px">{fmt_inr(estimate.total_amount)}</b></td></tr>
         </table>
+        {req_html}
         {drawing}
         <div style="margin:28px 0;text-align:center">
           <a href="{approve_url}" style="background:#059669;color:#fff;padding:12px 28px;text-decoration:none;font-weight:bold;margin-right:12px">APPROVE</a>
@@ -245,6 +337,9 @@ def send_for_approval(estimate_id: int, body: SendApprovalIn, request: Request,
     e.approved_at = None
     e.rejected_at = None
     e.rejection_reason = None
+    pending = db.query(EstimateStatus).filter(EstimateStatus.name.ilike("Pending Approval")).first()
+    if pending:
+        e.status_id = pending.id
     base = (os.environ.get("FRONTEND_URL")
             or request.headers.get("origin")
             or (f"{request.headers.get('x-forwarded-proto', request.url.scheme)}://{request.headers.get('x-forwarded-host') or request.headers.get('host', '')}")
@@ -252,8 +347,14 @@ def send_for_approval(estimate_id: int, body: SendApprovalIn, request: Request,
     approve_url = f"{base}/estimate-approval/{e.id}/{token}?action=approve"
     reject_url = f"{base}/estimate-approval/{e.id}/{token}?action=reject"
     email_sent, email_error = True, None
+    reqs = [{"requirement_name": r.requirement_name, "price": float(r.price)} for r in
+            db.query(EstimateRequirement).filter(EstimateRequirement.estimate_id == e.id)
+            .order_by(EstimateRequirement.id).all()]
+    from app.models import Client
+    client = db.get(Client, e.client_id) if e.client_id else None
     try:
-        send_approval_email(e, approve_url, reject_url)
+        send_approval_email(e, approve_url, reject_url, reqs=reqs,
+                            client_name=client.name if client else None)
     except Exception as ex:
         email_sent = False
         email_error = str(ex)
@@ -263,7 +364,7 @@ def send_for_approval(estimate_id: int, body: SendApprovalIn, request: Request,
               user.name, f"to {body.client_email}")
     db.commit()
     db.refresh(e)
-    return {**estimate_out(e), "email_sent": email_sent, "email_error": email_error,
+    return {**estimate_out(e, reqs=reqs), "email_sent": email_sent, "email_error": email_error,
             "approve_url": approve_url, "reject_url": reject_url}
 
 

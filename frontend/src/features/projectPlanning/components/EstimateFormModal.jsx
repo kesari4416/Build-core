@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, FileText, X } from "lucide-react";
+import { ImagePlus, FileText, X, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
@@ -12,9 +12,11 @@ import { InlineAddSelect } from "./InlineAddSelect";
 import { labelCls, inputCls } from "./AddIncomeModal";
 
 const empty = { client_id: "", project_name: "", phase: "", category_id: "", total_amount: "", status_id: "" };
+const fmt = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
 export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) => {
   const [form, setForm] = useState(empty);
+  const [reqRows, setReqRows] = useState([]);
   const [drawing, setDrawing] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -25,14 +27,30 @@ export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) 
     queryFn: () => api.get("/estimate-clients").then((r) => r.data),
     enabled: open,
   });
+  const { data: reqMaster } = useQuery({
+    queryKey: ["requirementsMaster"],
+    queryFn: () => api.get("/requirements-master").then((r) => r.data),
+    enabled: open,
+  });
+  const projectName = form.project_name.trim();
+  const { data: phaseOpts } = useQuery({
+    queryKey: ["estimatePhaseOptions", projectName],
+    queryFn: () => api.get(`/estimate-phase-options?project_name=${encodeURIComponent(projectName)}`).then((r) => r.data),
+    enabled: open && projectName.length > 0,
+  });
 
   useEffect(() => {
-    if (open) { setForm(empty); setDrawing(null); }
+    if (open) { setForm(empty); setDrawing(null); setReqRows([]); }
   }, [open]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-  const amount = Number(form.total_amount);
-  const valid = form.client_id && form.category_id && form.status_id && form.total_amount !== "" && amount > 0;
+  const setRow = (i, patch) => setReqRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+
+  const filledRows = reqRows.filter((r) => r.name.trim() && Number(r.price) > 0);
+  const reqTotal = useMemo(() => filledRows.reduce((s, r) => s + Number(r.price), 0), [filledRows]);
+  const hasRows = reqRows.length > 0;
+  const amount = hasRows ? reqTotal : Number(form.total_amount);
+  const valid = form.client_id && form.category_id && form.status_id && amount > 0;
 
   const onFile = async (ev) => {
     const f = ev.target.files?.[0];
@@ -54,20 +72,30 @@ export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) 
   const submit = async (ev) => {
     ev.preventDefault();
     if (!valid) return;
+    if (hasRows && filledRows.length !== reqRows.length) {
+      toast.error("Every requirement row needs a name and a price greater than 0 (or remove the empty row)");
+      return;
+    }
     setSaving(true);
     try {
-      await api.post("/estimates", {
+      const { data } = await api.post("/estimates", {
         client_id: Number(form.client_id),
-        project_name: form.project_name.trim() || null,
+        project_name: projectName || null,
         phase: form.phase.trim() || null,
         category_id: Number(form.category_id),
         drawing_url: drawing?.url || null,
         drawing_filename: drawing?.filename || null,
-        total_amount: amount,
+        total_amount: hasRows ? null : Number(form.total_amount),
         status_id: Number(form.status_id),
+        requirements: filledRows.map((r) => ({ requirement_name: r.name.trim(), price: Number(r.price) })),
       });
-      toast.success("Estimate created");
+      toast.success(data.synced_phase_id
+        ? `Estimate created — phase "${form.phase.trim()}" synced to project "${projectName}"`
+        : "Estimate created");
       qc.invalidateQueries({ queryKey: ["estimates"] });
+      qc.invalidateQueries({ queryKey: ["requirementsMaster"] });
+      qc.invalidateQueries({ queryKey: ["estimatePhaseOptions"] });
+      if (data.synced_phase_id) qc.invalidateQueries({ queryKey: ["project"] });
       onOpenChange(false);
     } catch (e) {
       toast.error(formatApiErrorDetail(e.response?.data?.detail) || e.message);
@@ -82,7 +110,7 @@ export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) 
         <DialogHeader>
           <DialogTitle className="font-heading text-2xl uppercase tracking-wide">Create Estimate</DialogTitle>
           <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
-            Attach a drawing and record the estimated cost for a project scope.
+            Itemise requirements with prices — the total is calculated automatically.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
@@ -97,13 +125,21 @@ export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) 
           </div>
           <div>
             <Label className={labelCls}>Project Name (optional)</Label>
-            <Input data-testid="estimate-project-input" value={form.project_name}
+            <Input data-testid="estimate-project-input" value={form.project_name} list="estimate-project-list"
               onChange={(e) => set("project_name", e.target.value)} className={inputCls} />
+            {phaseOpts?.project_id && (
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1" data-testid="estimate-project-match">
+                Matches existing project — new phases will be added to it automatically
+              </p>
+            )}
           </div>
           <div>
             <Label className={labelCls}>Phase (optional)</Label>
-            <Input data-testid="estimate-phase-input" value={form.phase}
-              onChange={(e) => set("phase", e.target.value)} placeholder="e.g. Foundation" className={inputCls} />
+            <Input data-testid="estimate-phase-input" value={form.phase} list="estimate-phase-list"
+              onChange={(e) => set("phase", e.target.value)} placeholder="Pick existing or type a new phase" className={inputCls} />
+            <datalist id="estimate-phase-list">
+              {(phaseOpts?.phases || []).map((p) => <option key={p} value={p} />)}
+            </datalist>
           </div>
           <div>
             <Label className={labelCls}>Category *</Label>
@@ -112,6 +148,42 @@ export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) 
               addLabel="+ Add New Category" testPrefix="estimate-category"
               onCreated={(c) => qc.setQueryData(["estimateCategories"], (old) => [...(old || []), c])} />
           </div>
+
+          <div>
+            <div className="flex items-center justify-between">
+              <Label className={labelCls}>Requirements</Label>
+              <button type="button" data-testid="estimate-add-requirement"
+                onClick={() => setReqRows((rs) => [...rs, { name: "", price: "" }])}
+                className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.1em] font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                <Plus size={12} strokeWidth={3} /> Add Requirement
+              </button>
+            </div>
+            <datalist id="estimate-req-list">
+              {(reqMaster || []).map((r) => <option key={r.id} value={r.name} />)}
+            </datalist>
+            {reqRows.length === 0 ? (
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                No requirements added — you can enter a total manually below, or itemise with "+ Add Requirement".
+              </p>
+            ) : (
+              <div className="space-y-2 mt-2" data-testid="estimate-requirement-rows">
+                {reqRows.map((r, i) => (
+                  <div key={i} className="flex items-center gap-2" data-testid={`estimate-req-row-${i}`}>
+                    <Input value={r.name} list="estimate-req-list" placeholder="Requirement (pick or type new)"
+                      onChange={(e) => setRow(i, { name: e.target.value })}
+                      data-testid={`estimate-req-name-${i}`} className={`${inputCls} flex-1 mt-0`} />
+                    <Input type="number" min="0" step="any" value={r.price} placeholder="Price ₹"
+                      onChange={(e) => setRow(i, { price: e.target.value })}
+                      data-testid={`estimate-req-price-${i}`} className={`${inputCls} w-28 mt-0`} />
+                    <button type="button" data-testid={`estimate-req-remove-${i}`}
+                      onClick={() => setReqRows((rs) => rs.filter((_, j) => j !== i))}
+                      className="p-1.5 text-slate-400 hover:text-red-500 transition-colors shrink-0"><X size={14} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div>
             <Label className={labelCls}>Drawing (JPG / PNG / PDF)</Label>
             <div className="mt-1.5 flex items-center gap-3">
@@ -140,12 +212,22 @@ export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) 
               <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.pdf" hidden onChange={onFile} data-testid="estimate-drawing-input" />
             </div>
           </div>
+
           <div>
-            <Label className={labelCls}>Total Amount (₹) *</Label>
-            <Input data-testid="estimate-amount-input" type="number" min="0" step="any" value={form.total_amount}
-              onChange={(e) => set("total_amount", e.target.value)} className={inputCls} />
-            {form.total_amount !== "" && !(amount > 0) && (
-              <p className="text-[11px] text-red-600 dark:text-red-400 mt-1" data-testid="estimate-amount-error">Enter a valid amount greater than 0</p>
+            <Label className={labelCls}>Total Amount (₹) *{hasRows ? " — auto-calculated" : ""}</Label>
+            {hasRows ? (
+              <div data-testid="estimate-total-auto"
+                className="mt-1.5 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 rounded-md px-3 py-2 font-heading font-bold text-lg text-blue-600 dark:text-blue-400">
+                {fmt(reqTotal)}
+              </div>
+            ) : (
+              <>
+                <Input data-testid="estimate-amount-input" type="number" min="0" step="any" value={form.total_amount}
+                  onChange={(e) => set("total_amount", e.target.value)} className={inputCls} />
+                {form.total_amount !== "" && !(Number(form.total_amount) > 0) && (
+                  <p className="text-[11px] text-red-600 dark:text-red-400 mt-1" data-testid="estimate-amount-error">Enter a valid amount greater than 0</p>
+                )}
+              </>
             )}
           </div>
           <div>

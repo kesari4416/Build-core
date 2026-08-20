@@ -173,6 +173,13 @@
   - REMOVED: VendorProductsModal.jsx + VendorQuotationsSection.jsx (old per-vendor system UI). Old backend endpoints kept (used by Add Expense vendor path).
   - Regression file: /app/backend/tests/test_iter24_quotations_v2.py. Nice-to-haves flagged by review (not bugs): share-log lacks failure reason column, quotation seq racy under concurrency / no per-year reset, no client-side guard for unit_price=0.
 
+- Estimate Requirements + Phase Sync upgrade (2026-08, self-tested via curl + screenshot per user's "No need testing"):
+  - New tables: requirements_master (reusable lookup, case-insensitive upsert) + estimate_requirements (estimate_id FK, requirement_name, price)
+  - Create Estimate form: dynamic requirement rows (datalist combobox w/ create-if-not-exists + price each, add/remove), Total Amount auto-calculated read-only = live sum when rows exist (manual total fallback when zero rows for backward compat; neither → 422)
+  - Phase two-way sync: Project Name matching an existing project (case-insensitive) → green hint + phase datalist from that project; new phase name auto-created under the project on save (deduped case-insensitively, sequence_order=max+1); endpoints GET /requirements-master, GET /estimate-phase-options?project_name=
+  - Send for Approval: now sets Current Status → "Pending Approval"; email includes full summary (client, project, phase, category, status, requirements table w/ prices, total, drawing link); audit events unchanged
+  - Testing agent wrote /app/backend/tests/test_iter25_estimates_reqs_phase_sync.py (11 tests, authored but NOT executed — user declined testing); reviewer notes: SMTP 20s timeout in request thread, negative manual total not explicitly rejected when reqs also present
+
 ## Backlog / Next
 - RECURRING ENV ISSUE (count ~7): container resets wipe PostgreSQL binaries+data. Recovery: `sudo bash /app/scripts/restore_postgres.sh` (reinstalls PG, recreates DB, reseeds, restarts backend; create_all rebuilds ALL tables incl. income_entries/extended expense_entries automatically). 2026-06-16: user-reported "Error in Finance module add income/expense" was this — verified post-restore that income credits + expense debits flow to project & org balance sheets.
 - P1: Milestones UI (backend ready); edit progress updates
