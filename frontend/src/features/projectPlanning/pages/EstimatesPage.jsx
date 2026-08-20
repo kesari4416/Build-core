@@ -127,7 +127,7 @@ export default function EstimatesPage() {
                       <button data-testid={`send-approval-${e.id}`} onClick={() => setSendModal({ open: true, estimate: e })}
                         title={e.sent_at ? "Re-send (issues a new link, resets to pending)" : "Send for Approval"}
                         className="inline-flex items-center gap-1 border border-blue-400/60 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 px-2 py-1 text-[10px] uppercase tracking-[0.1em] font-bold transition-colors">
-                        <Send size={11} strokeWidth={2.5} /> {e.sent_at ? "Re-send" : "Send for Approval"}
+                        <Send size={11} strokeWidth={2.5} /> {e.sent_at ? "Re-send" : "Send"}
                       </button>
                     )}
                     {!e.linked_project_id && e.approval_state !== "approved" && <ApprovalActionButtons estimate={e} onApproved={(est) => setProjectModal({ open: true, estimate: est })} />}

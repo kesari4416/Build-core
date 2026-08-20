@@ -89,7 +89,7 @@ export default function Layout({ children }) {
           </button>
         </div>
       </aside>
-      <main className="flex-1 ml-60">{children}</main>
+      <main className="flex-1 ml-60 min-w-0">{children}</main>
     </div>
   );
 }
