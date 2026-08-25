@@ -4,8 +4,7 @@ import { IndianRupee, TrendingUp, TrendingDown, Wallet, FileDown, FileSpreadshee
 import api from "../../../api/client";
 import { downloadFile } from "../utils/downloadFile";
 
-const fmt = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
-const fmtCr = (n) => `${n < 0 ? "−" : ""}₹${Math.abs(n || 0).toLocaleString("en-IN")}`;
+const fmt = (n) => `${n < 0 ? "−" : ""}₹${Math.abs(n || 0).toLocaleString("en-IN")}`;
 
 const Card = ({ label, value, sub, icon: Icon, accent, testId }) => (
   <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5" data-testid={testId}>
@@ -40,10 +39,10 @@ export const ProjectBalanceSheetTab = ({ projectId }) => {
         </button>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card label="Total Budget" value={fmtCr(bs.budget)} sub={bs.approved_variations > 0 ? `Revised contract: ${fmt(bs.revised_contract_value)} (incl. variations +${fmt(bs.approved_variations)})` : undefined} icon={IndianRupee} accent="text-sky-600 dark:text-sky-400" testId="pbs-budget" />
-        <Card label="Client Payment (In)" value={fmtCr(bs.client_paid)} sub={`Outstanding from client: ${fmt(bs.client_outstanding)}`} icon={TrendingUp} accent="text-emerald-600 dark:text-emerald-400" testId="pbs-client-paid" />
-        <Card label="Payment Released (Out)" value={fmtCr(bs.total_released)} icon={TrendingDown} accent="text-red-600 dark:text-red-400" testId="pbs-released" />
-        <Card label="Balance (In − Out)" value={fmtCr(bs.balance)} sub={`Budget remaining: ${fmtCr(bs.budget_remaining)}`} icon={Wallet} accent={bs.balance < 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"} testId="pbs-balance" />
+        <Card label="Total Budget" value={fmt(bs.budget)} sub={bs.approved_variations > 0 ? `Revised contract: ${fmt(bs.revised_contract_value)} (incl. variations +${fmt(bs.approved_variations)})` : undefined} icon={IndianRupee} accent="text-sky-600 dark:text-sky-400" testId="pbs-budget" />
+        <Card label="Client Payment (In)" value={fmt(bs.client_paid)} sub={`Outstanding from client: ${fmt(bs.client_outstanding)}`} icon={TrendingUp} accent="text-emerald-600 dark:text-emerald-400" testId="pbs-client-paid" />
+        <Card label="Payment Released (Out)" value={fmt(bs.total_released)} icon={TrendingDown} accent="text-red-600 dark:text-red-400" testId="pbs-released" />
+        <Card label="Balance (In − Out)" value={fmt(bs.balance)} sub={`Budget remaining: ${fmt(bs.budget_remaining)}`} icon={Wallet} accent={bs.balance < 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"} testId="pbs-balance" />
       </div>
 
       <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 mb-6" data-testid="pbs-released-breakdown">
@@ -82,9 +81,9 @@ export const ProjectBalanceSheetTab = ({ projectId }) => {
           </thead>
           <tbody>
             {bs.entries.map((en, i) => (
-              <tr key={i} className="border-b border-slate-100 dark:border-slate-800/60" data-testid={`pbs-tx-row-${i}`}>
+              <tr key={i} className={`border-b border-slate-100 dark:border-slate-800/60 ${en.type === "opening" ? "bg-slate-50 dark:bg-slate-950" : ""}`} data-testid={`pbs-tx-row-${i}`}>
                 <td className="px-4 py-2.5 text-xs text-slate-500 dark:text-slate-400">{en.date || "—"}</td>
-                <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">
+                <td className={`px-4 py-2.5 ${en.type === "opening" ? "italic font-semibold text-slate-500 dark:text-slate-400 uppercase text-xs tracking-wide" : "text-slate-700 dark:text-slate-300"}`}>
                   {en.type === "variation" && <span className="border border-amber-300 dark:border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wide font-bold mr-2">Variation</span>}
                   {en.description}
                 </td>

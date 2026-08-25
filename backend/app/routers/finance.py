@@ -629,9 +629,9 @@ def project_balance_sheet(project_id: int, db: Session = Depends(get_db),
     from app.routers.change_orders import co_totals, approved_co_entries
     approved, pending, n = co_totals(db, project_id)
     entries = approved_co_entries(db, project_id) + entries
-    entries.sort(key=lambda x: x["date"] or "", reverse=True)
+    entries.sort(key=lambda x: (x["date"] or "", 0 if x["type"] in ("credit", "variation") else 1))
     running = 0.0
-    for en in reversed(entries):
+    for en in entries:
         if en["type"] == "credit":
             running += en["amount"]
         elif en["type"] == "debit":
@@ -640,6 +640,9 @@ def project_balance_sheet(project_id: int, db: Session = Depends(get_db),
             en["balance"] = None
             continue
         en["balance"] = round(running, 2)
+    entries.reverse()
+    entries.append({"date": entries[-1]["date"] if entries else None, "type": "opening",
+                    "description": "Opening Balance", "amount": None, "balance": 0.0})
     return {"project_id": project_id, "name": project.name, "budget": row["budget"],
             "original_budget": row["budget"], "approved_variations": approved,
             "revised_contract_value": round(row["budget"] + approved, 2),
