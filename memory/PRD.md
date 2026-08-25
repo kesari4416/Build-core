@@ -1,206 +1,39 @@
-# PRD — Construction Project Management Portal (BUILDCORE)
+# Sitera — Construction Project Management Portal (PRD)
 
 ## Original Problem Statement
-"According to this docs Please the Portal for construction work with more attractive design" — doc: Admin → Project Planning module for a Construction Project Management System (projects, phases, progress updates, client-scoped views, role-based access).
+Build a comprehensive construction project management portal covering: Projects, Phases, Field Ops (attendance, labour payments), Clients, Finance (Ledger, Balance Sheet, Payroll, Invoicing), Estimates, Procurement (Vendor Catalog, Quotations, Bid Packages), Change Orders, and Portals for Vendors + Site Engineers + Clients. Must be fully mobile responsive.
 
-## User Choices
-- PostgreSQL + SQLAlchemy (strict requirement — NOT MongoDB)
-- JWT email/password auth, roles: Admin, SiteEngineer, Client (Vendor supported in model)
-- Seeded demo data (3 clients, 5 projects, phases, updates, demo accounts)
-- Real photo file upload (local disk, served at /api/uploads)
-- Design: Bold dark industrial theme (zinc + safety orange, Barlow Condensed/IBM Plex Sans)
+## Tech Stack
+- Backend: FastAPI + SQLAlchemy + PostgreSQL
+- Frontend: React + Tailwind CSS + shadcn/ui + React Query
+- Auth: JWT (httpOnly cookies + Bearer fallback)
 
-## Architecture
-- Backend: FastAPI + SQLAlchemy (sync) + PostgreSQL 15 (local, `service postgresql start`, auto-started in server.py), Alembic migration files at /app/backend/alembic
-- Structure: app/models, app/schemas, app/crud, app/routers (auth, projects, clients, uploads), app/core/security.py, app/database.py, app/main.py
-- Auth: JWT httpOnly cookies + Bearer fallback, bcrypt, role deps (require_roles)
-- Frontend: React (CRA) + React Query + axios(withCredentials), src/features/projectPlanning/{pages,components,hooks}
-- DB: construction_db via DATABASE_URL in backend/.env
+## What's Implemented (recent → oldest)
+- **2026-02-25** — Rebuilt Project Balance Sheet as a standard accounting ledger:
+  - 7-column layout: Date, Voucher No., Particulars, Type badge, Debit (Out), Credit (In), Balance
+  - Opening Balance b/f as very first row, Totals / Closing Balance c/f as very last row
+  - Voucher numbers auto-generated per type (RCPT-###, PYMT-###, CO-###) in chronological order
+  - Row-by-row running balance (`Prev + Credit − Debit`)
+  - Consistent `Rs. X,XX,XXX.00` Indian-comma format across summary cards, breakdown, and table
+  - Negative amounts shown as `(Rs. XXX.XX)` in red (accounting convention)
+  - File: `/app/frontend/src/features/projectPlanning/components/ProjectBalanceSheetTab.jsx`
+- Phase Edit → auto-100% when status = Completed
+- Balance Sheet running balance math + chronological sort (credits before debits same day)
+- 10-item QA batch: Tracking edit/delete, CO payments UI, Gantt bounds, INR formatting, Client sort, Estimate status
+- Full mobile responsive layout (drawer sidebar, adaptive grids)
+- Estimate module upgrade (phase sync, requirement rows, live totals)
+- Vendor Product Catalog + Quotation workflow
+- Phase Crew Scoping + cross-project exclusivity
 
-## User Personas
-- Admin (kesari4416@gmail.com): full CRUD, sees everything
-- Site Engineer: create/edit phases & updates on assigned projects
-- Client: read-only, own projects only, no internal updates
+## Prioritized Backlog
+- **P1** Double-entry accounting layer (Chart of Accounts, Vouchers, Trial Balance, Day Book)
+- **P2** Balance Sheet date range filter (month / custom period)
+- **P2** Fresh Google App Password for SMTP (approval + receipt emails)
 
-## Implemented (2026-06)
-- 4 user TCs fixed (2026-06, iter 10, TESTED 100%): (TC_PROJECTS_001) New Project location auto-detect — detect-location-button uses browser geolocation + backend proxy GET /api/geo/reverse (Nominatim server-side, falls back to coordinates), manual entry kept; (FINANCE_001) ExpenseCategory model + GET/POST/PATCH/DELETE /api/expense-categories (dup 409; rename propagates onto existing expense entries), Finance page Expense Categories panel (add/list/edit/delete) + expense form category dropdown, 8 seeded; (FINANCE_002/003) project finance summary now returns revenue_last_year/cost_last_year/period_from/period_to (365-day window); cards renamed 'Revenue from Client' + 'Expense' with visible 1-year date range (pf-income-period/pf-cost-period).
-- Dashboard analytics — TC_DASHBOARD_001 (2026-06, iter 9, TESTED 100%): GET /api/projects/dashboard-charts (Client-scoped) + seed_milestones (25 across phases). DashboardPage now has all 6 graphs: portfolio progress radial gauge, custom CSS Gantt timeline w/ Today marker, status breakdown bars, schedule variance bars (actual−expected % from planned dates, green/red), milestone tracker donut + upcoming list, projects-by-stage bars (current = first non-completed phase). testids: portfolio-progress-chart, gantt-chart, status-chart, variance-chart, milestone-chart, stages-chart. NOTE: Project model uses start_date_planned/end_date_planned (NOT planned_start).
-- Login page: Demo Accounts quick-login section removed on user request (2026-06). Credentials remain in /app/memory/test_credentials.md.
-- Client PPT deck generated at /app/frontend/public/downloads/BUILDCORE_Client_Presentation.pptx (13 slides, live screenshots; regenerate via python-pptx if screens change).
-- New modules per prompt_for_adding_modules.pdf (2026-06, iteration 4 — ALL TESTED GREEN):
-  - Finance: org dashboard /admin/finance (income/cost/profit/outstanding cards, overdue invoices, payroll history), Payroll /admin/finance/payroll (create run → process → mark entries paid), Project Finance /admin/projects/:id/finance (invoices + payments, expense log, summary cards; Finance button on project detail). Endpoints: /api/finance/dashboard-summary, /api/projects/{id}/invoices|payments|expenses|finance/summary, /api/payroll-runs*
-  - Client Management: /admin/clients table (active projects, total_billed, status) + ClientFormModal (add/edit), /admin/clients/:id detail with Projects/Invoices/Documents tabs. GET /api/clients now returns total_billed
-  - User Management (Admin): /admin/users table w/ role+status filters, UserFormModal (dynamic link-or-create Client/Vendor fields), RoleBadge, disable/enable, reset password, delete, ProjectAssignmentPicker for engineers. Endpoints: /api/users* (POST/PATCH/DELETE, disable, reset-password), /api/projects/{id}/assignments. Roles now include Accountant + ProcurementOfficer
-  - Vendor Quotation: /admin/procurement/vendors (vendor directory + org-wide bid package cards via new GET /api/bid-packages), /admin/procurement/bid-packages/:id/comparison (BidComparisonTable: rows=items, cols=vendors, best-price highlight, add line items, Award as PO/Subcontract), Vendor Portal /portal/vendor/bid-packages (+detail w/ line-item quote form, submit/update before due date, upsert). Vendor role auto-redirects from /admin to portal; role-filtered sidebar nav
-- Spec addendum Sections 4+5 — Employee Categories + Site Engineer Field Ops (2026-06, iter 6-8, TESTED — backend 12/12 + 11/11 regression, frontend 100% after fix):
-  - EmployeeCategory model (org-wide trades, default_wage_type, is_active) + Employee.category_id FK (role_title kept as legacy fallback; employee_out resolves role_title = category.name). Startup runs idempotent ALTER TABLE for category_id. Seed: 6 defaults (Mason, Electrician, Helper, Plumber, Carpenter, Supervisor) + backfill from role_title.
-  - Endpoints: POST/GET /api/employee-categories (INTERNAL incl. SE can create; dup name case-insensitive 409), PATCH + /deactivate (Admin/Accountant only). Deactivated categories hidden from list; assigned employees keep them.
-  - SE access rules (server-enforced): check_field_access — SE limited to projects where site_engineer_id==user OR project_assignments row (403 otherwise) on all employee/attendance/labour-cost routes; SE PATCH blocked for daily_wage/wage_type/status (403); deactivate employee = Admin/Accountant only. SE CAN set wage at creation (open question 4 resolved: create open, edit gated).
-  - Frontend: Field Ops portal /portal/site-engineer (nav for Admin+SiteEngineer) — project selector (auto-scoped), date input (SE clamped min=today-3 max=today; Admin unclamped), one-tap DailyAttendanceCards, marked-count bar, Add Employee. EmployeeFormModal: category dropdown w/ inline '+ Add Category' (EmployeeCategoryFormModal) that auto-selects after create; wage fields locked (wage-locked-note) for SE editing. EmployeesTab deactivate button Admin/Accountant only.
-  - BUG FIXED (iter 7-8): inline add-category auto-select — Radix Select fired onValueChange('') after nested modal closed, wiping category_id; fixed by ignoring empty values + explicit SelectValue children + optimistic cache append. Verified by testing agent (iteration_8: 3/3).
-  - Full integration chain verified: admin creates category → SE sees it → SE adds employee → SE marks attendance → visible in admin grid → labour cost includes it. NO disconnected modules.
-- Spec addendum — Employees, Attendance, Labour Cost + calendar-icon fix (2026-06, iter 5, TESTED 100%):
-  - BUG FIX: native date-input calendar icons invisible on dark theme — CSS ::-webkit-calendar-picker-indicator invert(0.75) in index.css (payroll, invoices, labour report, all date fields)
-  - Employee model (per-project field workers, no login; wage_type daily/monthly/piece_rate) + Attendance model (UNIQUE(employee_id, attendance_date) enforced at DB, statuses present/absent/half_day/leave)
-  - Endpoints (INTERNAL roles only — Admin/SiteEngineer/Accountant/ProcurementOfficer; Client+Vendor 403): POST/GET /projects/{id}/employees, GET/PATCH /employees/{id}, POST /employees/{id}/deactivate (soft, history preserved), POST/GET /projects/{id}/attendance (upsert per emp+date; backdate window: non-Admin today→today-3, Admin exempt), PATCH /attendance/{id}, GET /employees/{id}/attendance, GET /projects/{id}/labour-cost (days: present=1, half_day=0.5; amount=days×daily_wage for daily wage type; month-to-date default)
-  - Frontend: Employees tab on Project Detail (hidden for Client/Vendor) — today's one-tap attendance cards (P/½/A/L), 7-day click-to-cycle attendance grid, employee register table (add/edit/deactivate via EmployeeFormModal), labour cost report w/ date range. Components: EmployeesTab, EmployeeFormModal, DailyAttendanceCard, AttendanceMarkGrid
-  - Seed: 4 employees on project 1, 2 on project 2, 3 days of attendance. Tests: /app/backend/tests/test_iter5_employees.py (11 green)
-- Blocked Work Alerts (2026-06, TESTED): Notification model + /api/notifications (list, unread-count, {id}/read, read-all). Triggers: phase status changed to Blocked/Delayed (PATCH /phases/{id}) and progress updates flagged Blocked/Delayed (POST /projects/{id}/updates). Recipients: all Admins + project's site engineer, actor excluded. Frontend: NotificationBell in sidebar (Admin + SiteEngineer only) — unread badge (30s poll), popover list, click marks read + navigates to project, Mark-all-read. Verified via curl (notify/self-exclude/read flows) + Playwright (badge → open → click → navigate → badge cleared).
-- Procurement module (2026-06): Vendors (+documents, insurance expiry tracking, expiring_insurance filter), Bid Packages/Invitations/Bids/Award→creates draft PO or Subcontract, Purchase Orders (+line items, approve gated on current vendor insurance → 422, cancel), Subcontracts (retainage_pct, approve/execute both insurance-gated), Change Orders (Admin approve recomputes revised_amount/committed_amount), Pay Applications (retainage auto = amount × retainage_pct, submit/approve/mark-paid, G702/G703 line items w/ pct_complete, lien waivers), Material Deliveries, Procurement Documents (default internal, client-scoped route), CostCodeBudget table for over_budget + variance breakdown. Dashboard: GET /projects/{id}/procurement/dashboard-summary + /commitments (filters: type, status['open'], vendor_id, cost_code, pending_approval, over_budget) + /budget-breakdown. Frontend: ProcurementDashboardPage (4 filter stat cards, URL params, variance dialog red-if-negative, commitments table w/ pending & over-budget flags), CommitmentDetailPage (Overview w/ approve/execute/cancel, Change Orders tab, Pay Apps tab w/ full lifecycle + line items + waivers, Documents tab). Components: CommitmentStatusBadge, ChangeOrderCard, LineItemTable, LienWaiverRow, ProcurementDocumentsPanel. Statuses kept CamelCase.
-- Full CRUD: projects (soft-delete/archive via DELETE + POST /archive), phases (unique sequence_order → 409, reorder endpoint), progress updates (phase-scoped or project-level, DELETE endpoint), milestones (per-phase CRUD, Done sets completed_at — backend only, no UI yet)
-- Business rules: computed percent_complete (avg of phases), has_active_issues (phase Delayed/Blocked OR latest update flag Delayed/Blocked), role-based write access, client data isolation, visible_to_client filtering
-- Filters (client/status/engineer/search/has_issues/start_date/end_date) + limit/offset pagination on projects & updates
-- Endpoints: /api/auth/*, /api/projects* (+dashboard-summary), /api/phases/* (+milestones), /api/clients/{id}/projects(/updates)(/documents), /api/documents/*, /api/users, /api/stats, /api/upload
-- Documents module (2026-06): multipart upload w/ custom display name + category (Drawing/Contract/Invoice/Approval/Other) + client-visibility flag; list/search/filter, rename/change-category (PATCH), delete (admin only), client-scoped hiding; UI panel in Tracking tab (DocumentUploadCard, DocumentListItem, DocumentsPanel)
-- Dashboard stat cards (2026-06): 4 clickable filter cards on /admin/projects (Total/Ongoing/With Issues/Total Budget) from GET /projects/dashboard-summary; URL-reflected filters (?status=Ongoing, ?has_issues=true), budget breakdown dialog, live count updates via React Query invalidation; DashboardStatCard component
-- Project model: added project_type + currency columns; Phase status now includes Blocked
-- Frontend: Login (split-screen, demo account buttons), Dashboard (stat cards + recharts), Project List (filters, debounced search, pagination, New Project modal w/ validation), Project Detail (Overview/Phases stepper timeline/Tracking feed w/ optimistic updates + photo upload + documents panel), Clients page, Client Projects page, role-based UI hiding
-- Tests: 16 core + 20 planning + 17 procurement + 14 iter4 backend pytest passing (/app/backend/tests/); testing agent iterations 1-4 all green
-- Deployment guide PDF: /app/BUILDCORE_Ubuntu24_Nginx_Installation_Guide.pdf (also served at frontend /public), paths use /var/www/buildcore
+## Known Environmental Issues
+- PostgreSQL in the preview container drops periodically → run `bash /app/scripts/restore_postgres.sh`
+- User self-hosts on EC2; when they report 500s not reproducible in preview, provide raw SQL for schema patches
 
-- FINANCE_004 UI fix (2026-06, VERIFIED via screenshot): Profit card on ProjectFinancePage now shows 1-year period subtitle (data-testid pf-profit-period rendered via ProjectFinanceSummaryCard sub prop). Backend 1-yr profit already verified in iteration 11. All 4 bug reports (FINANCE_004, VENTORS_001, FIELDOPS_001, PROJECT_002) fully closed.
-
-- Balance Sheets + Invoice Share (2026-06, iter 12, TESTED 100%):
-  - GET /api/finance/balance-sheet (Admin/Accountant): per-project budget/credit/debit/profit_loss sorted losses-first, breakdown (staff_payroll, labour_wages from attendance, expenses, procurement), totals, overall_profit/overall_loss, loss_projects, employee_dues (pending payroll + daily-wage labour by category)
-  - GET /api/projects/{id}/balance-sheet (staff): budget, client_paid, client_outstanding, released breakdown, balance, budget_remaining, transactions latest-first incl daily labour-wage debit entries
-  - Frontend: /admin/finance now has Overview + Balance Sheet tabs (OrgBalanceSheetTab — loss projects red-highlighted, employee dues panel); Project Detail has new 'balance sheet' tab (ProjectBalanceSheetTab — 4 cards + money-out breakdown + latest-first transaction table); hidden from Client/Vendor
-  - Invoice Print/WhatsApp/Email buttons (device-based, no keys): utils/invoiceShare.js — printable BUILDCORE invoice window, wa.me + mailto share; on InvoiceCard (project finance + client detail) and overdue invoices on org Finance
-  - Tests: /app/backend/tests/test_iter12_balance_sheet.py (8/8 RBAC + math)
-
-- Balance Sheet Export (2026-06, SELF-TESTED: curl all 4 formats + RBAC + real UI download events):
-  - New router /app/backend/app/routers/exports.py: GET /api/finance/balance-sheet/export?fmt=pdf|xlsx (Admin/Accountant) and GET /api/projects/{id}/balance-sheet/export?fmt=pdf|xlsx (staff) — reportlab PDFs (loss rows red, dues section) + openpyxl workbooks (Balance Sheet + Employee Dues / Summary + Transactions sheets); filenames dated, project slugged
-  - Frontend: Export PDF / Export Excel buttons on both balance sheet tabs (bs-export-pdf/excel, pbs-export-pdf/excel); shared utils/downloadFile.js (blob download, filename from Content-Disposition)
-  - openpyxl added to requirements.txt
-
-- Client bug batch: DASHBOARD_001 / PROJECTS_002 / FIELDOPS_001 (2026-06, iter 13, TESTED 100%):
-  - Budget "not updated" reports: investigated end-to-end — creation/display/dashboard totals all worked; root cause likely unit confusion. Fix: Budget (₹) field now shows placeholder "e.g. 250000000 = ₹25 Cr" + live "= ₹X.XX Cr" preview (budget-preview) in ProjectFormModal
-  - Client read-only Field Ops (user choice a): READ_FIELD dep + Client branch in check_field_access (403 for other clients' projects) + mask_for_client (daily_wage/wage_type/phone/id_proof nulled for clients) on GET employees/attendance routes in employees.py. Writes + org register (/api/employees) stay INTERNAL → 403 for Client
-  - Frontend: Field Ops nav visible to Client; SiteEngineerPortalPage isClient mode — view-only note, no Add Employee, no org register, DailyAttendanceCard readOnly prop renders status badges instead of P/½/A/L buttons; date input unclamped for viewing history
-  - Env note: PostgreSQL was fully wiped by container reset this session — reinstalled via apt, ALTER USER password, CREATE DATABASE construction_db, seed repopulated
-  - Tests: /app/backend/tests/test_iter13_client_fieldops_rbac.py (11/11)
-
-- Full UI Redesign — Swiss High-Contrast Light Theme (2026-06, iter 14, TESTED 100% 14/14 pages, 5 roles):
-  - design_agent blueprint at /app/design_guidelines.json: light slate-50 bg, white cards (slate-200 border + shadow-sm, rounded-lg), blue-600 primary, amber construction accent, DARK slate-900 sidebar (intentional contrast, amber logo, blue active border), Cabinet Grotesk headings (Fontshare) + IBM Plex Sans body, rounded-full pastel status badges, light recharts palette (#2563EB/#F59E0B/#10B981/#8B5CF6/#64748B/#0EA5E9), white chart tooltips
-  - Implementation: global class mapping (zinc→slate, orange→blue/amber, rounded-none→rounded-md, dark→light status colors) across 49 jsx files via /tmp/restyle.sh; manual rewrites: index.css (light shadcn vars + fonts + scrollbar + selection), Layout.jsx, LoginPage.jsx (Pexels blueprint split-screen), ProjectStatusBadge, CommitmentStatusBadge, DashboardPage hex palette, App.js auth loader
-  - All data-testids preserved; zero functional regressions (verified across Admin/Client/Vendor/Accountant/SiteEngineer)
-  - Remaining cosmetic (optional): Radix Dialog aria-describedby warnings; recharts width(-1) first-paint warning; native <select> in expense category could become shadcn Select
-
-- Dark Theme Preference (2026-06, iter 15, TESTED 100%):
-  - ThemeContext (/app/frontend/src/context/ThemeContext.jsx): light/dark persisted in localStorage 'buildcore-theme', toggles 'dark' class on <html>; App wrapped in ThemeProvider
-  - Toggles: sidebar footer (theme-toggle, Sun/Moon) + login page top-right (theme-toggle-login)
-  - dark: variants added across 49 jsx files via placeholder-based class mapping (/tmp/darkify.sh); .dark shadcn CSS vars + --gauge-track/--tooltip-* chart vars + dark scrollbar/calendar-icon in index.css; chart tooltips & gauge theme-aware
-  - Sidebar intentionally dark slate-900 in BOTH themes; zero unflipped surfaces (programmatic scan), light mode regression clean
-
-- Workflow Guide PDF (2026-06, SELF-TESTED: curl 200 application/pdf, 7 pages verified via analyze tool, sidebar link screenshot):
-  - Generator: /app/scripts/generate_workflow_pdf.py (reportlab) -> /app/frontend/public/BUILDCORE_Workflow_Guide.pdf, served at {url}/BUILDCORE_Workflow_Guide.pdf
-  - Contents: cover, system overview + roles table, master lifecycle flow diagram (custom FlowDiagram flowable with box->arrow rendering), module workflows (Project Planning, Field Ops, Procurement/Bidding, Finance, Balance Sheets) each with flow diagram + numbered steps, role-wise daily workflows, permissions matrix, tips; footer with page numbers
-  - Sidebar "Workflow Guide" link (workflow-guide-link, BookOpen icon, all roles) opens PDF in new tab
-  - ENV: PostgreSQL wiped AGAIN by container reset; created one-command recovery script /app/scripts/restore_postgres.sh (reinstalls postgres, sets password, creates DB, restarts backend). Use it whenever backend 500s / port 5432 dead.
-
-- Bug batch: SE scoping + Vendor dashboard + Completed cards + form gaps (2026-06, SELF-TESTED via curl+screenshots per user's "Dont testing"):
-  - SITEENGINEER/DASHBOARD_002 + PROJECTS_002: new scope_by_role() helper in projects.py applied to /api/stats (clients.py), /projects, /projects/dashboard-summary, /projects/dashboard-charts — SE now sees only assigned projects (verified: SE 3 projects/74.5Cr vs Admin 5/89.5Cr; cards match list)
-  - SITEENGINEER/FIELDOPS_001: GET /api/employees org register scoped for SE to employees of their projects (verified 4 vs admin 6)
-  - VENDOR/DASHBOARD_001: new GET /api/vendor/dashboard (quotation.py, Vendor role, linked_vendor_id) + VendorDashboardPage at /portal/vendor/dashboard (now vendor landing page + nav item): portfolio, PO/subcontract status, delivery performance, material supply, invoices/pay-apps, upcoming deliveries. SE gets 403
-  - ACCOUNTANT/DASHBOARD_001 + PROJECTS_001: "Completed" stat card added to admin Dashboard (stat-completed) and Projects page (stat-card-completed, click-filters status=Completed); dashboard-summary now returns completed count
-  - ADMIN/FIELDOPS_008: joining_date already existed in employee form; added CategoryManagerModal (rename/enable/disable/add categories via existing PATCH /employee-categories/{id}) with "Categories" button on Field Ops (Admin/Accountant)
-  - ADMIN/VENDORS_006: VendorFormModal now includes Address + GST/Tax ID (backend already accepted them)
-  - ADMIN/CLIENDS_005: client form already had address; client detail already shows projects/invoices — no change needed
-  - ADMIN/PROJECT_002 (Activities/Schedule/BOQ/Quality/Safety/Risks/RFIs/Reports modules): NOT BUILT — this is a large new ERP feature set, flagged to user as roadmap decision
-
-- Vendor Products & Quotations module (2026-06, APPROVED by user, SELF-TESTED all 11 TCs via curl + UI screenshots):
-  - Models (procurement.py): VendorProduct (vendor_id, name, unit, unit_price, is_active), VendorQuotation (project_id, vendor_id, quote_number VQ-{pid}-{seq}, status Draft->Approved->Paid, total_amount, expense_entry_id), VendorQuotationItem (product snapshot, qty, line_total)
-  - Router /app/backend/app/routers/vendor_products.py: POST/GET /vendors/{id}/products, PATCH /vendor-products/{id} (Admin/PO); GET+POST /projects/{id}/vendor-quotations (create: Admin/PO/SE, empty items & inactive products -> 422); POST /vendor-quotations/{id}/approve (Admin); POST /vendor-quotations/{id}/pay (Admin/Accountant) -> creates ExpenseEntry category "Vendor Payment" -> flows to ledger/balance sheets automatically
-  - Frontend: VendorsPage "Add Product" button per vendor row -> VendorProductsModal (list/add/price-edit-on-blur/enable-disable); ProcurementDashboardPage -> VendorQuotationsSection (Make Quotation modal: vendor select -> product qty inputs -> live total; quotation cards with Approve/Record Payment buttons)
-  - Verified: TC-VP-01..04 + TC-VQ-01..07 all pass (incl. cost_to_date +156000 after pay, ledger debit entry "Expense — Vendor Payment: VQ-1-001 — Apex Steel Works")
-
-- Phase Description Notes (2026-06, APPROVED by user, TESTED 100% iter 16-17):
-  - PhaseNote model (phase_notes table); PhaseCreate/PhaseUpdate accept description; add_phase/update_phase pop description -> record_phase_note (dated note + PhaseNote notification to Admins & project SE via notify_flag); phase_notes_map attaches notes to list_phases, add/update responses AND get_project detail (iter-16 critical fix: PhaseTimeline reads project.phases from GET /projects/{id}); delete_phase deletes notes first (was FK 500)
-  - Frontend: PhaseFormModal description textarea (phase-description-input, resets each open = each save appends a NEW dated note); PhaseTimeline renders notes below each phase (phase-notes-{id}, newest first with date + author); fixed sed artifact in phase progress bar colors
-  - All 7 approved test cases pass (iter_17: backend 9/9, frontend 100%)
-
-- Change Order / Client Modification module (2026-06, APPROVED by user, TESTED iter_18: backend 16/16, frontend 100%):
-  - Models: ProjectChangeOrder (co_number CO-{pid}-{seq}, category [Client Modification/Rework/Design Change/Site Condition], status Draft->Pending Client Review->Approved/Rejected/Revision Requested, estimated/approved cost, time impact days) + ProjectChangeOrderRevision (versioned estimates) + ProjectChangeOrderEvent (audit trail)
-  - Router change_orders.py: GET/POST /projects/{id}/change-orders (list has summary: original_budget, approved_variations, revised_contract_value, pending_co_value [excl. Draft], increase_pct); POST /change-orders/{id}/approve (Client/Admin, requires confirm=true), /reject, /request-revision (comment required), /revise (contractor, v2+ estimates, Draft revise = submit). Notifications both directions (clients on submit/revise, team on approve/reject/rev-request). RBAC: Vendor 403, cross-client 403
-  - Finance integration: finance_summary + project balance sheet expose variation fields; balance sheet entries include type='variation' rows (excluded from credit/debit totals)
-  - Frontend: ChangeOrdersTab (summary cards, status/category filters, expandable rows with estimate history + activity log, role-aware action buttons), ChangeOrderFormModal (create/revise, draft checkbox), ChangeOrderStatusBadge; new "change orders" tab on ProjectDetailPage (all roles except Vendor incl. Client); pf-variations-panel on ProjectFinancePage; amber Variation badge rows in ProjectBalanceSheetTab
-  - Attachments: create modal photo/PDF upload (co-attachment-button, POST /api/upload, 10MB) sent as attachments[{url,filename}]; CO detail thumbnail gallery (co-attachments-{id}) + paperclip count on header. VERIFIED iter_19.
-  - Spec completion (2026-06, TESTED iter_19: backend 60/60, all tabs sweep pass): client-facing impact banner (co-impact-banner: "Your project cost has increased by ₹X (Y%) due to N approved modifications"); phase filter (co-phase-filter); CO export GET /projects/{id}/change-orders/export?fmt=pdf|xlsx&phase_id&category&status (exports.py — summary, by-category + by-phase approved splits, register; RBAC via check_co_access, client 200/other-client 403); amber variation chips on phase timeline (phase-variation-chip-{id}, via coByPhase in ProjectDetailPage).
-  - BLANK PAGE BUG (user-reported, FIXED iter_19): container reset partially reverted ChangeOrderFormModal.jsx leaving attachments/uploading/fileRef/onFiles undefined -> ReferenceError -> whole Change Orders tab blank. Testing agent restored the state hooks + onFiles handler. Also: same reset wiped PostgreSQL again (restored via /app/scripts/restore_postgres.sh).
-  - Approve uses window.confirm; reject/request-revision use window.prompt. Regression test file: /app/backend/tests/test_change_orders.py (run with -o addopts='')
-
-- Rebrand to Sitera / sitera.in (2026-06, SELF-TESTED via screenshots): USER-PROVIDED logo (navy/gold S-flame, artifact t9jurke6_logo-sitera.png) processed: S-mark extracted (white->transparent) to /frontend/public/sitera-logo.png + logo192.png + favicon.ico; full lockup at /frontend/public/sitera-logo-full.png. Sidebar (Layout.jsx): mark in white tile + SITERA / "Building Excellence"; Login (LoginPage.jsx): full lockup (white card in dark mode); index.html title "Sitera | Construction Portal" + favicon; all PDF/Excel export headers & filenames BUILDCORE->SITERA (exports.py); invoice footer "Generated by Sitera Construction Portal · sitera.in". NOT changed: seed emails @buildcore.com (credentials), localStorage theme key, old workflow-guide PDFs in /public.
-
-- Add Transaction (Income/Expense) in Finance module (2026-06, TESTED iter_20: backend 61/61, frontend pass; 1 medium bug found+fixed after):
-  - Models: new IncomeEntry (project_id, phase free-text, amount, payment_type, balance + balance_auto + override audit old/by/at); ExpenseEntry extended (phase_id, source_type, source_id, product_id, payment_type, balance_after, quotation_id) — ALTER TABLE applied; create_all covers fresh DBs
-  - Router transactions.py: GET /finance/transaction-context; POST /transactions/income (FIN; active project only, amount>0, balance override logged for audit); POST /transactions/expense (STAFF; phase must belong to project; Vendor path AUTO-GENERATES VendorQuotation status 'Generated' linked via expense_entry_id/quotation_id; Employee/Other paths); inline /transactions/inline/vendor, /vendor/{id}/product, /employee?project_id&phase_id (assigns PhaseEmployee); GET /transactions/vendors; GET /employees/{id}/payments; GET /projects/{id}/income
-  - finance.py sync: IncomeEntry credits in project_ledger (-> balance sheet), balance_row (org sheet), project_finance (income_to_date, revenue_1y)
-  - Frontend: AddIncomeModal + AddExpenseModal (radio payment types, live balance previews, override warning, Save+Add Another, inline mini-forms save-and-auto-select without leaving modal); buttons on org FinancePage + ProjectFinancePage (pf-add-*, project preselected)
-  - BUG FIXED post-iter20: Radix Select fired spurious onValueChange("") wiping inline-created vendor selection — fixed with `if (!v) return;` guard on all 3 selects + optimistic qc.setQueryData appends. Self-verified E2E: inline vendor -> inline product -> submit -> quotation generated
-  - SPEC FLAGS: expense balance uses PROJECT-level budget_remaining (phase budgets don't exist); income phase free-text vs expense phase dropdown naming inconsistency flagged for later cleanup
-
-- BUG FIX: Client approve mechanism not visible (2026-06, SELF-TESTED E2E as client): root cause — NotificationBell ("Alerts") in Layout.jsx was role-gated to Admin/SiteEngineer, so clients never saw "Change order awaiting your review" notifications (backend was creating them correctly). Fix: bell shown for ALL roles; ChangeOrder notifications now deep-link to /admin/projects/{id}?tab=variations; ProjectDetailPage reads ?tab= via useSearchParams for initial tab. Verified: client login -> alert badge -> click notification -> lands on Change Orders tab -> approve with confirm -> status Approved + activity log entry.
-
-- Employee Labour Payments (2026-06, APPROVED option a, SELF-TESTED E2E via curl + UI screenshots):
-  - Labour Cost Report now has Earned (range) / Paid / Due (all-time) columns + totals; "Make Payment" button per employee (Admin/Accountant) -> LabourPaymentModal (prefilled due, payment-type radios, note)
-  - Backend: POST /projects/{id}/labour-payments (employees.py) creates ExpenseEntry(category "Employee Payment", source_type Employee) -> DEBIT in project + org balance sheets + employee payment history (/employees/{id}/payments); labour_cost returns paid/due/earned_total
-  - ACCOUNTING NETTING (finance.py): attendance accrual now nets out payments per-employee to avoid DOUBLE-COUNTING — project_labour_total = sum(max(earned-paid,0)); balance-sheet daily entries labeled "Labour wages due — N workers (attendance, unpaid)" consume payments chronologically; org employee_dues labour_by_category is unpaid-only. Verified: mark present (+800 debit) -> pay 800 -> debit UNCHANGED, payment shows as its own debit line, due -> Settled
-  - Postgres wiped twice more during this task (restored via script both times)
-
-- Running Balance column in project Balance Sheet "All Transactions" (2026-06, SELF-TESTED): backend project_balance_sheet computes chronological running balance per entry (credit +, debit −; variation rows balance=None shown as —); top row balance == total_credit − total_debit (verified with test credit ₹3L + debit ₹50k, math validated programmatically, test entries removed). Frontend ProjectBalanceSheetTab: new Balance column (bs-balance-{i}), red when negative.
-
-- Client form simplified (2026-06, SELF-TESTED): ClientFormModal now has only Name*, Phone No, Email, Address (Company field removed; backend still accepts/stores company for old records). Verified create flow E2E via UI.
-
-- Estimates module (2026-06, TESTED iter_21: backend 22/22, frontend 14/14 — zero bugs):
-  - Tables: estimates (project_name, phase, category_id FK, drawing_url/filename, total_amount, status_id FK, created_by, timestamps) + estimate_categories + estimate_statuses lookups (defaults auto-seed on first GET: Civil/Electrical/Plumbing/Interior/Structural; Draft/Pending Approval/Approved/Rejected)
-  - Router estimates.py: GET/POST /estimates (Field(gt=0) amount validation), GET/POST /estimate-categories & /estimate-statuses (case-insensitive dedup), DELETE /estimates/{id} (Admin/Accountant). STAFF roles: Admin/Accountant/SE/PO; Client/Vendor 403. uploads.py roles broadened to include Accountant + PO
-  - Frontend: /admin/estimates page + sidebar nav (Calculator icon); EstimatesPage list (drawing thumbnail or red PDF link, status badges, delete); EstimateFormModal (drawing upload w/ preview, amount validation error, cancel); REUSABLE InlineAddSelect component ('+ Add New' inline create+auto-select, used for both category & status — correct setQueryData pattern)
-  - Regression file: /app/backend/tests/test_iter21_estimates.py
-
-- Estimate Approval -> Project Creation workflow (2026-06, TESTED iter_22: backend 14/14 + 22/22 regression, frontend 20/20):
-  - Estimate schema additions: approval_state (pending/approved/rejected, system-controlled), client_email, sent_at/approved_at/rejected_at, rejection_reason, linked_project_id FK, approval_token (secrets.token_urlsafe(32), compare_digest), token_expires_at (14d), token_used; EstimateApprovalEvent audit table (action, actor, detail, at)
-  - estimates.py: POST /estimates/{id}/send-approval (SMTP email via env SMTP_HOST/PORT/EMAIL/PASSWORD, graceful fallback returns approve_url/reject_url + email_sent flag); public no-auth GET/POST /public/estimate-approval/{id}/{token} (403 wrong, 410 used/expired); POST /estimates/{id}/decision (manual override, STAFF); POST /estimates/{id}/link-project (Admin only, must be approved & unlinked); GET /estimates/{id}/events; re-send resets state + new token invalidates old
-  - Frontend: EstimatesPage approval badges + actions (Send/Re-send, reusable ApprovalActionButtons, Create Project button when approved+unlinked, linked Project chip); SendForApprovalModal (email + copyable links fallback); public EstimateApprovalPage /estimate-approval/:id/:token (Sitera-branded, reject reason prompt, single-use); ProjectFormModal fromEstimate prefill (name+budget) + verification banner + "Confirm & Create Project" + onCreated -> link + navigate
-  - KNOWN ISSUE: SMTP creds (sales@sparkcurv.com / app password) REJECTED by Google (535 BadCredentials) — email sending fails gracefully; user asked to provide corrected Gmail App Password (needs 2-Step Verification on the Workspace account). Update backend/.env SMTP_PASSWORD when received
-  - EC2/relative-URL bug fix (2026-06, TESTED iter_23: 40/40 backend + frontend pass): approval links were relative when FRONTEND_URL env missing (user's EC2). Fix: send_for_approval base = FRONTEND_URL || Origin header || x-forwarded-proto+host fallback -> always absolute; SendForApprovalModal shows email failure reason (email-error-detail); friendly message for SMTP 535 auth failures; 'SMTP not configured' guard when env keys missing. EC2 operators need SMTP_* + FRONTEND_URL in their .env.
-  - Client dropdown in estimate form (2026-06, SELF-TESTED E2E): Estimate.client_id FK added (mandatory on create, 422 without; project_name now OPTIONAL/nullable — display_name() falls back to 'Estimate #id' in emails/public page). GET /estimate-clients (STAFF, id/name/email only). client_email auto-filled from selected client for approval emails. Form order: Client Name* (dropdown) -> Project Name (optional) -> Phase (optional) -> Category (inline-add) -> Drawing -> Amount* -> Status*. List has Client column.
-  - Regression file: /app/backend/tests/test_iter22_estimate_approval.py (NOTE: iter21/22 pytest files may need client_id added to estimate-creation payloads after this change)
-
-- Global Product Catalog + Quotation workflow v2 (2026-08, per user PDF Vendor&products.pdf, user chose to REPLACE old per-vendor quotation UI, TESTED iter_24: backend 14/14 + frontend 100%, zero bugs):
-  - Models (procurement.py): Product (global, vendor-independent: name/unit/category/description/default_price), Quotation (project+vendor, QTN-{year}-{seq}, status draft/sent/accepted/rejected/expired, denormalized quotation_total), QuotationLineItem (product FK, qty, unit_price, line_total), QuotationShareLog (channel/sent_to/status). Payment already has vendor_id + payment_direction incoming/outgoing.
-  - Router quotations_v2.py (registered): /products CRUD (STAFF; delete 422 if used in quotation; ?search&category), /projects/{id}/quotations (create requires >=1 line item, 422 otherwise), /quotations/{id} (GET/PATCH status), line-items add/delete, /quotations/{id}/print (branded HTML w/ print button, fetched with auth then written to new window), /quotations/{id}/send {channel: whatsapp|email} — contact read LIVE from Vendor at send time, wa.me link returned, SMTP email (fails gracefully, logged as failed), 422 if no phone/email on file; /quotations/{id}/share-log; POST/GET /projects/{id}/vendor-payments (FIN roles; SE 403; notes auto-prefixed 'Against QTN-…')
-  - Finance integration (finance.py): incoming/outgoing split everywhere — project_finance income & revenue_1y exclude outgoing, cost includes vendor_paid (+new key vendor_payments); balance_row credit excludes outgoing, debit + breakdown include vendor_payments (org sheet inherits); project_ledger emits 'Vendor payment — {vendor}: {notes}' DEBIT entries → project balance sheet transactions + running balance update immediately on payment
-  - Frontend: VendorsPage — per-row Add Product REMOVED; new 'Products — Global Catalog' section below vendor table (add-product-button, ProductFormModal create/edit, ProductListTable w/ edit/delete). ProcurementDashboardPage → QuotationsSection (table, Make Quotation). MakeQuotationModal: vendor select + repeatable line rows (product select pre-fills unit_price from default_price, editable; add/remove rows; live total). NEW ROUTE /admin/projects/:id/procurement/quotations/:quotationId → QuotationDetailPage: line items, status select, Print, WhatsApp/Email send w/ confirm dialog showing live vendor contact (blocked w/ warning if missing), share history, Record Payment modal (prefilled total) → toast + balance sheet invalidation. ProjectBalanceSheetTab breakdown now 5 tiles incl. Vendor Payments (pbs-bd-vendor-payments).
-  - REMOVED: VendorProductsModal.jsx + VendorQuotationsSection.jsx (old per-vendor system UI). Old backend endpoints kept (used by Add Expense vendor path).
-  - Regression file: /app/backend/tests/test_iter24_quotations_v2.py. Nice-to-haves flagged by review (not bugs): share-log lacks failure reason column, quotation seq racy under concurrency / no per-year reset, no client-side guard for unit_price=0.
-
-- Estimate Requirements + Phase Sync upgrade (2026-08, self-tested via curl + screenshot per user's "No need testing"):
-  - New tables: requirements_master (reusable lookup, case-insensitive upsert) + estimate_requirements (estimate_id FK, requirement_name, price)
-  - Create Estimate form: dynamic requirement rows (datalist combobox w/ create-if-not-exists + price each, add/remove), Total Amount auto-calculated read-only = live sum when rows exist (manual total fallback when zero rows for backward compat; neither → 422)
-  - Phase two-way sync: Project Name matching an existing project (case-insensitive) → green hint + phase datalist from that project; new phase name auto-created under the project on save (deduped case-insensitively, sequence_order=max+1); endpoints GET /requirements-master, GET /estimate-phase-options?project_name=
-  - Send for Approval: now sets Current Status → "Pending Approval"; email includes full summary (client, project, phase, category, status, requirements table w/ prices, total, drawing link); audit events unchanged
-  - Testing agent wrote /app/backend/tests/test_iter25_estimates_reqs_phase_sync.py (11 tests, authored but NOT executed — user declined testing); reviewer notes: SMTP 20s timeout in request thread, negative manual total not explicitly rejected when reqs also present
-
-- Mobile responsive portal (2026-08, self-verified via mobile+desktop screenshots & programmatic overflow checks on 12 routes):
-  - Layout.jsx: mobile drawer sidebar (translate-x, overlay, closes on nav) + sticky hamburger topbar (lg:hidden); desktop unchanged; main has min-w-0 (fixes app-wide page overflow)
-  - All 25 pages: p-4 sm:p-8 adaptive padding (bulk sed)
-  - Dashboard: Card gets min-w-0 overflow-hidden (recharts-in-grid overflow), recent-projects col min-w-0
-  - ProjectDetailPage TabsList: overflow-x-auto flex-nowrap (swipeable tabs on mobile)
-  - Estimates: "Send for Approval" → "Send" compact button
-
-- QA batch fixes (2026-08, 10 items from user test sheet, self-verified via curl + screenshots per "Dont need testing agent"):
-  1/6. Tracking updates now editable/deletable: PATCH /updates/{id} (backend), pencil/trash on each ProgressUpdateCard (canWrite), ProgressUpdateFormModal edit mode
-  2/7. Change Order payments: paid_at column (+startup ALTER), POST /change-orders/{id}/record-payment (Admin/Accountant, Approved-only, no double-pay 422) → incoming Payment credited to balance sheet + receipt email to client's registered email (graceful SMTP fallback) + "Paid" badge + Record Payment button in ChangeOrdersTab
-  3. Dashboard Gantt: progress fill capped at Today marker
-  4. Estimates: estimate_date column/field (defaults today, +ALTER), Current Status auto-defaults to Draft in form
-  5. Create Project from estimate: client auto-prefilled from estimate.client_id; status auto-computed from planned dates (Planning/Ongoing/Completed) in ProjectFormModal
-  8. All Crore notation removed app-wide → plain Indian comma format (₹89,50,00,000) in 9 files
-  9. Clients list ordered newest-first (created_at desc)
-  10. Approval column removed from Estimates table; client approve/reject decision now also sets Current Status to Approved/Rejected (apply_decision)
-
-## Backlog / Next
-- RECURRING ENV ISSUE (count ~7): container resets wipe PostgreSQL binaries+data. Recovery: `sudo bash /app/scripts/restore_postgres.sh` (reinstalls PG, recreates DB, reseeds, restarts backend; create_all rebuilds ALL tables incl. income_entries/extended expense_entries automatically). 2026-06-16: user-reported "Error in Finance module add income/expense" was this — verified post-restore that income credits + expense debits flow to project & org balance sheets.
-- P1: Milestones UI (backend ready); edit progress updates
-- P1 (user previously asked "how", pivoted away — re-confirm interest): true double-entry accounting layer (Chart of Accounts, vouchers, Trial Balance, Day Book)
-- P2: Replace window.prompt/confirm dialogs (record payment, reset password, delete user, award, CO approve/reject) with shadcn Dialogs; email channel for alerts (needs Resend/SendGrid key); Gantt view; export reports; invoice PDF export
-- Perf note (from code review, non-blocking): N+1 queries in GET /bid-packages and GET /clients — fold into GROUP BY joins if data grows
-- Note: PostgreSQL is locally installed in the container. Container resets WIPE apt packages + postgres data (happened again 2026-06 during iter4; reinstalled via `apt-get install -y postgresql`, then `ALTER USER postgres WITH PASSWORD 'postgres'; CREATE DATABASE construction_db;`, restart backend — seed repopulates). server.py auto-starts postgres if binaries exist. Emergent deployment officially supports MongoDB; Postgres persistence is a known risk.
+## Key Files
+- Backend: `/app/backend/app/routers/finance.py` (`project_balance_sheet`, `project_ledger`)
+- Frontend: `/app/frontend/src/features/projectPlanning/components/ProjectBalanceSheetTab.jsx`
