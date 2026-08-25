@@ -101,6 +101,8 @@ def startup():
                      "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS approval_token VARCHAR",
                      "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS token_expires_at TIMESTAMPTZ",
                      "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS token_used BOOLEAN DEFAULT FALSE",
+                     "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS estimate_date DATE",
+                     "ALTER TABLE project_change_orders ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ",
                      "ALTER TABLE estimates ALTER COLUMN project_name DROP NOT NULL"]:
             conn.execute(text(stmt))
     db = SessionLocal()

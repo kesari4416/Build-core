@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, ChevronDown, ChevronUp, GitBranch, CalendarClock, FileDiff, Paperclip, FileText, FileDown, FileSpreadsheet, Info } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, GitBranch, CalendarClock, FileDiff, Paperclip, FileText, FileDown, FileSpreadsheet, Info, IndianRupee } from "lucide-react";
 import api, { assetUrl, formatApiErrorDetail } from "../../../api/client";
 import { downloadFile } from "../utils/downloadFile";
 import { useAuth } from "../../../context/AuthContext";
@@ -21,7 +21,7 @@ const SummaryCell = ({ label, value, sub, accent, testId }) => (
   </div>
 );
 
-const ChangeOrderRow = ({ co, canDecide, canContract, onAction, onRevise }) => {
+const ChangeOrderRow = ({ co, canDecide, canContract, canPay, onAction, onRevise, onRecordPayment }) => {
   const [open, setOpen] = useState(false);
   const decidable = ["Pending Client Review", "Revision Requested"].includes(co.status);
   const revisable = ["Draft", "Pending Client Review", "Revision Requested", "Rejected"].includes(co.status);
@@ -46,6 +46,11 @@ const ChangeOrderRow = ({ co, canDecide, canContract, onAction, onRevise }) => {
           )}
         </div>
         <ChangeOrderStatusBadge status={co.status} />
+        {co.paid_at && (
+          <span className="inline-flex px-2 py-0.5 border border-emerald-400/60 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 text-[10px] uppercase tracking-[0.12em] font-bold" data-testid={`co-paid-badge-${co.id}`}>
+            Paid
+          </span>
+        )}
         {co.attachments?.length > 0 && (
           <span className="flex items-center gap-0.5 text-[10px] text-slate-500 dark:text-slate-400" data-testid={`co-attach-count-${co.id}`}>
             <Paperclip size={11} strokeWidth={2.5} /> {co.attachments.length}
@@ -129,6 +134,12 @@ const ChangeOrderRow = ({ co, canDecide, canContract, onAction, onRevise }) => {
                 )}
               </>
             )}
+            {canPay && co.status === "Approved" && !co.paid_at && (
+              <Button size="sm" data-testid={`co-record-payment-${co.id}`} onClick={() => onRecordPayment(co)}
+                className="rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wide h-8">
+                <IndianRupee size={12} strokeWidth={2.5} /> Record Payment
+              </Button>
+            )}
             {canContract && revisable && (
               <Button size="sm" variant="outline" data-testid={`co-revise-btn-${co.id}`} onClick={() => onRevise(co)}
                 className="rounded-md border-slate-300 dark:border-slate-700 hover:border-blue-400 text-xs font-bold uppercase tracking-wide h-8">
@@ -159,7 +170,26 @@ export const ChangeOrdersTab = ({ projectId, phases }) => {
 
   const canContract = ["Admin", "SiteEngineer"].includes(role);
   const canDecide = ["Client", "Admin"].includes(role);
+  const canPay = ["Admin", "Accountant"].includes(role);
   const refresh = () => ["changeOrders", "projFinance", "projectBalanceSheet", "notifications"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+
+  const onRecordPayment = async (co) => {
+    const amtStr = window.prompt(
+      `Record client payment for ${co.co_number} — "${co.title}".\nThe amount will be credited to the project balance sheet and a receipt emailed to the client.\n\nAmount (₹):`,
+      co.approved_cost ?? co.estimated_cost);
+    if (amtStr === null) return;
+    const amt = Number(amtStr);
+    if (!(amt > 0)) { toast.error("Enter a valid amount greater than 0"); return; }
+    try {
+      const r = await api.post(`/change-orders/${co.id}/record-payment`, { amount: amt });
+      toast.success(r.data.receipt_sent
+        ? `Payment recorded — receipt emailed to ${r.data.receipt_to}`
+        : `Payment recorded and credited to the balance sheet${r.data.receipt_to ? " (receipt email failed — check SMTP settings)" : ""}`);
+      refresh();
+    } catch (e) {
+      toast.error(formatApiErrorDetail(e.response?.data?.detail) || e.message);
+    }
+  };
 
   const onAction = async (co, action) => {
     let comment = null;
@@ -250,8 +280,8 @@ export const ChangeOrdersTab = ({ projectId, phases }) => {
       </div>
       <div className="space-y-3">
         {(data?.change_orders || []).map((co) => (
-          <ChangeOrderRow key={co.id} co={co} canDecide={canDecide} canContract={canContract}
-            onAction={onAction} onRevise={(c) => setModal({ open: true, co: c })} />
+          <ChangeOrderRow key={co.id} co={co} canDecide={canDecide} canContract={canContract} canPay={canPay}
+            onAction={onAction} onRevise={(c) => setModal({ open: true, co: c })} onRecordPayment={onRecordPayment} />
         ))}
         {data && data.change_orders.length === 0 && (
           <div className="border border-slate-200 dark:border-slate-800 p-10 text-center text-xs text-slate-500 dark:text-slate-400" data-testid="change-orders-empty">

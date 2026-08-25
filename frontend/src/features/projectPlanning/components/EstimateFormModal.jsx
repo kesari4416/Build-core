@@ -11,7 +11,7 @@ import api, { assetUrl, formatApiErrorDetail } from "../../../api/client";
 import { InlineAddSelect } from "./InlineAddSelect";
 import { labelCls, inputCls } from "./AddIncomeModal";
 
-const empty = { client_id: "", project_name: "", phase: "", category_id: "", total_amount: "", status_id: "" };
+const empty = { client_id: "", project_name: "", phase: "", category_id: "", total_amount: "", status_id: "", estimate_date: "" };
 const fmt = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
 export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) => {
@@ -40,8 +40,12 @@ export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) 
   });
 
   useEffect(() => {
-    if (open) { setForm(empty); setDrawing(null); setReqRows([]); }
-  }, [open]);
+    if (open) {
+      const draft = (statuses || []).find((s) => s.name === "Draft");
+      setForm({ ...empty, estimate_date: new Date().toISOString().slice(0, 10), status_id: draft ? String(draft.id) : "" });
+      setDrawing(null); setReqRows([]);
+    }
+  }, [open, statuses]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const setRow = (i, patch) => setReqRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
@@ -87,6 +91,7 @@ export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) 
         drawing_filename: drawing?.filename || null,
         total_amount: hasRows ? null : Number(form.total_amount),
         status_id: Number(form.status_id),
+        estimate_date: form.estimate_date || null,
         requirements: filledRows.map((r) => ({ requirement_name: r.name.trim(), price: Number(r.price) })),
       });
       toast.success(data.synced_phase_id
@@ -141,12 +146,19 @@ export const EstimateFormModal = ({ open, onOpenChange, categories, statuses }) 
               {(phaseOpts?.phases || []).map((p) => <option key={p} value={p} />)}
             </datalist>
           </div>
-          <div>
-            <Label className={labelCls}>Category *</Label>
-            <InlineAddSelect value={form.category_id} onChange={(v) => set("category_id", v)}
-              options={categories} endpoint="/estimate-categories" placeholder="Select category"
-              addLabel="+ Add New Category" testPrefix="estimate-category"
-              onCreated={(c) => qc.setQueryData(["estimateCategories"], (old) => [...(old || []), c])} />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className={labelCls}>Category *</Label>
+              <InlineAddSelect value={form.category_id} onChange={(v) => set("category_id", v)}
+                options={categories} endpoint="/estimate-categories" placeholder="Select category"
+                addLabel="+ Add New Category" testPrefix="estimate-category"
+                onCreated={(c) => qc.setQueryData(["estimateCategories"], (old) => [...(old || []), c])} />
+            </div>
+            <div>
+              <Label className={labelCls}>Estimate Date</Label>
+              <Input data-testid="estimate-date-input" type="date" value={form.estimate_date}
+                onChange={(e) => set("estimate_date", e.target.value)} className={inputCls} />
+            </div>
           </div>
 
           <div>

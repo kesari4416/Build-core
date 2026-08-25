@@ -1,8 +1,8 @@
-import { EyeOff, User } from "lucide-react";
+import { EyeOff, User, Pencil, Trash2 } from "lucide-react";
 import { FlagBadge } from "./ProjectStatusBadge";
 import { assetUrl } from "../../../api/client";
 
-export const ProgressUpdateCard = ({ update }) => (
+export const ProgressUpdateCard = ({ update, canManage, onEdit, onDelete }) => (
   <div
     className={`border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 ${update._optimistic ? "opacity-60" : ""}`}
     data-testid={`update-card-${update.id}`}
@@ -27,6 +27,18 @@ export const ProgressUpdateCard = ({ update }) => (
           </span>
         )}
         <FlagBadge flag={update.status_flag} />
+        {canManage && !update._optimistic && (
+          <>
+            <button data-testid={`edit-update-${update.id}`} title="Edit update" onClick={() => onEdit?.(update)}
+              className="p-1.5 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-blue-600 hover:border-blue-400 transition-colors">
+              <Pencil size={12} strokeWidth={2.5} />
+            </button>
+            <button data-testid={`delete-update-${update.id}`} title="Delete update" onClick={() => onDelete?.(update)}
+              className="p-1.5 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-red-600 hover:border-red-400 transition-colors">
+              <Trash2 size={12} strokeWidth={2.5} />
+            </button>
+          </>
+        )}
       </div>
     </div>
     <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{update.description}</p>
@@ -50,7 +62,7 @@ export const ProgressUpdateCard = ({ update }) => (
   </div>
 );
 
-export const ProgressUpdateFeed = ({ updates }) => {
+export const ProgressUpdateFeed = ({ updates, canManage, onEdit, onDelete }) => {
   if (!updates?.length)
     return (
       <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-12 text-center text-slate-500 dark:text-slate-400" data-testid="updates-empty-state">
@@ -64,7 +76,7 @@ export const ProgressUpdateFeed = ({ updates }) => {
         {updates.map((u) => (
           <div key={u.id} className="relative">
             <div className="absolute -left-[21px] top-6 w-2.5 h-2.5 bg-blue-600 border-2 border-white" />
-            <ProgressUpdateCard update={u} />
+            <ProgressUpdateCard update={u} canManage={canManage} onEdit={onEdit} onDelete={onDelete} />
           </div>
         ))}
       </div>

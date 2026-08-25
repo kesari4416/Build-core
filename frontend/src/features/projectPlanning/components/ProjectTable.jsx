@@ -3,7 +3,7 @@ import { AlertTriangle, MapPin } from "lucide-react";
 import { ProjectStatusBadge } from "./ProjectStatusBadge";
 
 const fmtBudget = (b) =>
-  b == null ? "—" : `₹${(b / 10000000).toFixed(2)} Cr`;
+  b == null ? "—" : `₹${Number(b).toLocaleString("en-IN")}`;
 
 export const ProjectTable = ({ projects }) => {
   const navigate = useNavigate();

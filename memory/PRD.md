@@ -187,6 +187,16 @@
   - ProjectDetailPage TabsList: overflow-x-auto flex-nowrap (swipeable tabs on mobile)
   - Estimates: "Send for Approval" → "Send" compact button
 
+- QA batch fixes (2026-08, 10 items from user test sheet, self-verified via curl + screenshots per "Dont need testing agent"):
+  1/6. Tracking updates now editable/deletable: PATCH /updates/{id} (backend), pencil/trash on each ProgressUpdateCard (canWrite), ProgressUpdateFormModal edit mode
+  2/7. Change Order payments: paid_at column (+startup ALTER), POST /change-orders/{id}/record-payment (Admin/Accountant, Approved-only, no double-pay 422) → incoming Payment credited to balance sheet + receipt email to client's registered email (graceful SMTP fallback) + "Paid" badge + Record Payment button in ChangeOrdersTab
+  3. Dashboard Gantt: progress fill capped at Today marker
+  4. Estimates: estimate_date column/field (defaults today, +ALTER), Current Status auto-defaults to Draft in form
+  5. Create Project from estimate: client auto-prefilled from estimate.client_id; status auto-computed from planned dates (Planning/Ongoing/Completed) in ProjectFormModal
+  8. All Crore notation removed app-wide → plain Indian comma format (₹89,50,00,000) in 9 files
+  9. Clients list ordered newest-first (created_at desc)
+  10. Approval column removed from Estimates table; client approve/reject decision now also sets Current Status to Approved/Rejected (apply_decision)
+
 ## Backlog / Next
 - RECURRING ENV ISSUE (count ~7): container resets wipe PostgreSQL binaries+data. Recovery: `sudo bash /app/scripts/restore_postgres.sh` (reinstalls PG, recreates DB, reseeds, restarts backend; create_all rebuilds ALL tables incl. income_entries/extended expense_entries automatically). 2026-06-16: user-reported "Error in Finance module add income/expense" was this — verified post-restore that income credits + expense debits flow to project & org balance sheets.
 - P1: Milestones UI (backend ready); edit progress updates

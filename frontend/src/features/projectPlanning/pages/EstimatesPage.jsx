@@ -17,7 +17,7 @@ const STATUS_COLOR = {
   "Pending Approval": "border-amber-300 dark:border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10",
 };
 
-const ApprovalBadge = ({ e }) => {
+const ApprovalBadge = ({ e }) => { // eslint-disable-line no-unused-vars
   if (e.approval_state === "approved")
     return <span data-testid={`approval-badge-${e.id}`} className="inline-block border border-emerald-300 dark:border-emerald-500/40 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] font-bold">Approved</span>;
   if (e.approval_state === "rejected")
@@ -86,7 +86,6 @@ export default function EstimatesPage() {
               <th className="px-3 py-3">Project Name</th><th className="px-3 py-3">Phase</th>
               <th className="px-3 py-3">Category</th><th className="px-3 py-3">Drawing</th>
               <th className="px-3 py-3 text-right">Total Amount</th><th className="px-3 py-3 text-center">Current Status</th>
-              <th className="px-3 py-3 text-center">Approval</th>
               <th className="px-3 py-3">Actions</th>
               {canDelete && <th className="px-3 py-3" />}
             </tr>
@@ -114,12 +113,9 @@ export default function EstimatesPage() {
                 </td>
                 <td className="px-3 py-2.5 text-right font-heading font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">{fmt(e.total_amount)}</td>
                 <td className="px-3 py-2.5 text-center">
-                  <span className={`inline-block border px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] font-bold whitespace-nowrap ${STATUS_COLOR[e.current_status] || "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800"}`}>
+                  <span data-testid={`estimate-status-${e.id}`} title={e.approval_state === "rejected" ? (e.rejection_reason || "") : (e.awaiting_response ? "Awaiting client response" : "")} className={`inline-block border px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] font-bold whitespace-nowrap ${STATUS_COLOR[e.current_status] || "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800"}`}>
                     {e.current_status}
                   </span>
-                </td>
-                <td className="px-3 py-2.5 text-center">
-                  <ApprovalBadge e={e} />
                 </td>
                 <td className="px-3 py-2.5">
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -154,7 +150,7 @@ export default function EstimatesPage() {
               </tr>
             ))}
             {estimates && estimates.length === 0 && (
-              <tr><td colSpan={canDelete ? 10 : 9} className="px-4 py-12 text-center text-slate-500 dark:text-slate-400" data-testid="estimates-empty">
+              <tr><td colSpan={canDelete ? 9 : 8} className="px-4 py-12 text-center text-slate-500 dark:text-slate-400" data-testid="estimates-empty">
                 No estimates yet — click "Create Estimate" to add your first one.
               </td></tr>
             )}

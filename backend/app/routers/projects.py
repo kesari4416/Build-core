@@ -378,6 +378,37 @@ def list_updates(project_id: int, db: Session = Depends(get_db),
             "total": total, "limit": limit, "offset": offset}
 
 
+@router.patch("/updates/{update_id}")
+def edit_update(update_id: int, body: ProgressUpdateCreate, db: Session = Depends(get_db),
+                user: User = Depends(get_current_user)):
+    upd = db.get(ProgressUpdate, update_id)
+    if not upd:
+        raise HTTPException(status_code=404, detail="Update not found")
+    check_write_access(user, upd.project)
+    if body.phase_id is not None:
+        phase = db.get(Phase, body.phase_id)
+        if not phase or phase.project_id != upd.project_id:
+            raise HTTPException(status_code=422, detail="phase_id does not belong to this project")
+    upd.phase_id = body.phase_id
+    upd.description = body.description
+    upd.percent_progress = body.percent_progress
+    upd.status_flag = body.status_flag
+    upd.attachments = body.attachments
+    upd.visible_to_client = body.visible_to_client
+    if body.update_date:
+        upd.update_date = body.update_date
+    if body.phase_id is not None and body.percent_progress is not None:
+        phase = db.get(Phase, body.phase_id)
+        phase.percent_complete = body.percent_progress
+        if phase.status == "NotStarted" and body.percent_progress > 0:
+            phase.status = "InProgress"
+        if body.percent_progress == 100:
+            phase.status = "Completed"
+    db.commit()
+    db.refresh(upd)
+    return update_out(upd)
+
+
 @router.delete("/updates/{update_id}", status_code=204)
 def delete_update(update_id: int, db: Session = Depends(get_db),
                   user: User = Depends(get_current_user)):

@@ -22,7 +22,7 @@ def list_clients(db: Session = Depends(get_db),
     billed = dict(db.query(Invoice.client_id,
                            func.sum(Invoice.amount + func.coalesce(Invoice.tax_amount, 0)))
                   .group_by(Invoice.client_id).all())
-    clients = db.query(Client).order_by(Client.name).all()
+    clients = db.query(Client).order_by(Client.created_at.desc(), Client.id.desc()).all()
     result = []
     for c in clients:
         count = db.query(Project).filter(Project.client_id == c.id,

@@ -49,6 +49,7 @@ def co_out(c, users=None, phases=None, detail=False):
            "status": c.status, "approved_cost": f(c.approved_cost) if c.approved_cost is not None else None,
            "approval_date": c.approval_date.isoformat() if c.approval_date else None,
            "approved_by": users.get(c.approved_by),
+           "paid_at": c.paid_at.isoformat() if c.paid_at else None,
            "attachments": json.loads(c.attachments) if c.attachments else [],
            "version_count": len(c.revisions),
            "revisions": [{"version": r.version, "estimated_cost": f(r.estimated_cost),
@@ -212,6 +213,98 @@ def approve_co(co_id: int, body: COAction, db: Session = Depends(get_db),
     db.refresh(co)
     users, phases = _maps(db, co.project_id)
     return co_out(co, users, phases)
+
+
+class COPayment(BaseModel):
+    amount: float = Field(gt=0)
+    payment_method: Optional[str] = "BankTransfer"
+    reference_no: Optional[str] = None
+
+
+@router.post("/change-orders/{co_id}/record-payment")
+def record_co_payment(co_id: int, body: COPayment, db: Session = Depends(get_db),
+                      user: User = Depends(require_roles("Admin", "Accountant"))):
+    co = get_co_or_404(db, co_id)
+    project = db.get(Project, co.project_id)
+    if co.status != "Approved":
+        raise HTTPException(status_code=422, detail="Payment can only be recorded on an approved change order")
+    if co.paid_at:
+        raise HTTPException(status_code=422, detail="Payment already recorded for this change order")
+    from app.models.finance import Payment
+    from app.models import Client
+    method = body.payment_method or "BankTransfer"
+    db.add(Payment(project_id=co.project_id, client_id=project.client_id,
+                   amount=body.amount, payment_direction="incoming",
+                   payment_method=method, reference_no=body.reference_no,
+                   received_by=user.id, payment_date=date.today(),
+                   notes=f"Change order payment — {co.co_number}: {co.title}"))
+    co.paid_at = datetime.now(timezone.utc)
+    log_event(db, co, user, "Payment Recorded",
+              f"₹{body.amount:,.0f} via {method}" + (f" (ref {body.reference_no})" if body.reference_no else ""))
+    client = db.get(Client, project.client_id) if project.client_id else None
+    receipt_sent, receipt_error = False, None
+    if client and client.email:
+        try:
+            send_co_receipt_email(client, project, co, body.amount, method, body.reference_no)
+            receipt_sent = True
+            log_event(db, co, user, "Receipt Emailed", f"Receipt sent to {client.email}")
+        except Exception as ex:
+            receipt_error = str(ex)
+    notify_team(db, project, user, f"Payment received: {co.co_number}",
+                f"₹{body.amount:,.0f} recorded against '{co.title}' ({project.name})")
+    db.commit()
+    db.refresh(co)
+    users, phases = _maps(db, co.project_id)
+    return {**co_out(co, users, phases), "receipt_sent": receipt_sent,
+            "receipt_error": receipt_error,
+            "receipt_to": client.email if client and client.email else None}
+
+
+def send_co_receipt_email(client, project, co, amount, method, reference_no):
+    import os
+    import smtplib
+    import ssl
+    from email.mime.text import MIMEText
+    host = os.environ.get("SMTP_HOST")
+    port = int(os.environ.get("SMTP_PORT", "465"))
+    sender = os.environ.get("SMTP_EMAIL")
+    password = os.environ.get("SMTP_PASSWORD")
+    if not (host and sender and password):
+        raise RuntimeError("SMTP not configured")
+    ref = f'<tr><td style="padding:6px 0;color:#64748b">Reference No.</td><td style="padding:6px 0">{reference_no}</td></tr>' if reference_no else ""
+    html = f"""
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border:1px solid #e2e8f0">
+      <div style="background:#0f172a;color:#fff;padding:18px 24px">
+        <h2 style="margin:0">SITERA <span style="color:#10b981">— Payment Receipt</span></h2>
+      </div>
+      <div style="padding:24px">
+        <p>Dear {client.name},</p>
+        <p>We confirm receipt of your payment towards the approved change order:</p>
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <tr><td style="padding:6px 0;color:#64748b">Project</td><td style="padding:6px 0"><b>{project.name}</b></td></tr>
+          <tr><td style="padding:6px 0;color:#64748b">Change Order</td><td style="padding:6px 0">{co.co_number} — {co.title}</td></tr>
+          <tr><td style="padding:6px 0;color:#64748b">Amount Paid</td><td style="padding:6px 0"><b style="font-size:16px">₹{amount:,.2f}</b></td></tr>
+          <tr><td style="padding:6px 0;color:#64748b">Payment Method</td><td style="padding:6px 0">{method}</td></tr>
+          {ref}
+          <tr><td style="padding:6px 0;color:#64748b">Date</td><td style="padding:6px 0">{date.today().isoformat()}</td></tr>
+        </table>
+        <p style="color:#64748b;font-size:12px;margin-top:18px">This amount has been credited to your project's balance sheet. Thank you for your business.</p>
+      </div>
+    </div>"""
+    msg = MIMEText(html, "html")
+    msg["Subject"] = f"Payment Receipt — {co.co_number} · {project.name}"
+    msg["From"] = sender
+    msg["To"] = client.email
+    ctx = ssl.create_default_context()
+    if port == 465:
+        with smtplib.SMTP_SSL(host, port, context=ctx, timeout=20) as s:
+            s.login(sender, password)
+            s.sendmail(sender, [client.email], msg.as_string())
+    else:
+        with smtplib.SMTP(host, port, timeout=20) as s:
+            s.starttls(context=ctx)
+            s.login(sender, password)
+            s.sendmail(sender, [client.email], msg.as_string())
 
 
 @router.post("/change-orders/{co_id}/reject")

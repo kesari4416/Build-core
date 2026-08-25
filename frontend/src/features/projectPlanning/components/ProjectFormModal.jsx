@@ -55,7 +55,7 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId,
         status: project.status || "Planning",
       } : {
         ...empty,
-        client_id: defaultClientId ? String(defaultClientId) : "",
+        client_id: fromEstimate?.client_id ? String(fromEstimate.client_id) : (defaultClientId ? String(defaultClientId) : ""),
         name: fromEstimate?.project_name || "",
         budget: fromEstimate?.total_amount ?? "",
       });
@@ -63,6 +63,18 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId,
   }, [open, project, defaultClientId, fromEstimate]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  useEffect(() => {
+    if (project) return;
+    setForm((f) => {
+      if (!f.start_date_planned && !f.end_date_planned) return f;
+      const t = new Date().toISOString().slice(0, 10);
+      let s = "Planning";
+      if (f.end_date_planned && f.end_date_planned < t) s = "Completed";
+      else if (f.start_date_planned && f.start_date_planned <= t) s = "Ongoing";
+      return f.status === s ? f : { ...f, status: s };
+    });
+  }, [form.start_date_planned, form.end_date_planned, project]);
 
   const validate = () => {
     const e = {};
@@ -162,7 +174,7 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId,
               <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Budget (₹)</Label>
               <Input data-testid="project-budget-input" type="number" placeholder="e.g. 250000000 = ₹25 Cr" value={form.budget} onChange={(e) => set("budget", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
               {form.budget !== "" && !isNaN(Number(form.budget)) && Number(form.budget) > 0 && (
-                <p className="text-blue-600 dark:text-blue-400 text-xs mt-1 font-semibold" data-testid="budget-preview">= ₹{(Number(form.budget) / 10000000).toFixed(2)} Cr</p>
+                <p className="text-blue-600 dark:text-blue-400 text-xs mt-1 font-semibold" data-testid="budget-preview">= ₹{Number(form.budget).toLocaleString("en-IN")}</p>
               )}
               {errors.budget && <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.budget}</p>}
             </div>

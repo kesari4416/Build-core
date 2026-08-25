@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, Link, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import api from "../../../api/client";
 import { ArrowLeft, Pencil, Plus, AlertTriangle, MapPin, IndianRupee, CalendarDays, UserRound, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
@@ -19,7 +20,7 @@ import { ProjectBalanceSheetTab } from "../components/ProjectBalanceSheetTab";
 import { ChangeOrdersTab } from "../components/ChangeOrdersTab";
 import { useAuth } from "../../../context/AuthContext";
 
-const fmtBudget = (b) => (b == null ? "—" : `₹${(b / 10000000).toFixed(2)} Cr`);
+const fmtBudget = (b) => (b == null ? "—" : `₹${Number(b).toLocaleString("en-IN")}`);
 
 const InfoCell = ({ icon: Icon, label, value, testId }) => (
   <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5" data-testid={testId}>
@@ -40,7 +41,21 @@ export default function ProjectDetailPage() {
   const { data: feed, isLoading: feedLoading } = useUpdatesFeed(projectId);
   const [phaseModal, setPhaseModal] = useState({ open: false, phase: null });
   const [updateModal, setUpdateModal] = useState(false);
+  const [editUpdate, setEditUpdate] = useState(null);
   const [editModal, setEditModal] = useState(false);
+  const qc = useQueryClient();
+
+  const deleteUpdate = async (u) => {
+    if (!window.confirm("Delete this progress update?")) return;
+    try {
+      await api.delete(`/updates/${u.id}`);
+      toast.success("Update deleted");
+      qc.invalidateQueries({ queryKey: ["updates", projectId] });
+      qc.invalidateQueries({ queryKey: ["project", projectId] });
+    } catch (e) {
+      toast.error(e.response?.data?.detail || e.message);
+    }
+  };
   const { data: coData } = useQuery({
     queryKey: ["changeOrders", projectId, "", "", ""],
     queryFn: () => api.get(`/projects/${projectId}/change-orders`).then((r) => r.data),
@@ -159,7 +174,8 @@ export default function ProjectDetailPage() {
               {feedLoading ? (
                 <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-28 bg-white dark:bg-slate-900 rounded-md" />)}</div>
               ) : (
-                <ProgressUpdateFeed updates={feed?.items} />
+                <ProgressUpdateFeed updates={feed?.items} canManage={canWrite}
+                  onEdit={(u) => { setEditUpdate(u); setUpdateModal(true); }} onDelete={deleteUpdate} />
               )}
             </div>
             <DocumentsPanel projectId={projectId} canWrite={canWrite} isAdmin={isAdmin} />
@@ -187,7 +203,7 @@ export default function ProjectDetailPage() {
       <PhaseFormModal open={phaseModal.open} onOpenChange={(o) => setPhaseModal({ open: o, phase: o ? phaseModal.phase : null })}
         projectId={projectId} phase={phaseModal.phase}
         nextOrder={(project.phases?.reduce((m, p) => Math.max(m, p.sequence_order), 0) || 0) + 1} />
-      <ProgressUpdateFormModal open={updateModal} onOpenChange={setUpdateModal} projectId={projectId} phases={project.phases} />
+      <ProgressUpdateFormModal open={updateModal} onOpenChange={(o) => { setUpdateModal(o); if (!o) setEditUpdate(null); }} projectId={projectId} phases={project.phases} update={editUpdate} />
       <ProjectFormModal open={editModal} onOpenChange={setEditModal} project={project} />
     </div>
   );

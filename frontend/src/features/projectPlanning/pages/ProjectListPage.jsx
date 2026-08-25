@@ -14,7 +14,7 @@ import { useAuth } from "../../../context/AuthContext";
 
 const STATUSES = ["Planning", "Ongoing", "OnHold", "Completed", "Cancelled"];
 const PAGE_SIZE = 10;
-const fmtCr = (b) => `₹${((b || 0) / 10000000).toFixed(2)} Cr`;
+const fmtCr = (b) => `₹${(b || 0).toLocaleString("en-IN")}`;
 
 export default function ProjectListPage() {
   const { isAdmin, canWrite, user } = useAuth();

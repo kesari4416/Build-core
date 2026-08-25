@@ -177,6 +177,7 @@ class ProjectChangeOrder(Base):
     approval_date = Column(DateTime(timezone=True), nullable=True)
     approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     attachments = Column(Text, nullable=True)
+    paid_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utcnow)
     revisions = relationship("ProjectChangeOrderRevision", cascade="all, delete-orphan",
                              order_by="ProjectChangeOrderRevision.version")

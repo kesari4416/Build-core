@@ -14,7 +14,7 @@ import { useProject } from "../hooks/useProjects";
 import { useAuth } from "../../../context/AuthContext";
 
 const fmt = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
-const fmtCr = (n) => `${n < 0 ? "−" : ""}₹${(Math.abs(n || 0) / 10000000).toFixed(2)} Cr`;
+const fmtCr = (n) => `${n < 0 ? "−" : ""}₹${Math.abs(n || 0).toLocaleString("en-IN")}`;
 
 export const ProjectFinanceSummaryCard = ({ label, value, sub, icon: Icon, accent, testId }) => (
   <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5" data-testid={testId}>

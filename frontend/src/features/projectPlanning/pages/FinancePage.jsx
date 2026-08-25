@@ -11,7 +11,7 @@ import { CommitmentStatusBadge } from "../components/CommitmentStatusBadge";
 import { OrgBalanceSheetTab } from "../components/OrgBalanceSheetTab";
 import { printInvoice, shareInvoiceWhatsApp, shareInvoiceEmail } from "../utils/invoiceShare";
 
-const fmtCr = (n) => `${n < 0 ? "−" : ""}₹${(Math.abs(n || 0) / 10000000).toFixed(2)} Cr`;
+const fmtCr = (n) => `${n < 0 ? "−" : ""}₹${Math.abs(n || 0).toLocaleString("en-IN")}`;
 
 const triggerCls = "rounded-md px-5 py-2.5 text-xs uppercase tracking-[0.15em] font-semibold data-[state=active]:bg-white dark:bg-slate-900 data-[state=active]:text-slate-900 dark:text-slate-100 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none text-slate-500 dark:text-slate-400 border-b-2 border-transparent";
 

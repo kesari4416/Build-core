@@ -9,7 +9,7 @@ import { useProcSummary, useCommitments, useBudgetBreakdownProc } from "../hooks
 import { useProject } from "../hooks/useProjects";
 import { QuotationsSection } from "../components/QuotationsSection";
 
-const fmtCr = (n) => `${n < 0 ? "−" : ""}₹${(Math.abs(n || 0) / 10000000).toFixed(2)} Cr`;
+const fmtCr = (n) => `${n < 0 ? "−" : ""}₹${Math.abs(n || 0).toLocaleString("en-IN")}`;
 
 export default function ProcurementDashboardPage() {
   const { id } = useParams();

@@ -10,23 +10,40 @@ import { Switch } from "../../../components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import api, { assetUrl, formatApiErrorDetail } from "../../../api/client";
 import { usePostUpdate } from "../hooks/useProjects";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../context/AuthContext";
 
 const FLAGS = ["OnTrack", "Delayed", "Blocked"];
 const empty = { phase_id: "", description: "", percent_progress: "", status_flag: "OnTrack", visible_to_client: true };
 
-export const ProgressUpdateFormModal = ({ open, onOpenChange, projectId, phases }) => {
+export const ProgressUpdateFormModal = ({ open, onOpenChange, projectId, phases, update }) => {
   const [form, setForm] = useState(empty);
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef(null);
   const post = usePostUpdate();
+  const qc = useQueryClient();
   const { user } = useAuth();
+  const isEdit = !!update;
 
   useEffect(() => {
-    if (open) { setForm(empty); setFiles([]); setError(""); }
-  }, [open]);
+    if (open) {
+      if (update) {
+        setForm({
+          phase_id: update.phase_id ? String(update.phase_id) : "",
+          description: update.description || "",
+          percent_progress: update.percent_progress ?? "",
+          status_flag: update.status_flag || "OnTrack",
+          visible_to_client: update.visible_to_client !== false,
+        });
+        setFiles(update.attachments || []);
+      } else {
+        setForm(empty); setFiles([]);
+      }
+      setError("");
+    }
+  }, [open, update]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -65,8 +82,15 @@ export const ProgressUpdateFormModal = ({ open, onOpenChange, projectId, phases 
     };
     onOpenChange(false);
     try {
-      await post.mutateAsync({ projectId, data: payload, authorName: user?.name });
-      toast.success("Update posted");
+      if (isEdit) {
+        await api.patch(`/updates/${update.id}`, payload);
+        qc.invalidateQueries({ queryKey: ["updates", Number(projectId)] });
+        qc.invalidateQueries({ queryKey: ["project", Number(projectId)] });
+        toast.success("Update edited");
+      } else {
+        await post.mutateAsync({ projectId, data: payload, authorName: user?.name });
+        toast.success("Update posted");
+      }
     } catch (err) {
       toast.error(formatApiErrorDetail(err.response?.data?.detail) || err.message);
     }
@@ -76,7 +100,7 @@ export const ProgressUpdateFormModal = ({ open, onOpenChange, projectId, phases 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md max-w-lg" data-testid="update-form-modal">
         <DialogHeader>
-          <DialogTitle className="font-heading text-2xl uppercase tracking-wide">Post Progress Update</DialogTitle>
+          <DialogTitle className="font-heading text-2xl uppercase tracking-wide">{isEdit ? "Edit Progress Update" : "Post Progress Update"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div>
@@ -135,7 +159,7 @@ export const ProgressUpdateFormModal = ({ open, onOpenChange, projectId, phases 
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300 dark:border-slate-700">Cancel</Button>
             <Button type="submit" disabled={uploading} data-testid="update-form-submit" className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">
-              Post Update
+              {isEdit ? "Save Changes" : "Post Update"}
             </Button>
           </div>
         </form>

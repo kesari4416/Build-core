@@ -52,7 +52,7 @@ const GanttChart = ({ timeline }) => {
               <div className="w-[150px] shrink-0 text-xs text-slate-600 dark:text-slate-400 truncate">{r.name}</div>
               <div className="flex-1 h-5 bg-slate-200 dark:bg-slate-800 relative">
                 <div className="absolute top-0 h-full opacity-40" style={{ left: `${left}%`, width: `${width}%`, background: BAR_COLORS[r.status] || "#f97316" }} />
-                <div className="absolute top-0 h-full" style={{ left: `${left}%`, width: `${(width * r.percent_complete) / 100}%`, background: BAR_COLORS[r.status] || "#f97316" }} />
+                <div className="absolute top-0 h-full" style={{ left: `${left}%`, width: `${Math.max(0, Math.min((width * r.percent_complete) / 100, todayPct - left))}%`, background: BAR_COLORS[r.status] || "#f97316" }} />
                 <span className="absolute top-0.5 text-[9px] font-bold text-slate-900 dark:text-slate-100" style={{ left: `calc(${left}% + 4px)` }}>{r.percent_complete}%</span>
               </div>
             </div>
@@ -104,7 +104,7 @@ export default function DashboardPage() {
           <StatCard icon={CheckCircle2} label="Ongoing" value={stats?.by_status?.Ongoing ?? 0} accent="text-emerald-600 dark:text-emerald-400" testId="stat-ongoing" />
           <StatCard icon={CheckCircle2} label="Completed" value={stats?.by_status?.Completed ?? 0} accent="text-purple-600 dark:text-purple-400" testId="stat-completed" />
           <StatCard icon={AlertTriangle} label="With Issues" value={stats?.projects_with_issues ?? 0} accent="text-red-500" testId="stat-issues" />
-          <StatCard icon={IndianRupee} label="Total Budget" value={stats ? `₹${(stats.total_budget / 10000000).toFixed(1)}Cr` : "—"} accent="text-sky-600 dark:text-sky-400" testId="stat-budget" />
+          <StatCard icon={IndianRupee} label="Total Budget" value={stats ? `₹${(stats.total_budget || 0).toLocaleString("en-IN")}` : "—"} accent="text-sky-600 dark:text-sky-400" testId="stat-budget" />
         </div>
       )}
 

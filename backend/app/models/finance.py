@@ -125,6 +125,7 @@ class Estimate(Base):
     category_id = Column(Integer, ForeignKey("estimate_categories.id"), nullable=False)
     drawing_url = Column(String, nullable=True)
     drawing_filename = Column(String, nullable=True)
+    estimate_date = Column(Date, nullable=True)
     total_amount = Column(Numeric(14, 2), nullable=False)
     status_id = Column(Integer, ForeignKey("estimate_statuses.id"), nullable=False)
     approval_state = Column(String, nullable=False, default="pending")

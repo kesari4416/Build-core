@@ -1,7 +1,7 @@
 import os
 import secrets
 import smtplib
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from email.mime.text import MIMEText
 from typing import Optional
 
@@ -86,6 +86,7 @@ class EstimateCreate(BaseModel):
     drawing_filename: Optional[str] = None
     total_amount: Optional[float] = None
     status_id: int
+    estimate_date: Optional[date] = None
     requirements: Optional[list["RequirementRow"]] = None
 
 
@@ -157,6 +158,7 @@ def estimate_out(e, events=None, clients=None, reqs=None):
             "awaiting_response": bool(e.sent_at and (e.approval_state or "pending") == "pending"),
             "events": events or [],
             "requirements": reqs or [],
+            "estimate_date": e.estimate_date.isoformat() if e.estimate_date else None,
             "created_at": e.created_at.isoformat() if e.created_at else None,
             "updated_at": e.updated_at.isoformat() if e.updated_at else None}
 
@@ -205,6 +207,7 @@ def create_estimate(body: EstimateCreate, db: Session = Depends(get_db), user: U
                  category_id=body.category_id, drawing_url=body.drawing_url,
                  drawing_filename=body.drawing_filename, total_amount=total,
                  status_id=body.status_id, created_by=user.id,
+                 estimate_date=body.estimate_date or date.today(),
                  client_email=client.email or None)
     db.add(e)
     db.flush()
@@ -407,6 +410,10 @@ def apply_decision(db, e, action, actor, reason=None):
         e.approved_at = None
         e.rejection_reason = (reason or "").strip() or None
         log_event(db, e.id, "rejected", actor, e.rejection_reason)
+    st = db.query(EstimateStatus).filter(
+        EstimateStatus.name.ilike("Approved" if action == "approve" else "Rejected")).first()
+    if st:
+        e.status_id = st.id
 
 
 @router.post("/public/estimate-approval/{estimate_id}/{token}")
