@@ -112,7 +112,7 @@ export const PhaseFormModal = ({ open, onOpenChange, projectId, phase, nextOrder
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Status</Label>
-              <Select value={form.status} onValueChange={(v) => set("status", v)}>
+              <Select value={form.status} onValueChange={(v) => { if (!v) return; setForm((f) => ({ ...f, status: v, percent_complete: v === "Completed" ? 100 : f.percent_complete })); }}>
                 <SelectTrigger data-testid="phase-status-select" className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md"><SelectValue /></SelectTrigger>
                 <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
                   {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -121,7 +121,8 @@ export const PhaseFormModal = ({ open, onOpenChange, projectId, phase, nextOrder
             </div>
             <div>
               <Label className="text-xs uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">% Complete</Label>
-              <Input data-testid="phase-percent-input" type="number" min="0" max="100" value={form.percent_complete} onChange={(e) => set("percent_complete", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
+              <Input data-testid="phase-percent-input" type="number" min="0" max="100" value={form.percent_complete} disabled={form.status === "Completed"} onChange={(e) => set("percent_complete", e.target.value)} className="mt-1.5 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md disabled:opacity-70" />
+              {form.status === "Completed" && <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1" data-testid="phase-percent-locked">Auto-set to 100% for completed phases</p>}
               {errors.percent_complete && <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.percent_complete}</p>}
             </div>
           </div>
