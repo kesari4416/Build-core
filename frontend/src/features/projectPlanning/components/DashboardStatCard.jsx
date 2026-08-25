@@ -23,7 +23,7 @@ export const DashboardStatCard = ({ label, value, icon: Icon, isActive, onClick,
         </span>
         <Icon size={17} strokeWidth={2.5} className={v.icon} />
       </div>
-      <div className={`font-heading font-bold text-4xl mt-3 leading-none ${isActive ? v.icon : "text-slate-900 dark:text-slate-100"}`}>
+      <div className={`font-heading font-bold text-2xl md:text-3xl xl:text-4xl mt-3 leading-tight num-wrap ${isActive ? v.icon : "text-slate-900 dark:text-slate-100"}`}>
         {value}
       </div>
       {isActive && (

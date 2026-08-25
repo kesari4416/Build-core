@@ -5,8 +5,8 @@ import { TrendingUp, TrendingDown, IndianRupee, AlertTriangle, Users, FileDown, 
 import api from "../../../api/client";
 import { downloadFile } from "../utils/downloadFile";
 
-const fmt = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
-const fmtCr = (n) => `${n < 0 ? "−" : ""}₹${Math.abs(n || 0).toLocaleString("en-IN")}`;
+const fmt = (n) => `₹${Math.round(Number(n || 0)).toLocaleString("en-IN")}`;
+const fmtCr = (n) => `${n < 0 ? "−" : ""}₹${Math.abs(Math.round(Number(n || 0))).toLocaleString("en-IN")}`;
 
 const StatCard = ({ label, value, icon: Icon, accent, testId }) => (
   <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5" data-testid={testId}>
@@ -14,7 +14,7 @@ const StatCard = ({ label, value, icon: Icon, accent, testId }) => (
       <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">{label}</span>
       <Icon size={16} strokeWidth={2.5} className={accent} />
     </div>
-    <div className={`font-heading font-bold text-3xl mt-3 leading-none ${accent}`}>{value}</div>
+    <div className={`font-heading font-bold text-2xl md:text-3xl mt-3 leading-tight num-wrap ${accent}`}>{value}</div>
   </div>
 );
 

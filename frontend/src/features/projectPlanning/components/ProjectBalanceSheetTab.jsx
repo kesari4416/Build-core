@@ -19,7 +19,7 @@ const Card = ({ label, value, sub, icon: Icon, accent, testId }) => (
       <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">{label}</span>
       <Icon size={16} strokeWidth={2.5} className={accent} />
     </div>
-    <div className={`font-heading font-bold text-3xl mt-3 leading-none ${accent}`}>{value}</div>
+    <div className={`font-heading font-bold text-2xl md:text-3xl mt-3 leading-tight num-wrap ${accent}`}>{value}</div>
     {sub && <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 tracking-wide">{sub}</div>}
   </div>
 );

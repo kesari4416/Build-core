@@ -119,6 +119,34 @@ body {
   filter: invert(0.8);
 }
 
+/* -----------------------------------------------------------------------------
+ * Global overflow guard
+ * ---------------------------------------------------------------------------
+ * Long, unbreakable strings (e.g. Indian-formatted currency ₹1,06,91,08,000 or
+ * ₹55,53,96,822.50) were forcing grid tracks and flex items to grow past their
+ * container, causing horizontal overflow across Projects, Finance, Estimates,
+ * etc. Setting min-width: 0 on all grid/flex children restores intrinsic
+ * shrinking behaviour without altering any layout that already sized itself.
+ * --------------------------------------------------------------------------- */
+:where(.grid) > *,
+:where([class*="flex"]) > * {
+  min-width: 0;
+}
+
+/* Long financial/numeric values should soft-wrap on commas & digits before
+ * overflowing their card / cell. Explicitly opt-in via .num-wrap when needed. */
+.num-wrap {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Ensure the app root never scrolls the whole viewport horizontally. Individual
+ * scrolling regions (tables) still opt-in via overflow-x-auto. */
+html, body, #root {
+  overflow-x: clip;
+}
+
+
 .grain-bg {
   position: relative;
 }
