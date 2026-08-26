@@ -67,12 +67,29 @@ class ExpensePatch(BaseModel):
 
 
 def paid_sum(db, invoice_id):
-    return f(db.query(func.coalesce(func.sum(Payment.amount), 0))
-             .filter(Payment.invoice_id == invoice_id).scalar())
+    """Total amount settled against an invoice.
+
+    Includes both explicit Payment rows AND — for auto-generated invoices linked
+    to an IncomeEntry — the linked IncomeEntry amount. This lets the auto
+    invoice appear fully paid without inserting a duplicate Payment row (which
+    would double-count in the ledger).
+    """
+    from app.models.finance import IncomeEntry
+    total = f(db.query(func.coalesce(func.sum(Payment.amount), 0))
+              .filter(Payment.invoice_id == invoice_id).scalar())
+    inv = db.get(Invoice, invoice_id)
+    if inv and inv.income_entry_id:
+        inc = db.get(IncomeEntry, inv.income_entry_id)
+        if inc:
+            total += f(inc.amount)
+    return round(total, 2)
 
 
 def refresh_invoice_status(db, inv):
     if inv.status in ("Draft", "Cancelled"):
+        return inv.status
+    if inv.income_entry_id:
+        inv.status = "Paid"
         return inv.status
     paid = paid_sum(db, inv.id)
     total = f(inv.amount) + f(inv.tax_amount)

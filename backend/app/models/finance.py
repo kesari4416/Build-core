@@ -17,6 +17,7 @@ class Invoice(Base):
     due_date = Column(Date, nullable=True)
     status = Column(String, default="Draft", nullable=False)
     description = Column(Text)
+    income_entry_id = Column(Integer, ForeignKey("income_entries.id"), nullable=True, unique=True, index=True)
     created_by = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime(timezone=True), default=utcnow)
     updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.security import require_roles
 from app.database import get_db
 from app.models import Phase, Project, User
-from app.models.finance import Employee, ExpenseEntry, IncomeEntry
+from app.models.finance import Employee, ExpenseEntry, IncomeEntry, Invoice
 from app.models.procurement import Vendor, VendorProduct, VendorQuotation, VendorQuotationItem
 
 router = APIRouter(tags=["transactions"])
@@ -31,6 +31,43 @@ def get_active_project(db, project_id):
     if p.is_archived or p.status in CLOSED_STATUSES:
         raise HTTPException(status_code=422, detail=f"Project is {'archived' if p.is_archived else p.status.lower()} — transactions not allowed")
     return p
+
+
+def ensure_invoice_for_income(db, project, income, user):
+    """Auto-generate an invoice document for a recorded client payment.
+
+    - **Linkage, not duplication**: the invoice references the IncomeEntry via
+      ``income_entry_id``; it does NOT create a Payment row, so the ledger's
+      Total Credit is not double-counted (IncomeEntry alone contributes the
+      credit).
+    - **Idempotent**: a partial unique index on ``invoices.income_entry_id``
+      guarantees at most one invoice per IncomeEntry; re-invoking this helper
+      is a no-op.
+    """
+    if income is None or getattr(income, "id", None) is None:
+        return None
+    existing = db.query(Invoice).filter(Invoice.income_entry_id == income.id).first()
+    if existing:
+        return existing
+    year_suffix = (income.income_date or date.today()).strftime("%y")
+    seq = db.query(Invoice).filter(Invoice.project_id == project.id).count() + 1
+    inv_number = f"INV-{year_suffix}-{seq:03d}"
+    desc_bits = [f"Client payment — {income.payment_type}"]
+    if income.phase:
+        desc_bits.append(income.phase)
+    inv = Invoice(project_id=project.id, client_id=project.client_id,
+                  invoice_number=inv_number, amount=income.amount, tax_amount=0,
+                  issue_date=income.income_date, due_date=income.income_date,
+                  status="Paid", description=" · ".join(desc_bits),
+                  income_entry_id=income.id, created_by=(user.id if user else None))
+    db.add(inv)
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        return db.query(Invoice).filter(Invoice.income_entry_id == income.id).first()
+    db.refresh(inv)
+    return inv
 
 
 def budget_remaining(db, project):
@@ -91,6 +128,7 @@ def add_income(body: IncomeCreate, db: Session = Depends(get_db), user: User = D
     db.add(inc)
     db.commit()
     db.refresh(inc)
+    ensure_invoice_for_income(db, project, inc, user)
     users = {user.id: user.name}
     return {**income_out(inc, users), "project_budget_remaining": budget_remaining(db, project)}
 

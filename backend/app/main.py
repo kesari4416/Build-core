@@ -103,7 +103,9 @@ def startup():
                      "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS token_used BOOLEAN DEFAULT FALSE",
                      "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS estimate_date DATE",
                      "ALTER TABLE project_change_orders ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ",
-                     "ALTER TABLE estimates ALTER COLUMN project_name DROP NOT NULL"]:
+                     "ALTER TABLE estimates ALTER COLUMN project_name DROP NOT NULL",
+                     "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS income_entry_id INTEGER REFERENCES income_entries(id)",
+                     "CREATE UNIQUE INDEX IF NOT EXISTS uq_invoices_income_entry_id ON invoices(income_entry_id) WHERE income_entry_id IS NOT NULL"]:
             conn.execute(text(stmt))
     db = SessionLocal()
     try:
@@ -118,5 +120,14 @@ def startup():
         seed_milestones(db)
         seed_expense_categories(db)
         seed_project_ledgers(db)
+        # Backfill: auto-generate invoices for pre-existing IncomeEntry rows
+        # that don't yet have a linked invoice. Safe to re-run on every boot.
+        from app.routers.transactions import ensure_invoice_for_income
+        from app.models.finance import IncomeEntry
+        from app.models import Project as _Project
+        for inc in db.query(IncomeEntry).filter(IncomeEntry.project_id.isnot(None)).all():
+            proj = db.get(_Project, inc.project_id)
+            if proj:
+                ensure_invoice_for_income(db, proj, inc, None)
     finally:
         db.close()
