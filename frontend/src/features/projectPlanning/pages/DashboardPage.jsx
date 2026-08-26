@@ -19,7 +19,7 @@ const StatCard = ({ icon: Icon, label, value, accent, testId }) => (
       <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">{label}</span>
       <Icon size={17} strokeWidth={2.5} className={accent} />
     </div>
-    <div className="font-heading font-bold text-4xl mt-3 leading-none">{value}</div>
+    <div className="font-heading font-bold text-2xl md:text-3xl xl:text-4xl mt-3 leading-tight num-wrap">{value}</div>
   </div>
 );
 
