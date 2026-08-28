@@ -11,8 +11,9 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
 from app.database import engine, Base, SessionLocal
-from app.routers import auth, projects, clients, uploads, documents, vendors, procurement, finance, users_admin, quotation, notifications, employees, exports, vendor_products, change_orders, transactions, estimates, quotations_v2
+from app.routers import auth, projects, clients, uploads, documents, vendors, procurement, finance, users_admin, quotation, notifications, employees, exports, vendor_products, change_orders, transactions, estimates, quotations_v2, concepts
 from app.routers.uploads import UPLOAD_DIR
+from app.models import concepts as _concepts_models  # noqa: F401 — register tables
 from app.seed import seed_admin, seed_demo_data
 from app.seed_procurement import seed_procurement
 
@@ -39,6 +40,7 @@ api_router.include_router(change_orders.router)
 api_router.include_router(transactions.router)
 api_router.include_router(estimates.router)
 api_router.include_router(quotations_v2.router)
+api_router.include_router(concepts.router)
 
 
 @api_router.get("/")
@@ -73,6 +75,12 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     Base.metadata.create_all(bind=engine)
+    # Initialise object storage — non-fatal if it fails (offline dev)
+    try:
+        from app.core.object_storage import init_storage
+        init_storage()
+    except Exception as _e:
+        logging.warning("Object storage init failed: %s", _e)
     from sqlalchemy import text
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS category_id "
