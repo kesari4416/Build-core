@@ -46,6 +46,18 @@ def root():
     return {"message": "Construction Portal API"}
 
 
+@api_router.get("/user-manual")
+def download_user_manual():
+    """Serve the Sitera User Manual PDF."""
+    from fastapi.responses import FileResponse
+    from fastapi import HTTPException
+    from pathlib import Path
+    p = Path("/app/docs/Sitera_User_Manual.pdf")
+    if not p.exists():
+        raise HTTPException(status_code=404, detail="User manual not found")
+    return FileResponse(str(p), media_type="application/pdf", filename="Sitera_User_Manual.pdf")
+
+
 app.include_router(api_router)
 app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
