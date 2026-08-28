@@ -204,7 +204,7 @@ export const ChangeOrderFormModal = ({ open, onOpenChange, projectId, phases, co
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300 dark:border-slate-700">Cancel</Button>
             <Button type="submit" disabled={!valid || saving || uploading} data-testid="co-form-submit"
-              className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">
+              className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold uppercase tracking-wide">
               {isRevise ? "Submit Revised Estimate" : submitNow ? "Create & Send" : "Save Draft"}
             </Button>
           </div>

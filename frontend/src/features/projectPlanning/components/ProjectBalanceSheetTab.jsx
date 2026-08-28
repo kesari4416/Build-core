@@ -14,12 +14,14 @@ const fmtAmt = (n) => {
 };
 
 const Card = ({ label, value, sub, icon: Icon, accent, testId }) => (
-  <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5" data-testid={testId}>
+  <div className="surface surface-hover p-5" data-testid={testId}>
     <div className="flex items-center justify-between">
-      <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">{label}</span>
-      <Icon size={16} strokeWidth={2.5} className={accent} />
+      <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">{label}</span>
+      <div className={`w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800/60 flex items-center justify-center ${accent}`}>
+        <Icon size={15} strokeWidth={2.25} />
+      </div>
     </div>
-    <div className={`font-heading font-bold text-2xl md:text-3xl mt-3 leading-tight num-wrap ${accent}`}>{value}</div>
+    <div className={`font-heading font-semibold text-2xl md:text-3xl mt-4 leading-tight tracking-tight num-wrap ${accent}`}>{value}</div>
     {sub && <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 tracking-wide">{sub}</div>}
   </div>
 );

@@ -42,17 +42,17 @@ export default function Layout({ children }) {
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       {open && (
-        <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" data-testid="sidebar-overlay"
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40 lg:hidden animate-in fade-in duration-200" data-testid="sidebar-overlay"
           onClick={() => setOpen(false)} />
       )}
       <aside data-testid="sidebar"
-        className={`w-60 shrink-0 border-r border-slate-800 bg-slate-900 flex flex-col fixed inset-y-0 z-50 transform transition-transform duration-200 lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800">
+        className={`w-64 shrink-0 border-r border-slate-800/60 bg-slate-950 flex flex-col fixed inset-y-0 z-50 transform transition-transform duration-300 ease-out lg:translate-x-0 ${open ? "translate-x-0 shadow-2xl" : "-translate-x-full"}`}>
+        <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800/60">
           <div data-testid="sidebar-logo"><Wordmark /></div>
-          <button className="lg:hidden p-1.5 text-slate-400 hover:text-white" data-testid="sidebar-close"
+          <button className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-md hover:bg-slate-800/60 transition-colors" data-testid="sidebar-close"
             onClick={() => setOpen(false)}><X size={18} /></button>
         </div>
-        <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 py-6 px-3 space-y-0.5 overflow-y-auto">
           {navItems
             .filter((i) => i.roles.includes(user?.role))
             .map(({ to, label, icon: Icon, end }) => (
@@ -63,53 +63,62 @@ export default function Layout({ children }) {
                 onClick={() => setOpen(false)}
                 data-testid={`nav-${label.toLowerCase()}`}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md border-l-2 transition-colors ${
+                  `group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 ${
                     isActive
-                      ? "border-blue-500 bg-slate-800 text-white"
-                      : "border-transparent text-slate-400 hover:text-white hover:bg-slate-800/60"
+                      ? "bg-amber-500/10 text-amber-400 ring-1 ring-inset ring-amber-500/20"
+                      : "text-slate-400 hover:text-white hover:bg-slate-800/50"
                   }`
                 }
               >
-                <Icon size={17} strokeWidth={2.5} />
-                <span className="uppercase tracking-[0.12em] text-xs font-semibold">{label}</span>
+                <Icon size={17} strokeWidth={2.25} className="shrink-0" />
+                <span className="uppercase tracking-[0.12em] text-[11px] font-semibold">{label}</span>
               </NavLink>
             ))}
         </nav>
         <div className="px-3 pb-2">
           <NotificationBell />
         </div>
-        <div className="border-t border-slate-800 p-4">
+        <div className="border-t border-slate-800/60 p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 bg-slate-800 border border-slate-700 rounded-md flex items-center justify-center font-heading font-bold text-amber-400">
+            <div className="w-9 h-9 bg-gradient-to-br from-amber-500/20 to-amber-500/5 border border-amber-500/30 rounded-lg flex items-center justify-center font-heading font-bold text-amber-400 shrink-0">
               {user?.name?.[0]?.toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold truncate text-white" data-testid="user-name">{user?.name}</div>
-              <div className="text-[11px] uppercase tracking-[0.15em] text-slate-500">{user?.role}</div>
+              <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 mt-0.5">{user?.role}</div>
             </div>
             <button
               data-testid="theme-toggle"
               onClick={toggleTheme}
               title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-              className="p-2 rounded-md border border-slate-700 text-slate-400 hover:text-amber-400 hover:border-slate-500 transition-colors"
+              className="p-2 rounded-lg border border-slate-800 text-slate-400 hover:text-amber-400 hover:border-slate-700 hover:bg-slate-800/50 transition-colors"
             >
-              {theme === "dark" ? <Sun size={15} strokeWidth={2.5} /> : <Moon size={15} strokeWidth={2.5} />}
+              {theme === "dark" ? <Sun size={15} strokeWidth={2.25} /> : <Moon size={15} strokeWidth={2.25} />}
             </button>
           </div>
           <button
             data-testid="logout-button"
             onClick={async () => { await logout(); navigate("/login"); }}
-            className="w-full flex items-center justify-center gap-2 border border-slate-700 rounded-md py-2 text-xs uppercase tracking-[0.15em] font-semibold text-slate-400 hover:text-white hover:border-slate-500 transition-colors"
+            className="w-full flex items-center justify-center gap-2 border border-slate-800 rounded-lg py-2 text-[11px] uppercase tracking-[0.15em] font-semibold text-slate-400 hover:text-white hover:border-slate-700 hover:bg-slate-800/50 transition-colors tap-scale"
           >
-            <LogOut size={14} strokeWidth={2.5} /> Sign Out
+            <LogOut size={13} strokeWidth={2.5} /> Sign Out
           </button>
         </div>
       </aside>
-      <div className="flex-1 min-w-0 lg:ml-60 flex flex-col">
-        <header className="lg:hidden sticky top-0 z-30 h-14 flex items-center gap-3 px-4 bg-slate-900 border-b border-slate-800" data-testid="mobile-topbar">
+      <div className="flex-1 min-w-0 lg:ml-64 flex flex-col">
+        <header className="lg:hidden sticky top-0 z-30 h-14 flex items-center gap-3 px-4 glass-header" data-testid="mobile-topbar">
           <button data-testid="mobile-menu-button" onClick={() => setOpen(true)}
-            className="p-2 -ml-2 text-slate-300 hover:text-white"><Menu size={20} /></button>
-          <Wordmark />
+            className="p-2 -ml-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors">
+            <Menu size={20} />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="bg-slate-900 rounded-md p-1 w-7 h-7 flex items-center justify-center shrink-0">
+              <img src="/sitera-logo.png" alt="Sitera" className="w-5 h-5 object-contain" />
+            </div>
+            <div className="font-heading font-bold text-base tracking-tight leading-none">
+              SITE<span className="text-amber-500">RA</span>
+            </div>
+          </div>
         </header>
         <main className="flex-1 min-w-0">{children}</main>
       </div>

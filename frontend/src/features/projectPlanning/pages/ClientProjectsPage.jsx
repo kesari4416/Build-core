@@ -30,7 +30,7 @@ export default function ClientProjectsPage() {
         </div>
         {isAdmin && (
           <Button data-testid="client-new-project-button" onClick={() => setModalOpen(true)}
-            className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-[0.12em]">
+            className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-[0.12em]">
             <Plus size={16} strokeWidth={3} /> New Project
           </Button>
         )}

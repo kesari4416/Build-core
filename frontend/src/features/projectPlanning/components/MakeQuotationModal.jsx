@@ -134,7 +134,7 @@ export const MakeQuotationModal = ({ projectId, open, onOpenChange, onCreated })
         <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-3">
           <div className="text-sm">Total: <span className="font-heading font-bold text-xl text-blue-600 dark:text-blue-400" data-testid="mq-total">{fmt(total)}</span></div>
           <Button onClick={submit} disabled={saving} data-testid="mq-submit"
-            className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide text-xs">Create Quotation</Button>
+            className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-wide text-xs">Create Quotation</Button>
         </div>
       </DialogContent>
     </Dialog>

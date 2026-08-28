@@ -1,58 +1,69 @@
-@import url('https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ---------------------------------------------------------------
+ * Sitera Design System — "Architectural Swiss"
+ * Slate base + Amber accent, calm enterprise finance aesthetic
+ * Inspired by Zoho Books, refined for construction operations.
+ * ------------------------------------------------------------- */
 :root {
-  --background: 210 40% 98%;
-  --foreground: 222 47% 11%;
-  --card: 0 0% 100%;
+  --background: 210 40% 98%;      /* #F8FAFC */
+  --foreground: 222 47% 11%;      /* #0F172A */
+  --card: 0 0% 100%;              /* #FFFFFF */
   --card-foreground: 222 47% 11%;
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
-  --primary: 221 83% 53%;
+  --primary: 222 47% 11%;         /* Slate 900 — for primary actions */
   --primary-foreground: 0 0% 100%;
   --secondary: 210 40% 96%;
   --secondary-foreground: 222 47% 11%;
   --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
-  --accent: 210 40% 96%;
-  --accent-foreground: 222 47% 11%;
-  --destructive: 0 84% 60%;
+  --muted-foreground: 215 16% 47%; /* Slate 500 */
+  --accent: 32 95% 44%;            /* Amber 600 — brand accent for active state */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 45%;        /* Rose 600 */
   --destructive-foreground: 0 0% 98%;
+  --success: 142 71% 36%;          /* Emerald 700 */
+  --warning: 45 93% 47%;
+  --info: 199 89% 42%;             /* Sky 600 */
   --border: 214 32% 91%;
   --input: 214 32% 91%;
-  --ring: 221 83% 53%;
-  --radius: 0.5rem;
-  --chart-1: 221 83% 53%;
-  --chart-2: 38 92% 50%;
-  --chart-3: 160 84% 39%;
+  --ring: 32 95% 44%;              /* Amber 600 focus ring */
+  --radius: 0.75rem;               /* rounded-xl for cards */
+  --chart-1: 32 95% 44%;
+  --chart-2: 199 89% 42%;
+  --chart-3: 142 71% 36%;
   --chart-4: 258 90% 66%;
   --chart-5: 215 16% 47%;
 }
 
 .dark {
-  --background: 222 47% 6%;
+  --background: 222 47% 4%;        /* #020617 near-black slate */
   --foreground: 210 40% 96%;
-  --card: 222 47% 9%;
+  --card: 222 47% 8%;              /* #0F172A slate 900 */
   --card-foreground: 210 40% 96%;
-  --popover: 222 47% 9%;
+  --popover: 222 47% 8%;
   --popover-foreground: 210 40% 96%;
-  --primary: 217 91% 60%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 217 33% 17%;
+  --primary: 210 40% 96%;
+  --primary-foreground: 222 47% 11%;
+  --secondary: 217 33% 14%;
   --secondary-foreground: 210 40% 96%;
-  --muted: 217 33% 17%;
+  --muted: 217 33% 12%;
   --muted-foreground: 215 20% 65%;
-  --accent: 217 33% 17%;
-  --accent-foreground: 210 40% 96%;
-  --destructive: 0 84% 60%;
+  --accent: 38 92% 50%;            /* Amber 500 — brighter in dark for contrast */
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 98%;
-  --border: 217 33% 17%;
-  --input: 217 33% 17%;
-  --ring: 217 91% 60%;
+  --success: 142 64% 47%;
+  --warning: 45 93% 55%;
+  --info: 199 89% 55%;
+  --border: 217 33% 15%;
+  --input: 217 33% 15%;
+  --ring: 38 92% 50%;
 }
 
 :root {
@@ -75,18 +86,24 @@
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "cv11", "ss01", "ss03";
 }
 
 .font-heading {
-  font-family: 'Cabinet Grotesk', 'IBM Plex Sans', sans-serif;
+  font-family: 'Outfit', 'IBM Plex Sans', system-ui, sans-serif;
+  letter-spacing: -0.015em;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 ::selection {
-  background: #2563eb;
-  color: #ffffff;
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
 }
 
 ::-webkit-scrollbar {
@@ -166,6 +183,61 @@ html, body, #root {
 .fade-up {
   animation: fade-up 0.45s ease both;
 }
+
+/* ---------------------------------------------------------------
+ * Component utilities — Architectural Swiss patterns
+ * ------------------------------------------------------------- */
+
+/* Surface cards: subtle bordered panel with gentle hover lift */
+.surface {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border) / 0.7);
+  border-radius: var(--radius);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+.surface-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -12px hsl(222 47% 11% / 0.12);
+  border-color: hsl(var(--border));
+}
+.dark .surface-hover:hover {
+  box-shadow: 0 8px 24px -12px hsl(0 0% 0% / 0.6);
+}
+
+/* Sticky glass topbar for page headers */
+.glass-header {
+  background: hsl(var(--background) / 0.75);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid hsl(var(--border) / 0.8);
+}
+
+/* Amber "brand pill" — active nav, active tab, primary CTA emphasis */
+.pill-accent {
+  background: hsl(var(--accent) / 0.12);
+  color: hsl(var(--accent));
+  border: 1px solid hsl(var(--accent) / 0.28);
+}
+
+/* Data table row hover — subtle, no jarring shift */
+.row-hover:hover {
+  background: hsl(var(--muted) / 0.6);
+}
+.dark .row-hover:hover {
+  background: hsl(var(--muted) / 0.4);
+}
+
+/* Focus ring — amber for consistency with brand */
+.ring-brand:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring) / 0.5);
+}
+
+/* Scale-tap: press-down feedback on interactive elements */
+.tap-scale:active {
+  transform: scale(0.98);
+}
+
 
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator {

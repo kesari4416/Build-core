@@ -21,7 +21,7 @@ const MiniForm = ({ title, fields, onSave, onCancel, saving, testPrefix }) => (
     <div className="flex gap-2 justify-end">
       <Button type="button" size="sm" variant="outline" onClick={onCancel} className="rounded-md h-7 text-xs border-slate-300 dark:border-slate-700">Cancel</Button>
       <Button type="button" size="sm" disabled={saving} onClick={onSave} data-testid={`${testPrefix}-save`}
-        className="rounded-md h-7 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold">Save</Button>
+        className="rounded-md h-7 text-xs bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold">Save</Button>
     </div>
   </div>
 );

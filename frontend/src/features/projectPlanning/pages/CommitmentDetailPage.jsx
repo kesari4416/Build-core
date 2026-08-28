@@ -88,7 +88,7 @@ export default function CommitmentDetailPage() {
                   <Button data-testid="approve-commitment" onClick={() => act({ url: `${base}/approve` }, "Subcontract approved")}
                     className="rounded-md bg-green-600 hover:bg-green-700 text-slate-900 dark:text-slate-100 font-bold uppercase tracking-wide">Approve</Button>
                   <Button data-testid="execute-commitment" onClick={() => act({ url: `${base}/execute` }, "Subcontract executed")}
-                    className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide">Execute</Button>
+                    className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-wide">Execute</Button>
                 </>
               )}
               {type === "po" && c.status !== "Cancelled" && (
@@ -127,7 +127,7 @@ export default function CommitmentDetailPage() {
               </div>
               <Button data-testid="co-submit" disabled={!coForm.reason.trim() || !coForm.amount}
                 onClick={async () => { await act({ url: `/commitments/${type}/${commitmentId}/change-orders`, data: { reason: coForm.reason.trim(), amount: Number(coForm.amount) } }, "Change order created"); setCoForm({ reason: "", amount: "" }); }}
-                className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide h-9">
+                className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-wide h-9">
                 <Plus size={14} strokeWidth={3} /> New CO
               </Button>
             </div>
@@ -150,7 +150,7 @@ export default function CommitmentDetailPage() {
               </div>
               <Button data-testid="payapp-create" disabled={!paForm.amount_this_period}
                 onClick={async () => { await act({ url: `/commitments/${type}/${commitmentId}/pay-applications`, data: { amount_this_period: Number(paForm.amount_this_period) } }, "Pay application created"); setPaForm({ amount_this_period: "" }); }}
-                className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide h-9">
+                className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-wide h-9">
                 <Plus size={14} strokeWidth={3} /> New Pay App
               </Button>
               {type === "subcontract" && <span className="text-[11px] text-slate-500 dark:text-slate-400">Retainage {c.retainage_pct}% is withheld automatically</span>}

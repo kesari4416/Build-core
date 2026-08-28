@@ -136,7 +136,7 @@ const ChangeOrderRow = ({ co, canDecide, canContract, canPay, onAction, onRevise
             )}
             {canPay && co.status === "Approved" && !co.paid_at && (
               <Button size="sm" data-testid={`co-record-payment-${co.id}`} onClick={() => onRecordPayment(co)}
-                className="rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wide h-8">
+                className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold uppercase tracking-wide h-8">
                 <IndianRupee size={12} strokeWidth={2.5} /> Record Payment
               </Button>
             )}
@@ -272,7 +272,7 @@ export const ChangeOrdersTab = ({ projectId, phases }) => {
           </button>
           {canContract && (
             <Button data-testid="new-change-order-button" size="sm" onClick={() => setModal({ open: true, co: null })}
-              className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-[0.12em] h-9">
+              className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-[0.12em] h-9">
               <Plus size={14} strokeWidth={3} /> New Change Order
             </Button>
           )}

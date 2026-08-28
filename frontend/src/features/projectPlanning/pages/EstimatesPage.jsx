@@ -73,7 +73,7 @@ export default function EstimatesPage() {
           <h1 className="font-heading font-bold text-4xl sm:text-5xl tracking-tight leading-none">Estimates</h1>
         </div>
         <button data-testid="create-estimate-button" onClick={() => setModal(true)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 text-xs uppercase tracking-[0.15em] font-bold transition-colors rounded-md">
+          className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 px-4 py-2.5 text-xs uppercase tracking-[0.15em] font-bold transition-colors rounded-md">
           <Plus size={15} strokeWidth={3} /> Create Estimate
         </button>
       </div>

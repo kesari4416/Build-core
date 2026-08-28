@@ -58,7 +58,7 @@ export const SendForApprovalModal = ({ open, onOpenChange, estimate }) => {
             <div className="flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300 dark:border-slate-700">Cancel</Button>
               <Button type="submit" disabled={!email.trim() || sending} data-testid="send-approval-submit"
-                className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">
+                className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold uppercase tracking-wide">
                 <Mail size={14} strokeWidth={2.5} /> {sending ? "Sending…" : "Send Request"}
               </Button>
             </div>
@@ -85,7 +85,7 @@ export const SendForApprovalModal = ({ open, onOpenChange, estimate }) => {
               </div>
             ))}
             <div className="flex justify-end">
-              <Button onClick={() => onOpenChange(false)} data-testid="approval-sent-done" className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">Done</Button>
+              <Button onClick={() => onOpenChange(false)} data-testid="approval-sent-done" className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold uppercase tracking-wide">Done</Button>
             </div>
           </div>
         )}

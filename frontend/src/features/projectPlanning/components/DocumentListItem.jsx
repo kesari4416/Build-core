@@ -105,7 +105,7 @@ export const DocumentListItem = ({ doc, isAdmin, projectId }) => {
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setRenameOpen(false)} className="rounded-md border-slate-300 dark:border-slate-700">Cancel</Button>
               <Button data-testid="document-rename-save" onClick={saveRename} disabled={patch.isPending}
-                className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">Save</Button>
+                className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold uppercase tracking-wide">Save</Button>
             </div>
           </div>
         </DialogContent>

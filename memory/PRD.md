@@ -8,32 +8,36 @@ Build a comprehensive construction project management portal covering: Projects,
 - Frontend: React + Tailwind CSS + shadcn/ui + React Query
 - Auth: JWT (httpOnly cookies + Bearer fallback)
 
+## Design System — "Architectural Swiss" (Phase 1 landed 2026-02-28)
+Reference: "Zoho Books but nicer" (user's verbatim direction). Mobile-first priority.
+- Typography: Outfit (headings, tight tracking) + IBM Plex Sans body + JetBrains Mono for numeric ledgers; tabular-nums globally
+- Colors: Slate base + Amber-600 (light) / Amber-500 (dark) as brand accent (used only for active states + focus rings)
+- Radii: rounded-xl cards, rounded-lg buttons/inputs
+- Motion: hover lift, tap-scale, glass sticky headers
+- Primary CTA: slate-900 background with white text (Zoho-inspired), NOT amber
+- Sidebar: deep slate-950 with subtle amber active pill (bg-amber-500/10 ring-amber-500/20)
+- Full spec at `/app/design_guidelines.json`
+
 ## What's Implemented (recent → oldest)
-- **2026-02-25** — Rebuilt Project Balance Sheet as a standard accounting ledger:
-  - 7-column layout: Date, Voucher No., Particulars, Type badge, Debit (Out), Credit (In), Balance
-  - Opening Balance b/f as very first row, Totals / Closing Balance c/f as very last row
-  - Voucher numbers auto-generated per type (RCPT-###, PYMT-###, CO-###) in chronological order
-  - Row-by-row running balance (`Prev + Credit − Debit`)
-  - Consistent `Rs. X,XX,XXX.00` Indian-comma format across summary cards, breakdown, and table
-  - Negative amounts shown as `(Rs. XXX.XX)` in red (accounting convention)
-  - File: `/app/frontend/src/features/projectPlanning/components/ProjectBalanceSheetTab.jsx`
-- Phase Edit → auto-100% when status = Completed
-- Balance Sheet running balance math + chronological sort (credits before debits same day)
-- 10-item QA batch: Tracking edit/delete, CO payments UI, Gantt bounds, INR formatting, Client sort, Estimate status
-- Full mobile responsive layout (drawer sidebar, adaptive grids)
-- Estimate module upgrade (phase sync, requirement rows, live totals)
-- Vendor Product Catalog + Quotation workflow
-- Phase Crew Scoping + cross-project exclusivity
+- **2026-02-28 Phase 1 Redesign — Foundations**: New color tokens (light + dark), typography upgrade to Outfit, glass sticky headers, sidebar refresh with amber active pills, all 4 StatCard variants unified (Dashboard local, DashboardStatCard, OrgBalanceSheetTab, ProjectBalanceSheetTab) — icon chip + Outfit numerals + hover lift, Login page split-screen refined with inline SITE**RA** wordmark, 38 files bulk-updated to slate-primary buttons (was blue-600) and amber focus rings
+- **2026-02-27** — Global layout overflow fix (min-width:0 grid/flex, overflow-x:clip root, num-wrap utility, responsive stat cards for large budgets)
+- **2026-02-26** — Auto-invoice on client income: `Invoice.income_entry_id` FK with partial unique index, `ensure_invoice_for_income` helper, `paid_sum` treats linked income as paid, startup backfill for pre-existing rows
+- **2026-02-25** — Balance Sheet rebuilt as accounting ledger (7 cols, Opening b/f, Totals/Closing c/f, voucher numbers, Rs. Indian-comma format)
+- Full Vendor Product Catalog + Quotation workflow, mobile drawer sidebar, 10-item QA fixes
 
 ## Prioritized Backlog
-- **P1** Double-entry accounting layer (Chart of Accounts, Vouchers, Trial Balance, Day Book)
-- **P2** Balance Sheet date range filter (month / custom period)
-- **P2** Fresh Google App Password for SMTP (approval + receipt emails)
+- **P1 Phase 2 (Redesign continued)**: Project Detail tabs (Overview/Phases/Tracking/Change Orders/Employees), Estimates page, Vendors + Procurement, Site Engineer + Vendor + Client portals — apply the new design language
+- **P1 Phase 3**: Ledger PDF/Excel exports match new 7-column ledger, Voucher drill-down (click voucher → open source transaction)
+- **P1 Phase 4**: Double-entry accounting (Chart of Accounts, Vouchers, Trial Balance, Day Book)
+- **P2**: Balance Sheet date range filter, fresh Google App Password for SMTP
 
 ## Known Environmental Issues
 - PostgreSQL in the preview container drops periodically → run `bash /app/scripts/restore_postgres.sh`
-- User self-hosts on EC2; when they report 500s not reproducible in preview, provide raw SQL for schema patches
+- User self-hosts on EC2 (sitera.in); when they report 500s not reproducible in preview, provide raw SQL for schema patches
+- On production, keep `SEED_DEMO_DATA=false` in backend .env so demo data doesn't re-seed after wipe
 
 ## Key Files
-- Backend: `/app/backend/app/routers/finance.py` (`project_balance_sheet`, `project_ledger`)
-- Frontend: `/app/frontend/src/features/projectPlanning/components/ProjectBalanceSheetTab.jsx`
+- Design: `/app/design_guidelines.json`, `/app/frontend/src/index.css` (tokens + utility classes)
+- Layout: `/app/frontend/src/components/Layout.jsx` (sidebar + mobile drawer + glass header)
+- StatCards: `DashboardPage.jsx`, `DashboardStatCard.jsx`, `OrgBalanceSheetTab.jsx`, `ProjectBalanceSheetTab.jsx`
+- Backend: `/app/backend/app/routers/finance.py`, `routers/transactions.py`, `main.py`, `models/finance.py`

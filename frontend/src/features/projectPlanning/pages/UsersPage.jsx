@@ -53,7 +53,7 @@ export default function UsersPage() {
           <h1 className="font-heading font-bold text-4xl sm:text-5xl tracking-tight leading-none">Users</h1>
         </div>
         <Button data-testid="add-user-button" onClick={() => { setEditUser(null); setFormModal(true); }}
-          className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide">
+          className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-wide">
           <Plus size={15} strokeWidth={3} /> Add User
         </Button>
       </div>

@@ -85,7 +85,7 @@ export const DocumentUploadCard = ({ projectId }) => {
             <span className="text-xs text-slate-600 dark:text-slate-400">Visible to client</span>
           </div>
           <Button data-testid="document-upload-submit" onClick={submit} disabled={upload.isPending}
-            className="w-full rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-[0.12em]">
+            className="w-full rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-[0.12em]">
             {upload.isPending ? "Uploading…" : "Upload"}
           </Button>
         </div>

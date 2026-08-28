@@ -84,7 +84,7 @@ export default function ProjectListPage() {
         </div>
         {isAdmin && (
           <Button data-testid="new-project-button" onClick={() => setModalOpen(true)}
-            className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-[0.12em]">
+            className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-[0.12em]">
             <Plus size={16} strokeWidth={3} /> New Project
           </Button>
         )}
@@ -109,7 +109,7 @@ export default function ProjectListPage() {
           <input data-testid="project-search-input" value={search}
             onChange={(e) => { setSearch(e.target.value); debouncedSearch(e.target.value); }}
             placeholder="Search projects…"
-            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
         </div>
         {user?.role !== "Client" && (
           <Select value={params.get("client_id") || "all"} onValueChange={(v) => setParam("client_id", v === "all" ? "" : v)}>

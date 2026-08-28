@@ -36,7 +36,7 @@ export default function VendorsPage() {
         </div>
         {canAdd && (
           <Button data-testid="add-vendor-button" onClick={() => { setEditVendor(null); setVendorModal(true); }}
-            className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide">
+            className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-wide">
             <Plus size={15} strokeWidth={3} /> Add Vendor
           </Button>
         )}
@@ -107,7 +107,7 @@ export default function VendorsPage() {
         <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Products — Global Catalog</div>
         {canManageProducts && (
           <Button data-testid="add-product-button" onClick={() => { setEditProduct(null); setProductModal(true); }}
-            className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide">
+            className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-wide">
             <Plus size={15} strokeWidth={3} /> Add Product
           </Button>
         )}

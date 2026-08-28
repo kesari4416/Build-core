@@ -120,7 +120,7 @@ export default function VendorBidPackagePage() {
           </div>
           {!disabled && data.line_items.length > 0 && (
             <Button data-testid="submit-quote-button" disabled={saving} onClick={submit}
-              className="mt-6 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide">
+              className="mt-6 rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-wide">
               <Send size={14} strokeWidth={2.5} /> {data.my_bid_amount != null ? "Update Quote" : "Submit Quote"}
             </Button>
           )}

@@ -142,7 +142,7 @@ export default function QuotationDetailPage() {
           {canPay && (
             <Button onClick={() => { setPay((p) => ({ ...p, amount: String(q.quotation_total || "") })); setPayOpen(true); }}
               data-testid="quotation-record-payment"
-              className="rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wide">
+              className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold uppercase tracking-wide">
               <IndianRupee size={14} /> Record Payment
             </Button>
           )}
@@ -221,7 +221,7 @@ export default function QuotationDetailPage() {
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setSendChannel(null)} className="rounded-md border-slate-300 dark:border-slate-700" data-testid="send-cancel">Cancel</Button>
             <Button onClick={send} disabled={!contact || sending} data-testid="send-confirm"
-              className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide text-xs">
+              className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold uppercase tracking-wide text-xs">
               {sending ? "Sending…" : "Send"}
             </Button>
           </div>
@@ -263,7 +263,7 @@ export default function QuotationDetailPage() {
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="outline" onClick={() => setPayOpen(false)} className="rounded-md border-slate-300 dark:border-slate-700" data-testid="vp-cancel">Cancel</Button>
             <Button onClick={submitPayment} disabled={paying} data-testid="vp-submit"
-              className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide text-xs">
+              className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold uppercase tracking-wide text-xs">
               {paying ? "Saving…" : "Record Payment"}
             </Button>
           </div>

@@ -63,7 +63,7 @@ export const EmployeeCategoryFormModal = ({ open, onOpenChange, onCreated }) => 
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300 dark:border-slate-700" data-testid="category-form-cancel">Cancel</Button>
-            <Button type="submit" disabled={saving} data-testid="category-form-submit" className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">Add Category</Button>
+            <Button type="submit" disabled={saving} data-testid="category-form-submit" className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold uppercase tracking-wide">Add Category</Button>
           </div>
         </form>
       </DialogContent>

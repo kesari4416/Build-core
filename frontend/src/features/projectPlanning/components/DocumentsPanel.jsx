@@ -29,7 +29,7 @@ export const DocumentsPanel = ({ projectId, canWrite, isAdmin }) => {
           <Search size={13} strokeWidth={2.5} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
           <input data-testid="document-search-input" value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Search documents…"
-            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 pl-8 pr-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 pl-8 pr-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500" />
         </div>
         <Select value={category} onValueChange={setCategory}>
           <SelectTrigger data-testid="document-filter-category" className="w-32 h-auto py-1.5 text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md">

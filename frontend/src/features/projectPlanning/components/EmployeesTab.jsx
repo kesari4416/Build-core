@@ -81,7 +81,7 @@ export const EmployeesTab = ({ projectId }) => {
             <HardHat size={13} strokeWidth={2.5} /> Today's Attendance · {today}
           </div>
           <Button data-testid="add-employee-button" size="sm" onClick={() => setModal({ open: true, employee: null })}
-            className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-[0.12em]">
+            className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-[0.12em]">
             <Plus size={14} strokeWidth={3} /> Add Employee
           </Button>
         </div>

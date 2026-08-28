@@ -86,7 +86,7 @@ export default function SiteEngineerPortalPage() {
               </Button>
             )}
             <Button data-testid="se-add-employee-button" onClick={() => setModal(true)}
-              className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide">
+              className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-wide">
               <Plus size={15} strokeWidth={3} /> Add Employee
             </Button>
           </div>

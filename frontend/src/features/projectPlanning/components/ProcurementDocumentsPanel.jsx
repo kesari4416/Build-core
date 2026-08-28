@@ -77,14 +77,14 @@ export const ProcurementDocumentsPanel = ({ type, id, canWrite, isAdmin }) => {
                 <Switch data-testid="proc-doc-visible" checked={visible} onCheckedChange={setVisible} /> Client visible
               </label>
               <Button data-testid="proc-doc-upload-submit" onClick={upload} disabled={mut.isPending}
-                className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide h-9">Upload</Button>
+                className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-wide h-9">Upload</Button>
             </div>
           )}
         </div>
       )}
       <input data-testid="proc-doc-search" value={search} onChange={(e) => setSearch(e.target.value)}
         placeholder="Search documents…"
-        className="w-full max-w-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        className="w-full max-w-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500" />
       <div className="space-y-2">
         {filtered.length === 0 && <div className="border border-slate-200 dark:border-slate-800 p-6 text-center text-xs text-slate-500 dark:text-slate-400" data-testid="proc-docs-empty">No documents.</div>}
         {filtered.map((d) => (

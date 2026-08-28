@@ -155,7 +155,7 @@ export default function ProjectFinancePage() {
               <Input data-testid="invoice-desc-input" placeholder="Description" value={invForm.description} onChange={(e) => setInvForm({ ...invForm, description: e.target.value })} className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md h-9 flex-1 min-w-[160px]" />
               <Button data-testid="invoice-create" disabled={!invForm.amount}
                 onClick={async () => { await run(() => api.post(`/projects/${id}/invoices`, { amount: Number(invForm.amount), due_date: invForm.due_date || null, description: invForm.description || null }), "Invoice created"); setInvForm({ amount: "", due_date: "", description: "" }); }}
-                className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide h-9"><Plus size={14} strokeWidth={3} /> Invoice</Button>
+                className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-wide h-9"><Plus size={14} strokeWidth={3} /> Invoice</Button>
             </div>
           )}
           {(invoices || []).map((inv) => <InvoiceCard key={inv.id} inv={inv} canWrite={canFin} onPay={recordPayment} projectName={project?.name} clientName={project?.client_name} />)}
@@ -174,7 +174,7 @@ export default function ProjectFinancePage() {
               <Input data-testid="expense-amount-input" type="number" placeholder="₹" value={expForm.amount} onChange={(e) => setExpForm({ ...expForm, amount: e.target.value })} className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md h-9 w-28" />
               <Button data-testid="expense-create" disabled={!expForm.amount}
                 onClick={async () => { await run(() => api.post(`/projects/${id}/expenses`, { category: expForm.category || "Misc", amount: Number(expForm.amount) }), "Expense added"); setExpForm({ category: "", amount: "" }); }}
-                className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold h-9 px-3"><Plus size={14} strokeWidth={3} /></Button>
+                className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold h-9 px-3"><Plus size={14} strokeWidth={3} /></Button>
             </div>
           )}
           {(expenses || []).map((e) => (
@@ -192,7 +192,7 @@ export default function ProjectFinancePage() {
                   onChange={(e) => setNewCat(e.target.value)} className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md h-9" />
                 <Button data-testid="new-category-add" disabled={!newCat.trim()}
                   onClick={async () => { await run(() => api.post("/expense-categories", { name: newCat.trim() }), "Category added"); setNewCat(""); }}
-                  className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold h-9 px-3"><Plus size={14} strokeWidth={3} /></Button>
+                  className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold h-9 px-3"><Plus size={14} strokeWidth={3} /></Button>
               </div>
               <div className="space-y-1.5" data-testid="expense-categories-list">
                 {(expCats || []).map((c) => (

@@ -71,7 +71,7 @@ export const CategoryManagerModal = ({ open, onOpenChange }) => {
                 className={`bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md ${!cat.is_active ? "opacity-50" : ""}`} />
               <Button type="button" size="sm" onClick={() => rename(cat)} data-testid={`category-save-${cat.id}`}
                 disabled={(edits[cat.id] ?? cat.name).trim() === cat.name}
-                className="rounded-md bg-blue-600 hover:bg-blue-700 text-white shrink-0"><Check size={14} /></Button>
+                className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 shrink-0"><Check size={14} /></Button>
               <Button type="button" size="sm" variant="outline" onClick={() => toggleActive(cat)} data-testid={`category-toggle-${cat.id}`}
                 className="rounded-md border-slate-300 dark:border-slate-700 shrink-0 text-xs">
                 {cat.is_active ? "Disable" : "Enable"}
@@ -84,7 +84,7 @@ export const CategoryManagerModal = ({ open, onOpenChange }) => {
           <Input placeholder="New category name…" value={newName} onChange={(e) => setNewName(e.target.value)}
             data-testid="category-new-input" className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md" />
           <Button type="button" onClick={add} data-testid="category-add-button"
-            className="rounded-md bg-blue-600 hover:bg-blue-700 text-white shrink-0"><Plus size={14} /> Add</Button>
+            className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 shrink-0"><Plus size={14} /> Add</Button>
         </div>
       </DialogContent>
     </Dialog>

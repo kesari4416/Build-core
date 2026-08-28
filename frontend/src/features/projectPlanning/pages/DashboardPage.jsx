@@ -14,12 +14,14 @@ const STAGE_COLORS = ["#2563EB", "#F59E0B", "#10B981", "#8B5CF6", "#64748B", "#0
 const TOOLTIP_STYLE = { background: "var(--tooltip-bg)", border: "1px solid var(--tooltip-border)", borderRadius: 8, fontSize: 12, color: "var(--tooltip-color)", boxShadow: "0 4px 12px rgba(15,23,42,0.15)" };
 
 const StatCard = ({ icon: Icon, label, value, accent, testId }) => (
-  <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 fade-up" data-testid={testId}>
+  <div className="surface surface-hover p-5 fade-up" data-testid={testId}>
     <div className="flex items-center justify-between">
-      <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">{label}</span>
-      <Icon size={17} strokeWidth={2.5} className={accent} />
+      <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">{label}</span>
+      <div className={`w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800/60 flex items-center justify-center ${accent}`}>
+        <Icon size={15} strokeWidth={2.25} />
+      </div>
     </div>
-    <div className="font-heading font-bold text-2xl md:text-3xl xl:text-4xl mt-3 leading-tight num-wrap">{value}</div>
+    <div className="font-heading font-semibold text-2xl md:text-3xl xl:text-4xl mt-4 leading-tight tracking-tight num-wrap text-slate-900 dark:text-slate-100">{value}</div>
   </div>
 );
 

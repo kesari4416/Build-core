@@ -82,7 +82,7 @@ export const LabourPaymentModal = ({ open, onOpenChange, projectId, row }) => {
           <div className="flex justify-end gap-3 pt-1">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300 dark:border-slate-700">Cancel</Button>
             <Button type="submit" disabled={!(amt > 0) || saving} data-testid="labour-payment-submit"
-              className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold uppercase tracking-wide">Make Payment</Button>
+              className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold uppercase tracking-wide">Make Payment</Button>
           </div>
         </form>
       </DialogContent>

@@ -48,7 +48,7 @@ export const LineItemTable = ({ items, columns, canWrite, onAdd, onDelete, addFi
                   {addFields.includes(c.key) ? (
                     <input data-testid={`line-item-input-${c.key}`} type={c.money || c.num ? "number" : "text"}
                       value={draft[c.key] ?? ""} onChange={(e) => setDraft({ ...draft, [c.key]: e.target.value })}
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-amber-500" />
                   ) : <span className="text-xs text-slate-400 dark:text-slate-500">auto</span>}
                 </td>
               ))}

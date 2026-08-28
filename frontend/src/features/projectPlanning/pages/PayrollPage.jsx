@@ -25,7 +25,7 @@ export const PayrollRunTable = ({ run, onProcess, onMarkPaid }) => {
         <span className="ml-auto font-semibold text-slate-900 dark:text-slate-100">{fmt(run.total_net_pay)}</span>
         {run.status === "Draft" && (
           <Button size="sm" data-testid={`process-run-${run.id}`} onClick={() => onProcess(run)}
-            className="rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs uppercase font-bold h-8">Process</Button>
+            className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs uppercase font-bold h-8">Process</Button>
         )}
       </div>
       {entries?.length > 0 && (
@@ -88,7 +88,7 @@ export default function PayrollPage() {
         </div>
         <Button data-testid="payroll-create" disabled={!form.period_start || !form.period_end}
           onClick={() => run(() => api.post("/payroll-runs", form), "Payroll run created")}
-          className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide h-9">
+          className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-wide h-9">
           <Plus size={14} strokeWidth={3} /> New Run
         </Button>
       </div>

@@ -151,7 +151,7 @@ export default function ProjectDetailPage() {
             <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Phase Timeline · {project.phases?.length || 0} phases</div>
             {canWrite && (
               <Button data-testid="add-phase-button" onClick={() => setPhaseModal({ open: true, phase: null })} size="sm"
-                className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-[0.12em]">
+                className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-[0.12em]">
                 <Plus size={14} strokeWidth={3} /> Add Phase
               </Button>
             )}
@@ -166,7 +166,7 @@ export default function ProjectDetailPage() {
                 <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Progress Feed · {feed?.total ?? 0} updates</div>
                 {canWrite && (
                   <Button data-testid="post-update-button" onClick={() => setUpdateModal(true)} size="sm"
-                    className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-[0.12em]">
+                    className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-[0.12em]">
                     <Plus size={14} strokeWidth={3} /> Post Update
                   </Button>
                 )}

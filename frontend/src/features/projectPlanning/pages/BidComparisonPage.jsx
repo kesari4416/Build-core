@@ -143,7 +143,7 @@ export default function BidComparisonPage() {
               }), "Line item added");
               setLiForm({ item_description: "", unit: "", quantity_required: "" });
             }}
-            className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide h-9">
+            className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-wide h-9">
             <Plus size={14} strokeWidth={3} /> Line Item
           </Button>
         </div>

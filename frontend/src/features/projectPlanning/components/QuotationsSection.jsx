@@ -39,7 +39,7 @@ export const QuotationsSection = ({ projectId }) => {
         <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Vendor Quotations</div>
         {canCreate && (
           <Button data-testid="make-quotation-button" onClick={() => setModal(true)}
-            className="rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase tracking-wide text-xs">
+            className="rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold uppercase tracking-wide text-xs">
             <Plus size={14} strokeWidth={3} /> Make Quotation
           </Button>
         )}
