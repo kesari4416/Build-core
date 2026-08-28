@@ -13,7 +13,7 @@ const STATUS_BADGE = {
 };
 
 export const DailyAttendanceCard = ({ employee, status, onMark, readOnly }) => (
-  <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-3 flex flex-wrap items-center gap-3" data-testid={`daily-attendance-${employee.id}`}>
+  <div className="surface p-3 flex flex-wrap items-center gap-3" data-testid={`daily-attendance-${employee.id}`}>
     <div className="min-w-0 flex-1">
       <div className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{employee.name}</div>
       <div className="text-[11px] text-slate-500 dark:text-slate-400">{employee.role_title || "—"}</div>

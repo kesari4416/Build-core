@@ -97,14 +97,14 @@ export const ProjectBalanceSheetTab = ({ projectId }) => {
           <FileSpreadsheet size={14} strokeWidth={2.5} /> Export Excel
         </button>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="kpi-scroller mb-6" style={{ ["--kpi-cols"]: 2, ["--kpi-cols-lg"]: 4 }}>
         <Card label="Total Budget" value={fmtAmt(bs.budget)} sub={bs.approved_variations > 0 ? `Revised contract: ${fmtAmt(bs.revised_contract_value)} (incl. variations +${fmtAmt(bs.approved_variations)})` : undefined} icon={IndianRupee} accent="text-sky-600 dark:text-sky-400" testId="pbs-budget" />
         <Card label="Client Payment (In)" value={fmtAmt(bs.client_paid)} sub={`Outstanding from client: ${fmtAmt(bs.client_outstanding)}`} icon={TrendingUp} accent="text-emerald-600 dark:text-emerald-400" testId="pbs-client-paid" />
         <Card label="Payment Released (Out)" value={fmtAmt(bs.total_released)} icon={TrendingDown} accent="text-red-600 dark:text-red-400" testId="pbs-released" />
         <Card label="Balance (In − Out)" value={fmtAmt(bs.balance)} sub={`Budget remaining: ${fmtAmt(bs.budget_remaining)}`} icon={Wallet} accent={bs.balance < 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"} testId="pbs-balance" />
       </div>
 
-      <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 mb-6" data-testid="pbs-released-breakdown">
+      <div className="surface p-4 mb-6" data-testid="pbs-released-breakdown">
         <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold mb-3">Where the money is going — Payment Released Breakdown</div>
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
           {[

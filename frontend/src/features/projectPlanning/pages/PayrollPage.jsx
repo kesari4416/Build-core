@@ -17,7 +17,7 @@ export const PayrollRunTable = ({ run, onProcess, onMarkPaid }) => {
     enabled: run.status !== "Draft",
   });
   return (
-    <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 space-y-3" data-testid={`payroll-run-${run.id}`}>
+    <div className="surface p-4 space-y-3" data-testid={`payroll-run-${run.id}`}>
       <div className="flex flex-wrap items-center gap-3">
         <span className="font-heading font-bold text-lg text-blue-600 dark:text-blue-400">Run #{run.id}</span>
         <span className="text-sm text-slate-600 dark:text-slate-400">{run.period_start} → {run.period_end}</span>
@@ -77,7 +77,7 @@ export default function PayrollPage() {
         <ArrowLeft size={14} strokeWidth={2.5} /> Finance
       </Link>
       <h1 className="font-heading font-bold text-4xl sm:text-5xl tracking-tight leading-none mb-8">Payroll</h1>
-      <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 flex flex-wrap items-end gap-3 mb-6">
+      <div className="surface p-4 flex flex-wrap items-end gap-3 mb-6">
         <div>
           <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 mb-1">Period Start</div>
           <Input data-testid="payroll-start-input" type="date" value={form.period_start} onChange={(e) => setForm({ ...form, period_start: e.target.value })} className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md h-9" />

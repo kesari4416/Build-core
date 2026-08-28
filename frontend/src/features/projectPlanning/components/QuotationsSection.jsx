@@ -66,7 +66,7 @@ export const QuotationsSection = ({ projectId }) => {
               {quotations.map((q) => (
                 <tr key={q.id} data-testid={`quotation-row-${q.id}`}
                   onClick={() => navigate(`/admin/projects/${projectId}/procurement/quotations/${q.id}`)}
-                  className="border-b border-slate-100 dark:border-slate-800/60 cursor-pointer hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-800/60 transition-colors">
+                  className="border-b border-slate-100 dark:border-slate-800/60 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
                       <FileText size={14} strokeWidth={2.5} className="text-blue-600 dark:text-blue-400" /> {q.quotation_number}

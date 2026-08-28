@@ -52,7 +52,7 @@ export const ProcurementDocumentsPanel = ({ type, id, canWrite, isAdmin }) => {
   return (
     <div className="space-y-4 max-w-3xl" data-testid="proc-documents-panel">
       {canWrite && (
-        <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 space-y-3" data-testid="proc-doc-upload-card">
+        <div className="surface p-4 space-y-3" data-testid="proc-doc-upload-card">
           <input ref={fileRef} type="file" hidden data-testid="proc-doc-file-input"
             onChange={(e) => { const f = e.target.files?.[0]; setFile(f || null); if (f) setName(f.name); }} />
           {!file ? (
@@ -88,7 +88,7 @@ export const ProcurementDocumentsPanel = ({ type, id, canWrite, isAdmin }) => {
       <div className="space-y-2">
         {filtered.length === 0 && <div className="border border-slate-200 dark:border-slate-800 p-6 text-center text-xs text-slate-500 dark:text-slate-400" data-testid="proc-docs-empty">No documents.</div>}
         {filtered.map((d) => (
-          <div key={d.id} className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-3 flex items-center gap-3" data-testid={`proc-doc-item-${d.id}`}>
+          <div key={d.id} className="surface p-3 flex items-center gap-3" data-testid={`proc-doc-item-${d.id}`}>
             <FileText size={16} strokeWidth={2.5} className="text-blue-600 dark:text-blue-400 shrink-0" />
             <div className="min-w-0 flex-1">
               <a href={assetUrl(d.file_url)} target="_blank" rel="noreferrer"

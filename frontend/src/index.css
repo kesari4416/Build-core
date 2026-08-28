@@ -238,6 +238,164 @@ html, body, #root {
   transform: scale(0.98);
 }
 
+/* ---------------------------------------------------------------
+ * Phase 2 — Module polish patterns
+ * ------------------------------------------------------------- */
+
+/* Segmented tab strip — replaces the old "border-bottom underline" trigger */
+.tab-strip {
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  background: hsl(var(--muted));
+  border-radius: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tab-strip::-webkit-scrollbar { display: none; }
+.tab-strip [data-state="active"] {
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  box-shadow: 0 1px 2px hsl(222 47% 11% / 0.06), 0 0 0 1px hsl(var(--border));
+}
+.dark .tab-strip [data-state="active"] {
+  background: hsl(217 33% 18%);
+  box-shadow: 0 1px 2px hsl(0 0% 0% / 0.4), 0 0 0 1px hsl(var(--border));
+}
+
+/* KPI horizontal scroller for mobile — snap-aligned cards */
+.kpi-scroller {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 78%;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.kpi-scroller::-webkit-scrollbar { display: none; }
+.kpi-scroller > * { scroll-snap-align: start; }
+@media (min-width: 640px) {
+  .kpi-scroller {
+    display: grid;
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    grid-template-columns: repeat(var(--kpi-cols, 2), minmax(0, 1fr));
+    overflow: visible;
+  }
+}
+@media (min-width: 1024px) {
+  .kpi-scroller {
+    grid-template-columns: repeat(var(--kpi-cols-lg, 4), minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+/* Data table — refined row aesthetics */
+.data-table {
+  width: 100%;
+  font-size: 0.875rem;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.data-table thead th {
+  background: hsl(var(--muted) / 0.4);
+  color: hsl(var(--muted-foreground));
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid hsl(var(--border));
+  text-align: left;
+  white-space: nowrap;
+}
+.data-table tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  vertical-align: middle;
+}
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.data-table tbody tr {
+  transition: background-color 0.12s ease;
+}
+.data-table tbody tr:hover {
+  background: hsl(var(--muted) / 0.4);
+}
+
+/* Mobile row card — a table row transformed into a card on small screens */
+.row-card {
+  display: none;
+}
+@media (max-width: 767px) {
+  .table-desktop { display: none !important; }
+  .row-card { display: block; }
+}
+
+/* Floating Action Button — used on Field Ops attendance & similar */
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 999px;
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow: 0 12px 32px -8px hsl(222 47% 11% / 0.4), 0 4px 12px hsl(222 47% 11% / 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px -8px hsl(222 47% 11% / 0.5), 0 6px 16px hsl(222 47% 11% / 0.2);
+}
+.fab:active { transform: scale(0.98); }
+
+/* Chip / tag */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+}
+.chip-success { border-color: hsl(142 71% 36% / 0.3); background: hsl(142 71% 36% / 0.08); color: hsl(142 71% 30%); }
+.dark .chip-success { color: hsl(142 64% 60%); }
+.chip-danger { border-color: hsl(0 84% 45% / 0.3); background: hsl(0 84% 45% / 0.08); color: hsl(0 84% 40%); }
+.dark .chip-danger { color: hsl(0 72% 65%); }
+.chip-warning { border-color: hsl(38 92% 50% / 0.35); background: hsl(38 92% 50% / 0.1); color: hsl(32 95% 40%); }
+.dark .chip-warning { color: hsl(38 92% 60%); }
+.chip-info { border-color: hsl(199 89% 42% / 0.3); background: hsl(199 89% 42% / 0.08); color: hsl(199 89% 38%); }
+.dark .chip-info { color: hsl(199 89% 60%); }
+
+/* Section header — consistent Phase 2 pattern */
+.section-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+}
+
+
 
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator {

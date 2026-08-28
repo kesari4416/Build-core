@@ -4,7 +4,7 @@ import { Button } from "../../../components/ui/button";
 const fmt = (n) => `₹${Math.abs(n).toLocaleString("en-IN")}`;
 
 export const ChangeOrderCard = ({ co, isAdmin, onDecide }) => (
-  <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 flex flex-wrap items-center gap-4" data-testid={`co-card-${co.id}`}>
+  <div className="surface p-4 flex flex-wrap items-center gap-4" data-testid={`co-card-${co.id}`}>
     <div className="font-heading font-bold text-lg text-blue-600 dark:text-blue-400">{co.co_number}</div>
     <div className="flex-1 min-w-[200px]">
       <div className="text-sm text-slate-700 dark:text-slate-300">{co.reason}</div>

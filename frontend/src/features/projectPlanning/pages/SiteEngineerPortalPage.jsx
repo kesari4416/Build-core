@@ -120,13 +120,18 @@ export default function SiteEngineerPortalPage() {
       </div>
 
       {project && (
-        <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 mb-6 flex flex-wrap items-center gap-4" data-testid="se-summary-bar">
-          <span className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-            <HardHat size={15} strokeWidth={2.5} className="text-blue-600 dark:text-blue-400" /> {project.name}
+        <div className="surface p-4 mb-6 flex flex-wrap items-center gap-x-6 gap-y-2" data-testid="se-summary-bar">
+          <span className="flex items-center gap-2.5 text-sm text-slate-700 dark:text-slate-200">
+            <div className="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-500/15 flex items-center justify-center">
+              <HardHat size={15} strokeWidth={2.25} className="text-sky-600 dark:text-sky-400" />
+            </div>
+            <span className="font-semibold truncate">{project.name}</span>
           </span>
-          <span className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <ClipboardCheck size={15} strokeWidth={2.5} className="text-emerald-600 dark:text-emerald-400" />
-            <span data-testid="se-marked-count">{markedCount}/{active.length}</span> marked for {day}
+          <span className="flex items-center gap-2.5 text-sm text-slate-500 dark:text-slate-400">
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center">
+              <ClipboardCheck size={15} strokeWidth={2.25} className="text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <span><span data-testid="se-marked-count" className="font-heading font-semibold text-slate-900 dark:text-slate-100 text-base">{markedCount}</span>/{active.length} marked for {day}</span>
           </span>
         </div>
       )}
@@ -136,12 +141,12 @@ export default function SiteEngineerPortalPage() {
           <DailyAttendanceCard key={e.id} employee={e} status={statusMap[e.id]} onMark={mark} readOnly={isClient} />
         ))}
         {pid && active.length === 0 && (
-          <div className="border border-slate-200 dark:border-slate-800 p-10 text-center text-slate-500 dark:text-slate-400 md:col-span-2" data-testid="se-empty">
+          <div className="surface p-10 text-center text-slate-500 dark:text-slate-400 md:col-span-2" data-testid="se-empty">
             {isClient ? "No employees on this project yet." : 'No employees on this project yet. Tap "Add Employee" to register your first field worker.'}
           </div>
         )}
         {!pid && (
-          <div className="border border-slate-200 dark:border-slate-800 p-10 text-center text-slate-500 dark:text-slate-400 md:col-span-2">
+          <div className="surface p-10 text-center text-slate-500 dark:text-slate-400 md:col-span-2">
             No assigned projects found.
           </div>
         )}
@@ -149,39 +154,73 @@ export default function SiteEngineerPortalPage() {
 
       {!isClient && (
       <div className="mt-10" data-testid="org-employee-register">
-        <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold mb-3">
-          Employee Register (Organisation) · {(allEmployees || []).length}
-        </div>
-        <div className="border border-slate-200 dark:border-slate-800 overflow-x-auto">
-          <table className="w-full text-sm" data-testid="org-employees-table">
+        <div className="section-eyebrow mb-3">Employee Register (Organisation) · {(allEmployees || []).length}</div>
+
+        {/* Desktop table */}
+        <div className="surface overflow-x-auto table-desktop">
+          <table className="data-table" data-testid="org-employees-table">
             <thead>
-              <tr className="text-left text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                <th className="px-4 py-3">Name</th><th className="px-4 py-3">Trade</th>
-                <th className="px-4 py-3 text-right">Wage</th><th className="px-4 py-3">Assigned Projects (via phases)</th>
-                <th className="px-4 py-3 text-center">Status</th>
+              <tr>
+                <th>Name</th><th>Trade</th>
+                <th className="text-right">Wage</th><th>Assigned Projects (via phases)</th>
+                <th className="text-center">Status</th>
               </tr>
             </thead>
             <tbody>
               {(allEmployees || []).map((e) => (
-                <tr key={e.id} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-800/60 transition-colors" data-testid={`org-employee-row-${e.id}`}>
-                  <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{e.name}</td>
-                  <td className="px-4 py-2.5 text-slate-600 dark:text-slate-400">{e.role_title || "—"}</td>
-                  <td className="px-4 py-2.5 text-right text-slate-700 dark:text-slate-300">{e.daily_wage != null ? `₹${Number(e.daily_wage).toLocaleString("en-IN")}/${e.wage_type === "daily" ? "day" : e.wage_type}` : "—"}</td>
-                  <td className="px-4 py-2.5 text-xs text-slate-500 dark:text-slate-400">
+                <tr key={e.id} data-testid={`org-employee-row-${e.id}`}>
+                  <td className="font-semibold text-slate-900 dark:text-slate-100">{e.name}</td>
+                  <td className="text-slate-600 dark:text-slate-400">{e.role_title || "—"}</td>
+                  <td className="text-right text-slate-700 dark:text-slate-300 num-wrap">{e.daily_wage != null ? `₹${Number(e.daily_wage).toLocaleString("en-IN")}/${e.wage_type === "daily" ? "day" : e.wage_type}` : "—"}</td>
+                  <td className="text-xs text-slate-500 dark:text-slate-400">
                     {(e.assigned_projects || []).length ? e.assigned_projects.join(", ") : <span className="text-slate-400 dark:text-slate-500">Unassigned — assign via Project → Phases</span>}
                   </td>
-                  <td className="px-4 py-2.5 text-center">
-                    <span className={`inline-block border px-2 py-0.5 text-[11px] uppercase tracking-[0.12em] font-semibold ${e.status === "active" ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-700"}`}>{e.status}</span>
+                  <td className="text-center">
+                    <span className={`chip ${e.status === "active" ? "chip-success" : ""}`}>{e.status}</span>
                   </td>
                 </tr>
               ))}
               {(allEmployees || []).length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">No employees yet — add your first worker above.</td></tr>
+                <tr><td colSpan={5} className="text-center text-slate-500 dark:text-slate-400 py-8">No employees yet — add your first worker above.</td></tr>
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Mobile card list */}
+        <div className="row-card space-y-2">
+          {(allEmployees || []).map((e) => (
+            <div key={e.id} className="surface p-4" data-testid={`org-employee-card-${e.id}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-semibold text-slate-900 dark:text-slate-100 truncate">{e.name}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{e.role_title || "—"}</div>
+                </div>
+                <span className={`chip ${e.status === "active" ? "chip-success" : ""}`}>{e.status}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60">
+                <div>
+                  <div className="text-[9px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 font-semibold">Wage</div>
+                  <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 num-wrap mt-0.5">{e.daily_wage != null ? `₹${Number(e.daily_wage).toLocaleString("en-IN")}/${e.wage_type === "daily" ? "day" : e.wage_type}` : "—"}</div>
+                </div>
+                <div>
+                  <div className="text-[9px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 font-semibold">Projects</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 truncate">{(e.assigned_projects || []).length ? e.assigned_projects.join(", ") : <span className="text-slate-400 dark:text-slate-500">Unassigned</span>}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+          {(allEmployees || []).length === 0 && (
+            <div className="surface p-10 text-center text-slate-500 dark:text-slate-400 text-sm">No employees yet — tap the button below to add your first worker.</div>
+          )}
+        </div>
       </div>
+      )}
+
+      {!isClient && (
+        <button onClick={() => setModal(true)} data-testid="se-add-employee-fab" className="fab md:hidden">
+          <Plus size={16} strokeWidth={3} /> Add Employee
+        </button>
       )}
 
       <EmployeeFormModal open={modal} onOpenChange={setModal} projectId={null} />

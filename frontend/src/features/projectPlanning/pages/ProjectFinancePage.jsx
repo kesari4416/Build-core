@@ -17,7 +17,7 @@ const fmt = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 const fmtCr = (n) => `${n < 0 ? "−" : ""}₹${Math.abs(n || 0).toLocaleString("en-IN")}`;
 
 export const ProjectFinanceSummaryCard = ({ label, value, sub, icon: Icon, accent, testId }) => (
-  <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5" data-testid={testId}>
+  <div className="surface p-5" data-testid={testId}>
     <div className="flex items-center justify-between">
       <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">{label}</span>
       <Icon size={16} strokeWidth={2.5} className={accent} />
@@ -28,7 +28,7 @@ export const ProjectFinanceSummaryCard = ({ label, value, sub, icon: Icon, accen
 );
 
 export const InvoiceCard = ({ inv, canWrite, onPay, projectName, clientName }) => (
-  <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4" data-testid={`invoice-card-${inv.id}`}>
+  <div className="surface p-4" data-testid={`invoice-card-${inv.id}`}>
     <div className="flex flex-wrap items-center gap-3">
       <span className="font-heading font-bold text-lg text-blue-600 dark:text-blue-400">{inv.invoice_number}</span>
       <CommitmentStatusBadge status={inv.status} />
@@ -149,7 +149,7 @@ export default function ProjectFinancePage() {
         <div className="lg:col-span-2 space-y-3">
           <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Invoices & Payments</div>
           {canFin && (
-            <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 flex flex-wrap items-end gap-3">
+            <div className="surface p-4 flex flex-wrap items-end gap-3">
               <Input data-testid="invoice-amount-input" type="number" placeholder="Amount ₹" value={invForm.amount} onChange={(e) => setInvForm({ ...invForm, amount: e.target.value })} className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md h-9 w-36" />
               <Input data-testid="invoice-due-input" type="date" value={invForm.due_date} onChange={(e) => setInvForm({ ...invForm, due_date: e.target.value })} className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md h-9 w-40" />
               <Input data-testid="invoice-desc-input" placeholder="Description" value={invForm.description} onChange={(e) => setInvForm({ ...invForm, description: e.target.value })} className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md h-9 flex-1 min-w-[160px]" />
@@ -164,7 +164,7 @@ export default function ProjectFinancePage() {
         <div className="space-y-3">
           <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Expense Log</div>
           {canExp && (
-            <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-3 flex gap-2">
+            <div className="surface p-3 flex gap-2">
               <select data-testid="expense-category-select" value={expForm.category}
                 onChange={(e) => setExpForm({ ...expForm, category: e.target.value })}
                 className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md h-9 text-sm text-slate-700 dark:text-slate-300 px-2 flex-1 min-w-0">
@@ -178,14 +178,14 @@ export default function ProjectFinancePage() {
             </div>
           )}
           {(expenses || []).map((e) => (
-            <div key={e.id} className="flex items-center gap-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-3 text-sm" data-testid={`expense-${e.id}`}>
+            <div key={e.id} className="flex items-center gap-3 surface p-3 text-sm" data-testid={`expense-${e.id}`}>
               <span className="text-slate-700 dark:text-slate-300">{e.category}</span>
               <span className="text-xs text-slate-500 dark:text-slate-400">{e.expense_date}</span>
               <span className="ml-auto font-semibold text-slate-900 dark:text-slate-100">{fmt(e.amount)}</span>
             </div>
           ))}
           {canExp && (
-            <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 mt-6" data-testid="expense-categories-panel">
+            <div className="surface p-4 mt-6" data-testid="expense-categories-panel">
               <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold mb-3">Expense Categories</div>
               <div className="flex gap-2 mb-3">
                 <Input data-testid="new-category-input" placeholder="New category name" value={newCat}

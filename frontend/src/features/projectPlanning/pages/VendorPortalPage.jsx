@@ -26,7 +26,7 @@ export default function VendorPortalPage() {
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {(packages || []).map((bp) => (
           <Link key={bp.id} to={`/portal/vendor/bid-packages/${bp.id}`} data-testid={`vendor-package-${bp.id}`}
-            className="group border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 hover:border-blue-400 transition-colors">
+            className="group surface p-5 hover:border-blue-400 transition-colors">
             <div className="flex items-center justify-between mb-3">
               <FileText size={18} strokeWidth={2.5} className="text-blue-600 dark:text-blue-400" />
               <CommitmentStatusBadge status={bp.status} />

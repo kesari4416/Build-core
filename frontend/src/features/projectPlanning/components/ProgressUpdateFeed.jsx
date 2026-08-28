@@ -4,7 +4,7 @@ import { assetUrl } from "../../../api/client";
 
 export const ProgressUpdateCard = ({ update, canManage, onEdit, onDelete }) => (
   <div
-    className={`border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 ${update._optimistic ? "opacity-60" : ""}`}
+    className={`surface p-5 ${update._optimistic ? "opacity-60" : ""}`}
     data-testid={`update-card-${update.id}`}
   >
     <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -65,7 +65,7 @@ export const ProgressUpdateCard = ({ update, canManage, onEdit, onDelete }) => (
 export const ProgressUpdateFeed = ({ updates, canManage, onEdit, onDelete }) => {
   if (!updates?.length)
     return (
-      <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-12 text-center text-slate-500 dark:text-slate-400" data-testid="updates-empty-state">
+      <div className="surface p-12 text-center text-slate-500 dark:text-slate-400" data-testid="updates-empty-state">
         No progress updates yet.
       </div>
     );

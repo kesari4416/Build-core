@@ -44,7 +44,7 @@ export const DocumentsPanel = ({ projectId, canWrite, isAdmin }) => {
       {isLoading ? (
         <div className="space-y-2">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16 bg-white dark:bg-slate-900 rounded-md" />)}</div>
       ) : filtered.length === 0 ? (
-        <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-6 text-center text-xs text-slate-500 dark:text-slate-400" data-testid="documents-empty-state">
+        <div className="surface p-6 text-center text-xs text-slate-500 dark:text-slate-400" data-testid="documents-empty-state">
           No documents found.
         </div>
       ) : (

@@ -49,7 +49,7 @@ export const DocumentListItem = ({ doc, isAdmin, projectId }) => {
   };
 
   return (
-    <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-3 flex items-start gap-3" data-testid={`document-item-${doc.id}`}>
+    <div className="surface p-3 flex items-start gap-3" data-testid={`document-item-${doc.id}`}>
       <div className="bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 p-2 shrink-0">
         <Icon size={16} strokeWidth={2.5} className="text-blue-600 dark:text-blue-400" />
       </div>

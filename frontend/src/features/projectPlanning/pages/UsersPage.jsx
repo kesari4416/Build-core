@@ -87,7 +87,7 @@ export default function UsersPage() {
           </thead>
           <tbody>
             {(users || []).map((u) => (
-              <tr key={u.id} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-800/60 transition-colors" data-testid={`user-row-${u.id}`}>
+              <tr key={u.id} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors" data-testid={`user-row-${u.id}`}>
                 <td className="px-4 py-3">
                   <div className="font-semibold text-slate-900 dark:text-slate-100">{u.name}</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">{u.email}</div>

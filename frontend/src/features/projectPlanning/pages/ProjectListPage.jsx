@@ -90,7 +90,7 @@ export default function ProjectListPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6" data-testid="dashboard-stat-cards">
+      <div className="kpi-scroller mb-6" style={{ ["--kpi-cols"]: 2, ["--kpi-cols-lg"]: 5 }} data-testid="dashboard-stat-cards">
         <DashboardStatCard label="Total Projects" value={summary?.total_projects ?? "—"} icon={Building2}
           isActive={totalActive} onClick={clickTotal} variant="default" testId="stat-card-total" />
         <DashboardStatCard label="Ongoing" value={summary?.ongoing ?? "—"} icon={Activity}

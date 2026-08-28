@@ -58,7 +58,7 @@ export default function VendorsPage() {
           </thead>
           <tbody>
             {(vendors || []).map((v) => (
-              <tr key={v.id} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-800/60 transition-colors" data-testid={`vendor-row-${v.id}`}>
+              <tr key={v.id} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors" data-testid={`vendor-row-${v.id}`}>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 p-2">
@@ -120,7 +120,7 @@ export default function VendorsPage() {
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="bid-packages-grid">
         {(packages || []).map((bp) => (
           <Link key={bp.id} to={`/admin/procurement/bid-packages/${bp.id}/comparison`} data-testid={`bid-package-card-${bp.id}`}
-            className="group border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 hover:border-blue-400 transition-colors">
+            className="group surface p-5 hover:border-blue-400 transition-colors">
             <div className="flex items-center justify-between mb-3">
               <Scale size={18} strokeWidth={2.5} className="text-blue-600 dark:text-blue-400" />
               <CommitmentStatusBadge status={bp.status} />

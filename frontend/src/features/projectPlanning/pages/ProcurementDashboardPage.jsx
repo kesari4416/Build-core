@@ -76,7 +76,7 @@ export default function ProcurementDashboardPage() {
       {isLoading ? (
         <div className="space-y-2">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-14 bg-white dark:bg-slate-900 rounded-md" />)}</div>
       ) : !data?.items?.length ? (
-        <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-12 text-center text-slate-500 dark:text-slate-400" data-testid="commitments-empty">No commitments found.</div>
+        <div className="surface p-12 text-center text-slate-500 dark:text-slate-400" data-testid="commitments-empty">No commitments found.</div>
       ) : (
         <div className="border border-slate-200 dark:border-slate-800 overflow-x-auto" data-testid="commitments-table">
           <table className="w-full text-sm">
@@ -91,7 +91,7 @@ export default function ProcurementDashboardPage() {
               {data.items.map((c) => (
                 <tr key={`${c.type}-${c.id}`} data-testid={`commitment-row-${c.type}-${c.id}`}
                   onClick={() => navigate(`/admin/projects/${id}/procurement/${c.type}/${c.id}`)}
-                  className="border-t border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-800/60 transition-colors">
+                  className="border-t border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                   <td className="px-4 py-3.5">
                     <div className="font-semibold text-slate-900 dark:text-slate-100">{c.vendor_name}</div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">{c.number}</div>

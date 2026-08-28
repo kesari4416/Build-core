@@ -18,7 +18,7 @@ import { formatApiErrorDetail } from "../../../api/client";
 const fmt = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
 const Cell = ({ label, value, testId }) => (
-  <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4" data-testid={testId}>
+  <div className="surface p-4" data-testid={testId}>
     <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">{label}</div>
     <div className="font-heading font-semibold text-lg mt-1.5 leading-none text-slate-900 dark:text-slate-100">{value ?? "—"}</div>
   </div>
@@ -57,10 +57,10 @@ export default function CommitmentDetailPage() {
       <div className="text-sm text-slate-500 dark:text-slate-400 mb-6">{c.vendor_name} · {type === "po" ? "Purchase Order" : "Subcontract"} · Cost code {c.cost_code || "—"}</div>
 
       <Tabs defaultValue="overview">
-        <TabsList className="bg-transparent border-b border-slate-200 dark:border-slate-800 rounded-md w-full justify-start h-auto p-0 gap-1">
+        <TabsList className="tab-strip w-fit h-auto justify-start mb-4 bg-slate-100 dark:bg-slate-900/60">
           {["overview", "change-orders", "pay-apps", "documents"].map((t) => (
             <TabsTrigger key={t} value={t} data-testid={`ctab-${t}`}
-              className="rounded-md px-4 py-2.5 text-xs uppercase tracking-[0.15em] font-semibold data-[state=active]:bg-white dark:bg-slate-900 data-[state=active]:text-slate-900 dark:text-slate-100 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none text-slate-500 dark:text-slate-400 border-b-2 border-transparent">
+              className="rounded-md px-4 py-2 text-[11px] uppercase tracking-[0.15em] font-semibold text-slate-500 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100 transition-colors whitespace-nowrap">
               {t.replace("-", " ")}
             </TabsTrigger>
           ))}
@@ -114,7 +114,7 @@ export default function CommitmentDetailPage() {
 
         <TabsContent value="change-orders" className="mt-6 space-y-4" data-testid="ctab-cos-content">
           {canWrite && (
-            <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 flex flex-wrap items-end gap-3">
+            <div className="surface p-4 flex flex-wrap items-end gap-3">
               <div className="flex-1 min-w-[220px]">
                 <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 mb-1">Reason</div>
                 <Input data-testid="co-reason-input" value={coForm.reason} onChange={(e) => setCoForm({ ...coForm, reason: e.target.value })}
@@ -141,7 +141,7 @@ export default function CommitmentDetailPage() {
 
         <TabsContent value="pay-apps" className="mt-6 space-y-4" data-testid="ctab-payapps-content">
           {canWrite && (
-            <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 flex flex-wrap items-end gap-3">
+            <div className="surface p-4 flex flex-wrap items-end gap-3">
               <div>
                 <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 mb-1">Amount this period (₹)</div>
                 <Input data-testid="payapp-amount-input" type="number" value={paForm.amount_this_period}
@@ -157,7 +157,7 @@ export default function CommitmentDetailPage() {
             </div>
           )}
           {(payApps || []).map((pa) => (
-            <div key={pa.id} className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 space-y-4" data-testid={`payapp-card-${pa.id}`}>
+            <div key={pa.id} className="surface p-5 space-y-4" data-testid={`payapp-card-${pa.id}`}>
               <div className="flex flex-wrap items-center gap-3">
                 <span className="font-heading font-bold text-xl text-blue-600 dark:text-blue-400">App #{pa.application_number}</span>
                 <CommitmentStatusBadge status={pa.status} />

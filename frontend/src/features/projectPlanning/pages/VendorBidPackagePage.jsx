@@ -11,7 +11,7 @@ import { CommitmentStatusBadge } from "../components/CommitmentStatusBadge";
 const fmt = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
 export const VendorQuoteLineItemForm = ({ item, row, onChange, disabled }) => (
-  <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4" data-testid={`quote-item-${item.id}`}>
+  <div className="surface p-4" data-testid={`quote-item-${item.id}`}>
     <div className="flex flex-wrap items-center gap-3 mb-3">
       <span className="font-semibold text-slate-900 dark:text-slate-100">{item.item_description}</span>
       <span className="text-xs text-slate-500 dark:text-slate-400">Required: {item.quantity_required} {item.unit || ""}</span>

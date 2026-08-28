@@ -23,11 +23,14 @@ import { useAuth } from "../../../context/AuthContext";
 const fmtBudget = (b) => (b == null ? "—" : `₹${Number(b).toLocaleString("en-IN")}`);
 
 const InfoCell = ({ icon: Icon, label, value, testId }) => (
-  <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5" data-testid={testId}>
-    <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">
-      <Icon size={13} strokeWidth={2.5} /> {label}
+  <div className="surface surface-hover p-5" data-testid={testId}>
+    <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">
+      <div className="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800/60 flex items-center justify-center text-slate-600 dark:text-slate-300">
+        <Icon size={12} strokeWidth={2.25} />
+      </div>
+      {label}
     </div>
-    <div className="font-heading font-semibold text-xl mt-2 leading-none text-slate-900 dark:text-slate-100">{value || "—"}</div>
+    <div className="font-heading font-semibold text-xl mt-3 leading-tight tracking-tight text-slate-900 dark:text-slate-100 num-wrap">{value || "—"}</div>
   </div>
 );
 
@@ -115,21 +118,21 @@ export default function ProjectDetailPage() {
         )}
       </div>
 
-      <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 mb-6" data-testid="overall-progress">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Overall Completion</span>
-          <span className="font-heading font-bold text-2xl text-blue-600 dark:text-blue-400 leading-none">{project.percent_complete}%</span>
+      <div className="surface p-5 mb-6" data-testid="overall-progress">
+        <div className="flex items-center justify-between mb-3">
+          <span className="section-eyebrow">Overall Completion</span>
+          <span className="font-heading font-semibold text-2xl text-slate-900 dark:text-slate-100 leading-none tabular-nums">{project.percent_complete}%</span>
         </div>
-        <div className="h-2.5 bg-slate-200 dark:bg-slate-800">
-          <div className="h-full bg-blue-600 transition-[width] duration-500" style={{ width: `${project.percent_complete}%` }} />
+        <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div className={`h-full rounded-full transition-[width] duration-500 ${project.percent_complete >= 100 ? "bg-emerald-500" : project.percent_complete >= 60 ? "bg-amber-500" : "bg-sky-500"}`} style={{ width: `${project.percent_complete}%` }} />
         </div>
       </div>
 
       <Tabs defaultValue={initialTab}>
-        <TabsList className="bg-transparent border-b border-slate-200 dark:border-slate-800 rounded-md w-full justify-start h-auto p-0 gap-1 overflow-x-auto flex-nowrap [&::-webkit-scrollbar]:h-1">
+        <TabsList className="tab-strip w-full h-auto justify-start flex-nowrap bg-slate-100 dark:bg-slate-900/60">
           {["overview", "phases", "tracking", ...(user?.role !== "Vendor" ? ["variations"] : []), ...(user?.role !== "Client" && user?.role !== "Vendor" ? ["employees", "balancesheet"] : [])].map((t) => (
             <TabsTrigger key={t} value={t} data-testid={`tab-${t}`}
-              className="rounded-md px-5 py-2.5 text-xs uppercase tracking-[0.15em] font-semibold data-[state=active]:bg-white dark:bg-slate-900 data-[state=active]:text-slate-900 dark:text-slate-100 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none text-slate-500 dark:text-slate-400 border-b-2 border-transparent">
+              className="rounded-md px-4 py-2 text-[11px] uppercase tracking-[0.15em] font-semibold text-slate-500 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100 transition-colors whitespace-nowrap">
               {t === "balancesheet" ? "balance sheet" : t === "variations" ? "change orders" : t}
             </TabsTrigger>
           ))}

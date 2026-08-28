@@ -26,7 +26,7 @@ const StatCard = ({ icon: Icon, label, value, accent, testId }) => (
 );
 
 const Card = ({ title, testId, children, className = "" }) => (
-  <div className={`border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 min-w-0 overflow-hidden ${className}`} data-testid={testId}>
+  <div className={`surface p-5 min-w-0 overflow-hidden ${className}`} data-testid={testId}>
     <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold mb-4">{title}</div>
     {children}
   </div>
@@ -101,7 +101,7 @@ export default function DashboardPage() {
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 bg-white dark:bg-slate-900 rounded-md" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="kpi-scroller" style={{ ["--kpi-cols"]: 2, ["--kpi-cols-lg"]: 5 }}>
           <StatCard icon={Building2} label="Total Projects" value={stats?.total_projects ?? 0} accent="text-blue-600 dark:text-blue-400" testId="stat-total-projects" />
           <StatCard icon={CheckCircle2} label="Ongoing" value={stats?.by_status?.Ongoing ?? 0} accent="text-emerald-600 dark:text-emerald-400" testId="stat-ongoing" />
           <StatCard icon={CheckCircle2} label="Completed" value={stats?.by_status?.Completed ?? 0} accent="text-purple-600 dark:text-purple-400" testId="stat-completed" />

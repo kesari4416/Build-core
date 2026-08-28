@@ -78,79 +78,79 @@ export default function EstimatesPage() {
         </button>
       </div>
 
-      <div className="border border-slate-200 dark:border-slate-800 overflow-x-auto bg-white dark:bg-slate-900 shadow-sm">
-        <table className="w-full text-sm" data-testid="estimates-table">
+      <div className="surface overflow-x-auto">
+        <table className="data-table" data-testid="estimates-table">
           <thead>
-            <tr className="text-left text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-              <th className="px-3 py-3">Client</th>
-              <th className="px-3 py-3">Project Name</th><th className="px-3 py-3">Phase</th>
-              <th className="px-3 py-3">Category</th><th className="px-3 py-3">Drawing</th>
-              <th className="px-3 py-3 text-right">Total Amount</th><th className="px-3 py-3 text-center">Current Status</th>
-              <th className="px-3 py-3">Actions</th>
-              {canDelete && <th className="px-3 py-3" />}
+            <tr>
+              <th>Client</th>
+              <th>Project Name</th><th>Phase</th>
+              <th>Category</th><th>Drawing</th>
+              <th className="text-right">Total Amount</th><th className="text-center">Current Status</th>
+              <th>Actions</th>
+              {canDelete && <th />}
             </tr>
           </thead>
           <tbody>
             {(estimates || []).map((e) => (
-              <tr key={e.id} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors" data-testid={`estimate-row-${e.id}`}>
-                <td className="px-3 py-2.5 font-semibold text-slate-900 dark:text-slate-100" data-testid={`estimate-client-${e.id}`}>{e.client_name || "—"}</td>
-                <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300">{e.project_name || "—"}</td>
-                <td className="px-3 py-2.5 text-slate-600 dark:text-slate-400">{e.phase || "—"}</td>
-                <td className="px-3 py-2.5 text-slate-600 dark:text-slate-400">{e.category}</td>
-                <td className="px-3 py-2.5">
+              <tr key={e.id} data-testid={`estimate-row-${e.id}`}>
+                <td className="font-semibold text-slate-900 dark:text-slate-100" data-testid={`estimate-client-${e.id}`}>{e.client_name || "—"}</td>
+                <td className="text-slate-700 dark:text-slate-300">{e.project_name || "—"}</td>
+                <td className="text-slate-600 dark:text-slate-400">{e.phase || "—"}</td>
+                <td className="text-slate-600 dark:text-slate-400">{e.category}</td>
+                <td>
                   {e.drawing_url ? (
                     <a href={assetUrl(e.drawing_url)} target="_blank" rel="noreferrer" data-testid={`estimate-drawing-${e.id}`} title={e.drawing_filename}>
                       {/\.pdf$/i.test(e.drawing_url) ? (
-                        <span className="inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 text-xs font-semibold hover:underline">
-                          <FileText size={14} strokeWidth={2.5} /> PDF
+                        <span className="inline-flex items-center gap-1.5 text-rose-600 dark:text-rose-400 text-xs font-semibold hover:underline">
+                          <FileText size={14} strokeWidth={2.25} /> PDF
                         </span>
                       ) : (
                         <img src={assetUrl(e.drawing_url)} alt={e.drawing_filename || "drawing"}
-                          className="w-12 h-9 object-cover border border-slate-200 dark:border-slate-700 hover:border-blue-400 transition-colors" />
+                          className="w-12 h-9 object-cover rounded border border-slate-200 dark:border-slate-700 hover:border-amber-400 transition-colors" />
                       )}
                     </a>
                   ) : <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>}
                 </td>
-                <td className="px-3 py-2.5 text-right font-heading font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">{fmt(e.total_amount)}</td>
-                <td className="px-3 py-2.5 text-center">
-                  <span data-testid={`estimate-status-${e.id}`} title={e.approval_state === "rejected" ? (e.rejection_reason || "") : (e.awaiting_response ? "Awaiting client response" : "")} className={`inline-block border px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] font-bold whitespace-nowrap ${STATUS_COLOR[e.current_status] || "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800"}`}>
+                <td className="text-right font-heading font-semibold text-slate-900 dark:text-slate-100 whitespace-nowrap num-wrap">{fmt(e.total_amount)}</td>
+                <td className="text-center">
+                  <span data-testid={`estimate-status-${e.id}`} title={e.approval_state === "rejected" ? (e.rejection_reason || "") : (e.awaiting_response ? "Awaiting client response" : "")} className={`inline-block border rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-[0.12em] font-bold whitespace-nowrap ${STATUS_COLOR[e.current_status] || "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800"}`}>
                     {e.current_status}
                   </span>
                 </td>
-                <td className="px-3 py-2.5">
+                <td>
                   <div className="flex flex-wrap items-center gap-1.5">
                     {!e.linked_project_id && (
                       <button data-testid={`send-approval-${e.id}`} onClick={() => setSendModal({ open: true, estimate: e })}
                         title={e.sent_at ? "Re-send (issues a new link, resets to pending)" : "Send for Approval"}
-                        className="inline-flex items-center gap-1 border border-blue-400/60 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 px-2 py-1 text-[10px] uppercase tracking-[0.1em] font-bold transition-colors">
+                        className="inline-flex items-center gap-1 rounded-md border border-sky-400/60 text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-500/10 px-2 py-1 text-[10px] uppercase tracking-[0.1em] font-bold transition-colors">
                         <Send size={11} strokeWidth={2.5} /> {e.sent_at ? "Re-send" : "Send"}
                       </button>
                     )}
                     {!e.linked_project_id && e.approval_state !== "approved" && <ApprovalActionButtons estimate={e} onApproved={(est) => setProjectModal({ open: true, estimate: est })} />}
                     {e.approval_state === "approved" && !e.linked_project_id && isAdmin && (
                       <button data-testid={`create-project-from-estimate-${e.id}`} onClick={() => setProjectModal({ open: true, estimate: e })}
-                        className="inline-flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 text-[10px] uppercase tracking-[0.1em] font-bold transition-colors">
+                        className="inline-flex items-center gap-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 text-[10px] uppercase tracking-[0.1em] font-bold transition-colors">
                         <Building2 size={11} strokeWidth={2.5} /> Create Project
                       </button>
                     )}
                     {e.linked_project_id && (
                       <Link to={`/admin/projects/${e.linked_project_id}`} data-testid={`linked-project-${e.id}`}
-                        className="inline-flex items-center gap-1 border border-emerald-400/60 text-emerald-600 dark:text-emerald-400 px-2 py-1 text-[10px] uppercase tracking-[0.1em] font-bold hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors">
+                        className="inline-flex items-center gap-1 rounded-md border border-emerald-400/60 text-emerald-600 dark:text-emerald-400 px-2 py-1 text-[10px] uppercase tracking-[0.1em] font-bold hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors">
                         <Building2 size={11} strokeWidth={2.5} /> Project #{e.linked_project_id}
                       </Link>
                     )}
                   </div>
                 </td>
                 {canDelete && (
-                  <td className="px-3 py-2.5 text-right">
+                  <td className="text-right">
                     <button data-testid={`delete-estimate-${e.id}`} title="Delete" onClick={() => remove(e)}
-                      className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"><Trash2 size={14} strokeWidth={2.5} /></button>
+                      className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"><Trash2 size={14} strokeWidth={2.25} /></button>
                   </td>
                 )}
               </tr>
             ))}
             {estimates && estimates.length === 0 && (
-              <tr><td colSpan={canDelete ? 9 : 8} className="px-4 py-12 text-center text-slate-500 dark:text-slate-400" data-testid="estimates-empty">
+              <tr><td colSpan={canDelete ? 9 : 8} className="text-center text-slate-500 dark:text-slate-400 py-12" data-testid="estimates-empty">
                 No estimates yet — click "Create Estimate" to add your first one.
               </td></tr>
             )}

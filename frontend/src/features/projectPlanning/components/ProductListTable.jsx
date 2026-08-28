@@ -38,7 +38,7 @@ export const ProductListTable = ({ onEdit, canManage }) => {
         </thead>
         <tbody>
           {(products || []).map((p) => (
-            <tr key={p.id} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-800/60 transition-colors" data-testid={`product-row-${p.id}`}>
+            <tr key={p.id} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors" data-testid={`product-row-${p.id}`}>
               <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
                   <div className="bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 p-2">

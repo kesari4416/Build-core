@@ -45,7 +45,7 @@ export const DocumentUploadCard = ({ projectId }) => {
   };
 
   return (
-    <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4" data-testid="document-upload-card">
+    <div className="surface p-4" data-testid="document-upload-card">
       <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold mb-3">Upload Document</div>
       <input ref={fileRef} type="file" hidden data-testid="document-file-input"
         accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.doc,.docx,.xls,.xlsx,.csv,.txt,.dwg,.zip"

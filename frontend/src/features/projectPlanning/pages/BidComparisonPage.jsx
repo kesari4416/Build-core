@@ -128,7 +128,7 @@ export default function BidComparisonPage() {
         </div>
       </div>
       {canEdit && data?.status !== "Awarded" && (
-        <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 flex flex-wrap items-end gap-3 mb-6">
+        <div className="surface p-4 flex flex-wrap items-end gap-3 mb-6">
           <Input data-testid="li-desc-input" placeholder="Line item description" value={liForm.item_description}
             onChange={(e) => setLiForm({ ...liForm, item_description: e.target.value })} className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md h-9 flex-1 min-w-[200px]" />
           <Input data-testid="li-unit-input" placeholder="Unit" value={liForm.unit}

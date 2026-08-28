@@ -41,7 +41,7 @@ export const OrgBalanceSheetTab = () => {
           <FileSpreadsheet size={14} strokeWidth={2.5} /> Export Excel
         </button>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="kpi-scroller mb-6" style={{ ["--kpi-cols"]: 2, ["--kpi-cols-lg"]: 4 }}>
         <StatCard label="Total Credit (In)" value={fmtCr(bs.total_credit)} icon={TrendingUp} accent="text-emerald-600 dark:text-emerald-400" testId="bs-total-credit" />
         <StatCard label="Total Debit (Out)" value={fmtCr(bs.total_debit)} icon={TrendingDown} accent="text-red-600 dark:text-red-400" testId="bs-total-debit" />
         <StatCard label="Overall Profit" value={fmtCr(bs.overall_profit)} icon={IndianRupee} accent="text-emerald-600 dark:text-emerald-400" testId="bs-overall-profit" />
@@ -108,7 +108,7 @@ export const OrgBalanceSheetTab = () => {
 
         <div>
           <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold mb-3">Required Employee Payments</div>
-          <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4" data-testid="employee-dues-panel">
+          <div className="surface p-4" data-testid="employee-dues-panel">
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 mb-3">
               <span className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><Users size={14} strokeWidth={2.5} className="text-blue-600 dark:text-blue-400" /> Staff payroll pending</span>
               <span className="font-semibold text-slate-900 dark:text-slate-100" data-testid="dues-payroll-pending">{fmt(dues.staff_payroll_pending)}</span>

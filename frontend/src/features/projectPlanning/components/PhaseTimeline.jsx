@@ -5,7 +5,7 @@ import { PhaseCrew } from "./PhaseCrew";
 export const PhaseTimeline = ({ phases, canWrite, onEdit, coByPhase }) => {
   if (!phases?.length)
     return (
-      <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-12 text-center text-slate-500 dark:text-slate-400" data-testid="phases-empty-state">
+      <div className="surface p-12 text-center text-slate-500 dark:text-slate-400" data-testid="phases-empty-state">
         No phases defined yet.
       </div>
     );

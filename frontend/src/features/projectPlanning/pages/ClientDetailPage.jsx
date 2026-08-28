@@ -65,7 +65,7 @@ export default function ClientDetailPage() {
         <div className="space-y-2" data-testid="client-projects-list">
           {(projects || []).map((p) => (
             <Link key={p.id} to={`/admin/projects/${p.id}`} data-testid={`client-project-${p.id}`}
-              className="flex items-center gap-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 hover:border-blue-400 transition-colors group">
+              className="flex items-center gap-4 surface p-4 hover:border-blue-400 transition-colors group">
               <div className="font-heading font-bold text-2xl text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-400 transition-colors w-16">{p.percent_complete}%</div>
               <div className="min-w-0 flex-1">
                 <div className="font-semibold text-slate-900 dark:text-slate-100 truncate">{p.name}</div>
@@ -90,7 +90,7 @@ export default function ClientDetailPage() {
         <div className="space-y-2 max-w-3xl" data-testid="client-documents-list">
           {(documents || []).map((doc) => (
             <a key={doc.id} href={assetUrl(doc.file_url)} target="_blank" rel="noreferrer" data-testid={`client-doc-${doc.id}`}
-              className="flex items-center gap-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-3 hover:border-blue-400 transition-colors">
+              className="flex items-center gap-3 surface p-3 hover:border-blue-400 transition-colors">
               <FileText size={16} strokeWidth={2.5} className="text-blue-600 dark:text-blue-400 shrink-0" />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{doc.document_name}</div>

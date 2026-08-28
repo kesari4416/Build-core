@@ -7,7 +7,7 @@ import { CommitmentStatusBadge } from "../components/CommitmentStatusBadge";
 const fmt = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
 const Card = ({ label, value, sub, icon: Icon, accent, testId }) => (
-  <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm rounded-lg p-5" data-testid={testId}>
+  <div className="surface rounded-lg p-5" data-testid={testId}>
     <div className="flex items-center justify-between">
       <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">{label}</span>
       <Icon size={16} strokeWidth={2.5} className={accent} />
@@ -57,7 +57,7 @@ export default function VendorDashboardPage() {
           {dash.purchase_orders.length === 0 && dash.subcontracts.length === 0 ? <Empty text="No purchase orders or subcontracts yet." /> : (
             <div className="space-y-2">
               {dash.purchase_orders.map((p) => (
-                <div key={`po-${p.id}`} className="flex items-center gap-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm rounded-md p-3" data-testid={`vd-po-${p.id}`}>
+                <div key={`po-${p.id}`} className="flex items-center gap-3 surface rounded-md p-3" data-testid={`vd-po-${p.id}`}>
                   <ShoppingCart size={15} strokeWidth={2.5} className="text-blue-600 dark:text-blue-400 shrink-0" />
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold truncate">{p.po_number}</div>
@@ -68,7 +68,7 @@ export default function VendorDashboardPage() {
                 </div>
               ))}
               {dash.subcontracts.map((s) => (
-                <div key={`sc-${s.id}`} className="flex items-center gap-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm rounded-md p-3" data-testid={`vd-sc-${s.id}`}>
+                <div key={`sc-${s.id}`} className="flex items-center gap-3 surface rounded-md p-3" data-testid={`vd-sc-${s.id}`}>
                   <FileText size={15} strokeWidth={2.5} className="text-purple-600 dark:text-purple-400 shrink-0" />
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold truncate">{s.contract_number}</div>
@@ -86,7 +86,7 @@ export default function VendorDashboardPage() {
           {dp.total === 0 ? <Empty text="No deliveries recorded yet." /> : (
             <div className="grid grid-cols-3 gap-3 mb-3">
               {Object.entries(dp.by_status).map(([st, n]) => (
-                <div key={st} className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm rounded-md p-3 text-center" data-testid={`vd-dp-${st}`}>
+                <div key={st} className="surface rounded-md p-3 text-center" data-testid={`vd-dp-${st}`}>
                   <div className="font-heading font-bold text-2xl">{n}</div>
                   <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold mt-1">{st}</div>
                 </div>
@@ -114,7 +114,7 @@ export default function VendorDashboardPage() {
           {dash.invoices.length === 0 ? <Empty text="No pay applications yet." /> : (
             <div className="space-y-2">
               {dash.invoices.map((inv) => (
-                <div key={inv.id} className="flex items-center gap-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm rounded-md p-3" data-testid={`vd-inv-${inv.id}`}>
+                <div key={inv.id} className="flex items-center gap-3 surface rounded-md p-3" data-testid={`vd-inv-${inv.id}`}>
                   <Receipt size={15} strokeWidth={2.5} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold">App #{inv.application_number} · {inv.reference}</div>

@@ -13,7 +13,7 @@ import { printInvoice, shareInvoiceWhatsApp, shareInvoiceEmail } from "../utils/
 
 const fmtCr = (n) => `${n < 0 ? "−" : ""}₹${Math.abs(n || 0).toLocaleString("en-IN")}`;
 
-const triggerCls = "rounded-md px-5 py-2.5 text-xs uppercase tracking-[0.15em] font-semibold data-[state=active]:bg-white dark:bg-slate-900 data-[state=active]:text-slate-900 dark:text-slate-100 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none text-slate-500 dark:text-slate-400 border-b-2 border-transparent";
+const triggerCls = "rounded-md px-4 py-2 text-[11px] uppercase tracking-[0.15em] font-semibold text-slate-500 dark:text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100 transition-colors whitespace-nowrap";
 
 export default function FinancePage() {
   const [incomeModal, setIncomeModal] = useState(false);
@@ -51,7 +51,7 @@ export default function FinancePage() {
       </div>
 
       <Tabs defaultValue="overview">
-        <TabsList className="bg-transparent border-b border-slate-200 dark:border-slate-800 rounded-md w-full justify-start h-auto p-0 gap-1 mb-6">
+        <TabsList className="tab-strip w-fit h-auto justify-start mb-6 bg-slate-100 dark:bg-slate-900/60">
           <TabsTrigger value="overview" data-testid="fin-tab-overview" className={triggerCls}>Overview</TabsTrigger>
           <TabsTrigger value="balancesheet" data-testid="fin-tab-balancesheet" className={triggerCls}>Balance Sheet</TabsTrigger>
         </TabsList>
@@ -93,7 +93,7 @@ export default function FinancePage() {
               <div className="space-y-2" data-testid="payroll-runs-list">
                 {(runs || []).length === 0 && <div className="border border-slate-200 dark:border-slate-800 p-6 text-center text-xs text-slate-500 dark:text-slate-400">No payroll runs yet.</div>}
                 {(runs || []).map((r) => (
-                  <Link key={r.id} to="/admin/finance/payroll" className="flex items-center gap-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-3 hover:border-blue-400 transition-colors">
+                  <Link key={r.id} to="/admin/finance/payroll" className="flex items-center gap-3 surface p-3 hover:border-blue-400 transition-colors">
                     <span className="text-sm text-slate-700 dark:text-slate-300">{r.period_start} → {r.period_end}</span>
                     <span className="text-xs text-slate-500 dark:text-slate-400">{r.entry_count} staff</span>
                     <span className="ml-auto font-semibold text-slate-900 dark:text-slate-100 text-sm">{fmtCr(r.total_net_pay)}</span>

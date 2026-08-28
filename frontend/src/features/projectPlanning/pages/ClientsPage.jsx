@@ -31,57 +31,92 @@ export default function ClientsPage() {
       {isLoading ? (
         <Skeleton className="h-64 bg-slate-200 dark:bg-slate-800 rounded-md" />
       ) : (
-        <div className="border border-slate-200 dark:border-slate-800 overflow-x-auto">
-          <table className="w-full text-sm" data-testid="clients-table">
-            <thead>
-              <tr className="text-left text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                <th className="px-4 py-3">Client</th>
-                <th className="px-4 py-3">Contact</th>
-                <th className="px-4 py-3 text-center">Active Projects</th>
-                <th className="px-4 py-3 text-right">Total Billed</th>
-                <th className="px-4 py-3 text-center">Status</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {clients?.map((c) => (
-                <tr key={c.id} className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-800/60 transition-colors" data-testid={`client-row-${c.id}`}>
-                  <td className="px-4 py-3">
-                    <Link to={`/admin/clients/${c.id}`} className="flex items-center gap-3 group">
-                      <div className="bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 p-2">
-                        <Building2 size={15} strokeWidth={2.5} className="text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-400 transition-colors">{c.name}</div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">{c.company || "—"}</div>
-                      </div>
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
-                    <div>{c.email || "—"}</div>
-                    <div>{c.phone || "—"}</div>
-                  </td>
-                  <td className="px-4 py-3 text-center font-heading font-bold text-2xl text-slate-600 dark:text-slate-400">{c.project_count ?? 0}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">{fmt(c.total_billed)}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-block border px-2 py-0.5 text-[11px] uppercase tracking-[0.12em] font-semibold ${c.is_active ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-700"}`}>
-                      {c.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link to={`/admin/clients/${c.id}`} data-testid={`client-view-${c.id}`}
-                      className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.15em] font-semibold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-400 transition-colors">
-                      View <ArrowRight size={12} strokeWidth={2.5} />
-                    </Link>
-                  </td>
+        <>
+          {/* Desktop table */}
+          <div className="surface overflow-x-auto table-desktop">
+            <table className="data-table" data-testid="clients-table">
+              <thead>
+                <tr>
+                  <th>Client</th>
+                  <th>Contact</th>
+                  <th className="text-center">Active Projects</th>
+                  <th className="text-right">Total Billed</th>
+                  <th className="text-center">Status</th>
+                  <th />
                 </tr>
-              ))}
-              {clients?.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500 dark:text-slate-400">No clients yet.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {clients?.map((c) => (
+                  <tr key={c.id} data-testid={`client-row-${c.id}`}>
+                    <td>
+                      <Link to={`/admin/clients/${c.id}`} className="flex items-center gap-3 group">
+                        <div className="w-9 h-9 bg-slate-100 dark:bg-slate-800/60 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300">
+                          <Building2 size={15} strokeWidth={2.25} />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{c.name}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">{c.company || "—"}</div>
+                        </div>
+                      </Link>
+                    </td>
+                    <td className="text-xs text-slate-500 dark:text-slate-400">
+                      <div>{c.email || "—"}</div>
+                      <div>{c.phone || "—"}</div>
+                    </td>
+                    <td className="text-center font-heading font-semibold text-2xl text-slate-600 dark:text-slate-400 tabular-nums">{c.project_count ?? 0}</td>
+                    <td className="text-right font-mono font-semibold text-slate-900 dark:text-slate-100 tabular-nums num-wrap">{fmt(c.total_billed)}</td>
+                    <td className="text-center">
+                      <span className={`chip ${c.is_active ? "chip-success" : ""}`}>{c.is_active ? "Active" : "Inactive"}</span>
+                    </td>
+                    <td className="text-right">
+                      <Link to={`/admin/clients/${c.id}`} data-testid={`client-view-${c.id}`}
+                        className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.15em] font-semibold text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
+                        View <ArrowRight size={12} strokeWidth={2.5} />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+                {clients?.length === 0 && (
+                  <tr><td colSpan={6} className="text-center text-slate-500 dark:text-slate-400 py-10">No clients yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="row-card space-y-2">
+            {clients?.map((c) => (
+              <Link key={c.id} to={`/admin/clients/${c.id}`} data-testid={`client-card-${c.id}`}
+                className="surface surface-hover block p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800/60 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0">
+                    <Building2 size={16} strokeWidth={2.25} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="font-semibold text-slate-900 dark:text-slate-100 truncate">{c.name}</div>
+                      <span className={`chip ${c.is_active ? "chip-success" : ""}`}>{c.is_active ? "Active" : "Inactive"}</span>
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{c.company || c.email || "—"}</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60">
+                  <div>
+                    <div className="text-[9px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 font-semibold">Projects</div>
+                    <div className="font-heading font-semibold text-lg text-slate-900 dark:text-slate-100 tabular-nums">{c.project_count ?? 0}</div>
+                  </div>
+                  <div>
+                    <div className="text-[9px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 font-semibold">Total Billed</div>
+                    <div className="font-mono font-semibold text-sm text-slate-800 dark:text-slate-200 tabular-nums num-wrap">{fmt(c.total_billed)}</div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+            {clients?.length === 0 && (
+              <div className="surface p-10 text-center text-slate-500 dark:text-slate-400 text-sm">No clients yet.</div>
+            )}
+          </div>
+        </>
       )}
       <ClientFormModal open={modal} onOpenChange={setModal} />
     </div>

@@ -14,7 +14,7 @@ const STATUSES = ["Draft", "Pending Client Review", "Revision Requested", "Appro
 const CATEGORIES = ["Client Modification", "Rework", "Design Change", "Site Condition"];
 
 const SummaryCell = ({ label, value, sub, accent, testId }) => (
-  <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4" data-testid={testId}>
+  <div className="surface p-4" data-testid={testId}>
     <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">{label}</div>
     <div className={`font-heading font-bold text-2xl mt-2 leading-none ${accent || "text-slate-900 dark:text-slate-100"}`}>{value}</div>
     {sub && <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5">{sub}</div>}
@@ -26,7 +26,7 @@ const ChangeOrderRow = ({ co, canDecide, canContract, canPay, onAction, onRevise
   const decidable = ["Pending Client Review", "Revision Requested"].includes(co.status);
   const revisable = ["Draft", "Pending Client Review", "Revision Requested", "Rejected"].includes(co.status);
   return (
-    <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm" data-testid={`change-order-${co.id}`}>
+    <div className="surface" data-testid={`change-order-${co.id}`}>
       <div className="p-4 flex flex-wrap items-center gap-3 cursor-pointer" onClick={() => setOpen((o) => !o)} data-testid={`co-row-header-${co.id}`}>
         <span className="font-heading font-bold text-amber-600 dark:text-amber-400">{co.co_number}</span>
         <div className="flex-1 min-w-[180px]">
