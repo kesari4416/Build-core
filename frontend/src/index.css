@@ -150,11 +150,27 @@ body {
   min-width: 0;
 }
 
-/* Long financial/numeric values should soft-wrap on commas & digits before
- * overflowing their card / cell. Explicitly opt-in via .num-wrap when needed. */
+/* Long financial/numeric values used to break mid-digit ("₹1,52,5\n1,38,01\n0")
+ * because overflow-wrap:anywhere was too aggressive. New rule: keep the number
+ * intact and let CSS clamp() shrink font to always fit its card's inline size.
+ * .num-wrap is now a no-op safety net (kept for existing callsites). */
 .num-wrap {
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+/* Auto-fitting large numeric display for stat/KPI cards.
+ * Apply container-type on the surrounding card, and .stat-value on the number.
+ * Font scales with card width (cqi) so ₹1,52,51,38,010 fits at any density. */
+.stat-card { container-type: inline-size; }
+.stat-value {
+  font-family: 'Outfit', 'IBM Plex Sans', system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-size: clamp(1.25rem, 10cqi, 2.5rem);
 }
 
 /* Ensure the app root never scrolls the whole viewport horizontally. Individual

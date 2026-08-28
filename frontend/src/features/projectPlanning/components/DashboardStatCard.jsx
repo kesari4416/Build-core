@@ -12,7 +12,7 @@ export const DashboardStatCard = ({ label, value, icon: Icon, isActive, onClick,
       data-testid={testId}
       onClick={onClick}
       aria-pressed={!!isActive}
-      className={`text-left surface surface-hover p-5 tap-scale focus:outline-none transition-all group ${
+      className={`text-left stat-card surface surface-hover p-5 tap-scale focus:outline-none transition-all group ${
         isActive ? `${v.active} ring-2 ring-inset ${v.ring}` : ""
       }`}
     >
@@ -25,7 +25,7 @@ export const DashboardStatCard = ({ label, value, icon: Icon, isActive, onClick,
           <Icon size={15} strokeWidth={2.25} />
         </div>
       </div>
-      <div className={`font-heading font-semibold text-2xl md:text-3xl xl:text-4xl mt-4 leading-tight tracking-tight num-wrap ${isActive ? v.icon : "text-slate-900 dark:text-slate-100"}`}>
+      <div className={`stat-value mt-4 ${isActive ? v.icon : "text-slate-900 dark:text-slate-100"}`}>
         {value}
       </div>
       {isActive && (

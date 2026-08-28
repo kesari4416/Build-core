@@ -14,7 +14,7 @@ const timeAgo = (iso) => {
   return `${Math.floor(s / 86400)}d ago`;
 };
 
-export const NotificationBell = () => {
+export const NotificationBell = ({ collapsed = false }) => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -51,13 +51,15 @@ export const NotificationBell = () => {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button data-testid="notification-bell"
-          className="relative w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium border-l-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-800/60 transition-colors">
-          <Bell size={17} strokeWidth={2.5} />
-          <span className="uppercase tracking-[0.12em] text-xs font-semibold">Alerts</span>
+        <button data-testid="notification-bell" title={collapsed ? "Alerts" : undefined}
+          className={`group relative w-full flex items-center rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors ${collapsed ? "justify-center px-3 py-2.5" : "gap-3 px-3 py-2.5"}`}>
+          <Bell size={collapsed ? 19 : 17} strokeWidth={2.25} className="shrink-0" />
+          {!collapsed && <span className="uppercase tracking-[0.12em] text-[11px] font-semibold">Alerts</span>}
           {unread > 0 && (
             <span data-testid="notification-badge"
-              className="ml-auto bg-red-50 dark:bg-red-500/100 text-white text-[10px] font-bold px-1.5 py-0.5 leading-none min-w-[18px] text-center">
+              className={collapsed
+                ? "absolute top-1 right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-rose-500 text-white text-[9px] font-bold leading-none"
+                : "ml-auto bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none min-w-[18px] text-center"}>
               {unread > 99 ? "99+" : unread}
             </span>
           )}
