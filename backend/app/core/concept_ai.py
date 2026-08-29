@@ -1,28 +1,89 @@
 """AI helpers for the Design Concept module.
 
-Two calls per generation:
-  1. Gemini Nano Banana (gemini-3.1-flash-image-preview) — image edit with the
-     user's uploaded reference photo to produce a restyled render.
-  2. Claude Sonnet 4.6 — strict-JSON itemized cost estimate (retry once on
-     malformed output).
+Native SDKs — no ``emergentintegrations``:
+  1. Gemini 2.5 Flash Image ("Nano Banana") via ``google-genai`` — restyles the
+     uploaded reference photo while preserving room structure.
+  2. Claude Sonnet 5 via ``anthropic`` — strict-JSON itemized cost estimate
+     (retry once on malformed output).
+
+Both keys are read from ``backend/.env`` (``GEMINI_API_KEY`` and
+``ANTHROPIC_API_KEY``). Clients are constructed lazily so the backend can boot
+even when a key is temporarily missing; a clean, actionable error is raised
+only when the pipeline is actually invoked.
 """
-import base64
 import json
 import logging
 import os
 import re
 import uuid
 
-from emergentintegrations.llm.chat import (ImageContent, LlmChat, UserMessage)
-
 logger = logging.getLogger(__name__)
 
-IMAGE_MODEL = "gemini-3.1-flash-image-preview"
-COST_MODEL = "claude-sonnet-4-6"
+IMAGE_MODEL = "gemini-2.5-flash-image"
+COST_MODEL = "claude-sonnet-5"
 
 COST_CATEGORIES = ["Flooring", "Paint/Wall Finish", "Furniture",
                      "Lighting", "Fixtures", "Labour"]
 
+
+# ---------------------------------------------------------------------------
+# Lazy SDK clients
+# ---------------------------------------------------------------------------
+
+_gemini_client = None
+_anthropic_client = None
+
+
+def _get_gemini():
+    global _gemini_client
+    if _gemini_client is not None:
+        return _gemini_client
+    key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if not key:
+        raise RuntimeError(
+            "GEMINI_API_KEY is not set. Add it to backend/.env and restart the "
+            "backend. Get a key at https://aistudio.google.com/api-keys."
+        )
+    try:
+        from google import genai  # type: ignore
+    except ModuleNotFoundError as e:
+        raise RuntimeError(
+            "The `google-genai` package is not installed. Run:\n"
+            "  pip install google-genai\n"
+            "then restart the backend."
+        ) from e
+    _gemini_client = genai.Client(api_key=key)
+    return _gemini_client
+
+
+def _get_anthropic():
+    global _anthropic_client
+    if _anthropic_client is not None:
+        return _anthropic_client
+    key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    if not key:
+        raise RuntimeError(
+            "ANTHROPIC_API_KEY is not set. Add it to backend/.env and restart "
+            "the backend. Get a key at https://console.anthropic.com/."
+        )
+    try:
+        from anthropic import AsyncAnthropic  # type: ignore
+    except ModuleNotFoundError as e:
+        raise RuntimeError(
+            "The `anthropic` package is not installed. Run:\n"
+            "  pip install anthropic\n"
+            "then restart the backend."
+        ) from e
+    # Identity-linked keys require an ``anthropic-workspace-id`` header.
+    workspace_id = os.environ.get("ANTHROPIC_WORKSPACE_ID", "").strip()
+    extra = {"default_headers": {"anthropic-workspace-id": workspace_id}} if workspace_id else {}
+    _anthropic_client = AsyncAnthropic(api_key=key, **extra)
+    return _anthropic_client
+
+
+# ---------------------------------------------------------------------------
+# Image render — Gemini 2.5 Flash Image
+# ---------------------------------------------------------------------------
 
 def _restyle_prompt(space_type: str, style: str) -> str:
     return (
@@ -36,29 +97,49 @@ def _restyle_prompt(space_type: str, style: str) -> str:
     )
 
 
+def _sniff_mime(reference_bytes: bytes) -> str:
+    if reference_bytes.startswith(b"\x89PNG"):
+        return "image/png"
+    if reference_bytes.startswith(b"\xff\xd8"):
+        return "image/jpeg"
+    if reference_bytes[:4] == b"RIFF" and reference_bytes[8:12] == b"WEBP":
+        return "image/webp"
+    return "image/png"
+
+
 async def generate_render(reference_bytes: bytes, space_type: str, style: str) -> bytes:
-    """Return PNG bytes of a restyled render, preserving room structure.
+    """Return PNG/JPEG bytes of a restyled render, preserving room structure.
 
     Raises RuntimeError on failure.
     """
-    api_key = os.environ.get("EMERGENT_LLM_KEY")
-    if not api_key:
-        raise RuntimeError("EMERGENT_LLM_KEY missing")
+    client = _get_gemini()
+    from google.genai import types  # type: ignore
 
-    b64 = base64.b64encode(reference_bytes).decode("utf-8")
-    chat = LlmChat(api_key=api_key, session_id=f"concept-{uuid.uuid4()}",
-                    system_message="You are an expert interior design render assistant.")
-    chat.with_model("gemini", IMAGE_MODEL).with_params(modalities=["image", "text"])
+    mime = _sniff_mime(reference_bytes)
+    reference = types.Part.from_bytes(data=reference_bytes, mime_type=mime)
+    prompt = _restyle_prompt(space_type, style)
 
-    msg = UserMessage(text=_restyle_prompt(space_type, style),
-                        file_contents=[ImageContent(b64)])
+    response = await client.aio.models.generate_content(
+        model=IMAGE_MODEL,
+        contents=[reference, prompt],
+        config=types.GenerateContentConfig(
+            response_modalities=["IMAGE"],
+        ),
+    )
 
-    _, images = await chat.send_message_multimodal_response(msg)
-    if not images:
-        raise RuntimeError("Image model returned no images")
-    # First image is the restyled render
-    return base64.b64decode(images[0]["data"])
+    # Response may include multiple parts (text + image). Return the first
+    # inline image payload.
+    for cand in response.candidates or []:
+        for part in getattr(cand.content, "parts", None) or []:
+            data = getattr(getattr(part, "inline_data", None), "data", None)
+            if data:
+                return data
+    raise RuntimeError("Gemini returned no image")
 
+
+# ---------------------------------------------------------------------------
+# Cost estimate — Claude Sonnet 5
+# ---------------------------------------------------------------------------
 
 def _cost_system() -> str:
     return (
@@ -75,7 +156,7 @@ def _cost_user_prompt(space_type: str, style: str, sqft: float, region: str) -> 
         f"Generate a realistic renovation cost estimate for a {sqft} sq ft "
         f"{space_type} restyled in {style} style, in {region}. Return between 8 "
         f"and 14 line items spanning these categories: {cats}. Rates should be "
-        "credible mid-market {region} prices in {reg} INR.\n\n"
+        f"credible mid-market {region} prices in INR.\n\n"
         "Return this exact JSON shape and NOTHING else:\n"
         "{\n"
         '  "lines": [\n'
@@ -91,11 +172,11 @@ def _cost_user_prompt(space_type: str, style: str, sqft: float, region: str) -> 
         "}\n\n"
         "Rules:\n"
         "- subtotal MUST equal round(quantity * rate).\n"
-        "- All amounts are plain numbers (no ₹, no commas).\n"
+        "- All amounts are plain numbers (no INR symbol, no commas).\n"
         "- Include labour separately (skilled + helper as a single Labour line "
         "  or split as needed).\n"
         "- No trailing commentary."
-    ).replace("{region}", region).replace("{reg}", region)
+    )
 
 
 _JSON_BLOCK = re.compile(r"\{[\s\S]*\}")
@@ -134,21 +215,25 @@ def _parse_lines(raw: str) -> list[dict]:
 async def generate_cost_estimate(space_type: str, style: str, sqft: float,
                                     region: str = "India") -> list[dict]:
     """Return validated cost lines. One retry on malformed JSON."""
-    api_key = os.environ.get("EMERGENT_LLM_KEY")
-    if not api_key:
-        raise RuntimeError("EMERGENT_LLM_KEY missing")
-
+    client = _get_anthropic()
     prompt = _cost_user_prompt(space_type, style, sqft, region)
+    system = _cost_system()
 
     for attempt in (1, 2):
-        chat = LlmChat(api_key=api_key, session_id=f"cost-{uuid.uuid4()}",
-                        system_message=_cost_system())
-        chat.with_model("anthropic", COST_MODEL)
-        resp = await chat.send_message(UserMessage(text=prompt))
+        message = await client.messages.create(
+            model=COST_MODEL,
+            max_tokens=4096,
+            system=system,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = "".join(
+            b.text for b in (message.content or []) if getattr(b, "type", None) == "text"
+        ).strip()
         try:
-            return _parse_lines(resp)
+            return _parse_lines(text)
         except (ValueError, json.JSONDecodeError) as e:
-            logger.warning("Cost JSON parse failed (attempt %d): %s", attempt, e)
+            logger.warning("Cost JSON parse failed (attempt %d, session=%s): %s",
+                             attempt, uuid.uuid4().hex[:8], e)
             if attempt == 2:
                 raise RuntimeError(f"Cost estimate malformed after retry: {e}")
     return []

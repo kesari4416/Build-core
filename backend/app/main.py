@@ -11,9 +11,10 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
 from app.database import engine, Base, SessionLocal
-from app.routers import auth, projects, clients, uploads, documents, vendors, procurement, finance, users_admin, quotation, notifications, employees, exports, vendor_products, change_orders, transactions, estimates, quotations_v2, concepts
+from app.routers import auth, projects, clients, uploads, documents, vendors, procurement, finance, users_admin, quotation, notifications, employees, exports, vendor_products, change_orders, transactions, estimates, quotations_v2, concepts, models3d
 from app.routers.uploads import UPLOAD_DIR
 from app.models import concepts as _concepts_models  # noqa: F401 — register tables
+from app.models import models3d as _models3d_models  # noqa: F401 — register tables
 from app.seed import seed_admin, seed_demo_data
 from app.seed_procurement import seed_procurement
 
@@ -41,6 +42,7 @@ api_router.include_router(transactions.router)
 api_router.include_router(estimates.router)
 api_router.include_router(quotations_v2.router)
 api_router.include_router(concepts.router)
+api_router.include_router(models3d.router)
 
 
 @api_router.get("/")

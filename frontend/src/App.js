@@ -29,6 +29,7 @@ import SiteEngineerPortalPage from "./features/projectPlanning/pages/SiteEnginee
 import EstimatesPage from "./features/projectPlanning/pages/EstimatesPage";
 import EstimateApprovalPage from "./features/projectPlanning/pages/EstimateApprovalPage";
 import ConceptStudioPage from "./features/projectPlanning/pages/ConceptStudioPage";
+import Model3DViewerPage from "./features/projectPlanning/pages/Model3DViewerPage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -64,6 +65,7 @@ function App() {
             <Route path="/admin" element={<ProtectedRoute><AdminHome /></ProtectedRoute>} />
             <Route path="/admin/projects" element={<ProtectedRoute><ProjectListPage /></ProtectedRoute>} />
             <Route path="/admin/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
+            <Route path="/admin/projects/:projectId/3d-viewer" element={<ProtectedRoute><Model3DViewerPage /></ProtectedRoute>} />
             <Route path="/admin/projects/:id/finance" element={<ProtectedRoute><ProjectFinancePage /></ProtectedRoute>} />
             <Route path="/admin/projects/:id/procurement" element={<ProtectedRoute><ProcurementDashboardPage /></ProtectedRoute>} />
             <Route path="/admin/projects/:id/procurement/quotations/:quotationId" element={<ProtectedRoute><QuotationDetailPage /></ProtectedRoute>} />

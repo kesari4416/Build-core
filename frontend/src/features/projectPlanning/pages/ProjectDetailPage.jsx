@@ -111,6 +111,11 @@ export default function ProjectDetailPage() {
                 Procurement
               </Button>
             </Link>
+            <Link to={`/admin/projects/${id}/3d-viewer`} data-testid="model3d-link">
+              <Button variant="outline" className="rounded-md border-slate-300 dark:border-slate-700 hover:border-blue-400">
+                3D Drawings
+              </Button>
+            </Link>
             <Button data-testid="edit-project-button" onClick={() => setEditModal(true)} variant="outline" className="rounded-md border-slate-300 dark:border-slate-700 hover:border-blue-400">
               <Pencil size={14} strokeWidth={2.5} /> Edit Project
             </Button>

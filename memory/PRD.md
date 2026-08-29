@@ -19,6 +19,8 @@ Reference: "Zoho Books but nicer" (user's verbatim direction). Mobile-first prio
 - Full spec at `/app/design_guidelines.json`
 
 ## What's Implemented (recent → oldest)
+- **2026-02-29** — 3D Drawing Viewer wired up: route `/admin/projects/:projectId/3d-viewer` and "3D Drawings" button on project header; upload GLB/GLTF, camera presets (Front/Rear/Left/Right/Top/Iso/Free), wireframe toggle, click-to-drop pin annotations with local storage on `/app/backend/uploads/models3d/`
+- **2026-02-29** — AI Concept Studio migrated off Emergent LLM: `/app/backend/app/core/concept_ai.py` now uses native `google-genai` SDK (Gemini 2.5 Flash Image) for restyle and native `anthropic` SDK (Claude Sonnet 5) for cost estimate. Env vars: `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, optional `ANTHROPIC_WORKSPACE_ID` for identity-linked keys
 - **2026-02-28 Phase 1 Redesign — Foundations**: New color tokens (light + dark), typography upgrade to Outfit, glass sticky headers, sidebar refresh with amber active pills, all 4 StatCard variants unified (Dashboard local, DashboardStatCard, OrgBalanceSheetTab, ProjectBalanceSheetTab) — icon chip + Outfit numerals + hover lift, Login page split-screen refined with inline SITE**RA** wordmark, 38 files bulk-updated to slate-primary buttons (was blue-600) and amber focus rings
 - **2026-02-27** — Global layout overflow fix (min-width:0 grid/flex, overflow-x:clip root, num-wrap utility, responsive stat cards for large budgets)
 - **2026-02-26** — Auto-invoice on client income: `Invoice.income_entry_id` FK with partial unique index, `ensure_invoice_for_income` helper, `paid_sum` treats linked income as paid, startup backfill for pre-existing rows
