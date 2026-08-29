@@ -132,16 +132,17 @@ def startup():
     db = SessionLocal()
     try:
         seed_admin(db)
-        seed_demo_data(db)
-        seed_procurement(db)
-        from app.seed_finance import seed_finance
-        seed_finance(db)
-        from app.seed_finance import seed_employees, seed_categories, seed_milestones, seed_expense_categories, seed_project_ledgers
-        seed_employees(db)
-        seed_categories(db)
-        seed_milestones(db)
-        seed_expense_categories(db)
-        seed_project_ledgers(db)
+        if os.environ.get("SEED_DEMO_DATA", "false").lower() == "true":
+            seed_demo_data(db)
+            seed_procurement(db)
+            from app.seed_finance import seed_finance
+            seed_finance(db)
+            from app.seed_finance import seed_employees, seed_categories, seed_milestones, seed_expense_categories, seed_project_ledgers
+            seed_employees(db)
+            seed_categories(db)
+            seed_milestones(db)
+            seed_expense_categories(db)
+            seed_project_ledgers(db)
         # Backfill: auto-generate invoices for pre-existing IncomeEntry rows
         # that don't yet have a linked invoice. Safe to re-run on every boot.
         from app.routers.transactions import ensure_invoice_for_income
