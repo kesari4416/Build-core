@@ -132,6 +132,7 @@ def startup():
                      "CREATE UNIQUE INDEX IF NOT EXISTS uq_invoices_income_entry_id ON invoices(income_entry_id) WHERE income_entry_id IS NOT NULL",
                      # -- Phase 1 multi-tenant scaffolding -------------------
                      "ALTER TABLE users ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id)",
+                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS allowed_modules JSONB",
                      "ALTER TABLE projects ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id)",
                      "ALTER TABLE clients ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id)",
                      "ALTER TABLE vendors ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id)",

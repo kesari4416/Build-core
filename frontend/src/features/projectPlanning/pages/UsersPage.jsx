@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Pencil, KeyRound, UserX, UserCheck, Trash2, HardHat } from "lucide-react";
+import { Plus, Pencil, KeyRound, UserX, UserCheck, Trash2, HardHat, ShieldCheck, Check, X } from "lucide-react";
 import api, { formatApiErrorDetail } from "../../../api/client";
 import { Button } from "../../../components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
@@ -16,6 +16,14 @@ const STATUS_STYLE = {
   Invited: "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/30",
   Disabled: "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border-red-200 dark:border-red-500/30",
 };
+const MODULE_LABELS = {
+  projects: "Projects", phases_tracking: "Phases & Tracking",
+  field_ops: "Field Ops", clients: "Clients", finance: "Finance",
+  estimates: "Estimates", procurement: "Procurement",
+  change_orders: "Change Orders", model3d_viewer: "3D Viewer",
+  concept_studio: "AI Concept", client_portal: "Client Portal",
+  vendor_portal: "Vendor Portal", site_engineer_portal: "SE Portal",
+};
 const fmt = (n) => (n ? `₹${Number(n).toLocaleString("en-IN")}` : "—");
 
 export default function UsersPage() {
@@ -25,6 +33,7 @@ export default function UsersPage() {
   const [formModal, setFormModal] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [assignUser, setAssignUser] = useState(null);
+  const [permUser, setPermUser] = useState(null);
 
   const { data: users } = useQuery({
     queryKey: ["allUsers", role, status],
@@ -32,6 +41,12 @@ export default function UsersPage() {
       params: { ...(role !== "all" && { role }), ...(status !== "all" && { status }) },
     }).then((r) => r.data),
   });
+
+  const { data: allowanceData } = useQuery({
+    queryKey: ["admin-module-allowance"],
+    queryFn: () => api.get("/users/allowed-modules").then((r) => r.data),
+  });
+  const tenantAllowed = allowanceData?.modules || [];
 
   const run = async (fn, ok) => {
     try { await fn(); toast.success(ok); qc.invalidateQueries({ queryKey: ["allUsers"] }); }
@@ -80,6 +95,7 @@ export default function UsersPage() {
               <th className="px-4 py-3">User</th>
               <th className="px-4 py-3">Role</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Modules</th>
               <th className="px-4 py-3 text-right">Base Salary</th>
               <th className="px-4 py-3">Last Login</th>
               <th className="px-4 py-3 text-right">Actions</th>
@@ -95,6 +111,15 @@ export default function UsersPage() {
                 <td className="px-4 py-3"><RoleBadge role={u.role} /></td>
                 <td className="px-4 py-3">
                   <span className={`inline-block border px-2 py-0.5 text-[11px] uppercase tracking-[0.12em] font-semibold ${STATUS_STYLE[u.status] || STATUS_STYLE.Active}`}>{u.status}</span>
+                </td>
+                <td className="px-4 py-3">
+                  <button data-testid={`modules-${u.id}`} onClick={() => setPermUser(u)}
+                    className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/60 hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors">
+                    <ShieldCheck size={12} strokeWidth={2.5} />
+                    {(u.allowed_modules && u.allowed_modules.length > 0)
+                      ? `${u.allowed_modules.length}/${tenantAllowed.length}`
+                      : (u.role === "Admin" ? "Full" : `All ${tenantAllowed.length}`)}
+                  </button>
                 </td>
                 <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">{fmt(u.base_salary)}</td>
                 <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{u.last_login_at ? u.last_login_at.slice(0, 10) : "Never"}</td>
@@ -123,13 +148,105 @@ export default function UsersPage() {
               </tr>
             ))}
             {(users || []).length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500 dark:text-slate-400" data-testid="users-empty">No users match the filters.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-500 dark:text-slate-400" data-testid="users-empty">No users match the filters.</td></tr>
             )}
           </tbody>
         </table>
       </div>
       <UserFormModal open={formModal} onOpenChange={setFormModal} user={editUser} />
       <ProjectAssignmentPicker open={!!assignUser} onOpenChange={(v) => !v && setAssignUser(null)} targetUser={assignUser || {}} />
+      <UserModulesModal user={permUser} onClose={() => setPermUser(null)}
+        tenantAllowed={tenantAllowed} moduleLabels={MODULE_LABELS}
+        onSaved={() => { setPermUser(null); qc.invalidateQueries({ queryKey: ["allUsers"] }); }} />
+    </div>
+  );
+}
+
+
+function UserModulesModal({ user, onClose, tenantAllowed, moduleLabels, onSaved }) {
+  const [selected, setSelected] = useState(new Set());
+  const [inherit, setInherit] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const has = user.allowed_modules || [];
+    setInherit(has.length === 0);
+    setSelected(new Set(has));
+  }, [user?.id]);
+
+  if (!user) return null;
+
+  const toggle = (m) => {
+    const next = new Set(selected);
+    next.has(m) ? next.delete(m) : next.add(m);
+    setSelected(next);
+    if (inherit) setInherit(false);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const body = { allowed_modules: inherit ? [] : Array.from(selected) };
+      await api.patch(`/users/${user.id}`, body);
+      toast.success("Permissions updated");
+      onSaved();
+    } catch (e) {
+      toast.error(formatApiErrorDetail(e.response?.data?.detail) || "Update failed");
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto" data-testid="user-modules-modal">
+      <div className="surface p-6 w-full max-w-2xl my-8">
+        <div className="section-eyebrow mb-1">Module permissions</div>
+        <h2 className="font-heading font-semibold text-xl text-slate-900 dark:text-slate-100 mb-1">{user.name}</h2>
+        <div className="text-xs text-slate-500 dark:text-slate-400 mb-5">
+          {user.email} · <span className="font-semibold">{user.role}</span>
+        </div>
+
+        <label className="flex items-center gap-2.5 mb-5 cursor-pointer p-3 rounded-lg bg-slate-50 dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800">
+          <input type="checkbox" checked={inherit} onChange={(e) => setInherit(e.target.checked)} data-testid="modules-inherit"
+            className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-amber-600 focus:ring-amber-500/40" />
+          <div>
+            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">Inherit all tenant modules</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">User sees every module the company is entitled to ({tenantAllowed.length} total).</div>
+          </div>
+        </label>
+
+        <div className={inherit ? "opacity-50 pointer-events-none" : ""}>
+          <div className="section-eyebrow mb-2">Custom module set · {selected.size} selected</div>
+          <div className="grid sm:grid-cols-2 gap-1.5">
+            {tenantAllowed.map((m) => (
+              <button key={m} type="button" onClick={() => toggle(m)} data-testid={`umodule-${m}`}
+                className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm text-left transition-colors ${
+                  selected.has(m)
+                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-500/30"
+                    : "bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-slate-300 dark:hover:ring-slate-700"
+                }`}>
+                <span className="truncate">{moduleLabels[m] || m}</span>
+                {selected.has(m) ? <Check size={14} strokeWidth={2.5} /> : <X size={14} strokeWidth={2.5} className="opacity-40" />}
+              </button>
+            ))}
+            {tenantAllowed.length === 0 && (
+              <div className="col-span-2 text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-4 text-center">
+                Your tenant has no modules enabled. Ask your SuperAdmin to enable modules first.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 mt-6">
+          <button type="button" onClick={onClose}
+            className="px-4 py-2 text-[11px] uppercase tracking-[0.15em] font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+            Cancel
+          </button>
+          <button type="button" onClick={save} disabled={saving} data-testid="save-modules-btn"
+            className="px-5 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-[11px] uppercase tracking-[0.15em] font-semibold disabled:opacity-50">
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

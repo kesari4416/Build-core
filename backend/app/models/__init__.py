@@ -18,6 +18,9 @@ class User(Base):
     role = Column(String, nullable=False, default="Client")
     # NULL for SuperAdmin (platform-wide), FK to tenants.id for everyone else.
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
+    # Optional per-user module allow-list (subset of the tenant's allowed_modules).
+    # NULL means the user inherits the full tenant module set.
+    allowed_modules = Column(JSON, nullable=True)
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
     phone = Column(String, nullable=True)
     status = Column(String, default="Active", nullable=False)

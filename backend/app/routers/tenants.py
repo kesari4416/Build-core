@@ -171,12 +171,59 @@ def update_tenant(tid: int, body: TenantPatch, db: Session = Depends(get_db),
 @router.delete("/tenants/{tid}")
 def deactivate_tenant(tid: int, db: Session = Depends(get_db),
                         _: User = Depends(_require_super)):
+    """Soft-delete: pause the tenant. Data is preserved. Use ``/permanent``
+    for a full cascading wipe."""
     t = db.get(Tenant, tid)
     if not t:
         raise HTTPException(404, "Tenant not found")
     t.is_active = False
     db.commit()
     return {"status": "deactivated"}
+
+
+@router.delete("/tenants/{tid}/permanent")
+def permanent_delete_tenant(tid: int, db: Session = Depends(get_db),
+                                _: User = Depends(_require_super)):
+    """HARD delete a tenant and every row belonging to it. Cannot be undone.
+    The Default Company (id=1) is protected."""
+    if tid == 1:
+        raise HTTPException(400, "The Default Company cannot be deleted")
+    t = db.get(Tenant, tid)
+    if not t:
+        raise HTTPException(404, "Tenant not found")
+
+    from sqlalchemy import text
+    # Delete tenant-owned rows first (children cascade via FKs where set).
+    for tbl in ("model3d_files", "concept_generations", "estimates",
+                  "employees", "vendors", "projects", "clients"):
+        try:
+            db.execute(text(f"DELETE FROM {tbl} WHERE tenant_id = :tid"),
+                        {"tid": tid})
+        except Exception:  # noqa: BLE001
+            db.rollback()
+    # Users last so admins keep FK integrity while other rows are removed.
+    db.execute(text("DELETE FROM users WHERE tenant_id = :tid"), {"tid": tid})
+    db.delete(t)
+    db.commit()
+    return {"status": "deleted"}
+
+
+@router.get("/tenants/{tid}/data-summary")
+def tenant_data_summary(tid: int, db: Session = Depends(get_db),
+                            _: User = Depends(_require_super)):
+    """Row counts across the tenant's top-level tables — the SuperAdmin uses
+    this to decide whether it's safe to delete or hold a tenant."""
+    from sqlalchemy import text
+    counts: dict[str, int] = {}
+    for tbl in ("users", "projects", "clients", "vendors", "employees",
+                  "estimates", "concept_generations", "model3d_files"):
+        try:
+            row = db.execute(text(f"SELECT count(*) FROM {tbl} WHERE tenant_id = :tid"),
+                              {"tid": tid}).scalar()
+            counts[tbl] = int(row or 0)
+        except Exception:  # noqa: BLE001
+            counts[tbl] = 0
+    return counts
 
 
 @router.post("/tenants/{tid}/users", status_code=201)

@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Building2, Plus, Shield, Users, Check, X, ChevronRight, LogOut } from "lucide-react";
+import { Building2, Plus, Shield, Users, Check, X, ChevronRight, LogOut, Pause, Play, Trash2, AlertTriangle } from "lucide-react";
 import api, { formatApiErrorDetail } from "../../../api/client";
 import { useAuth } from "../../../context/AuthContext";
 
@@ -45,6 +45,18 @@ export default function SuperAdminPage() {
     mutationFn: ({ id, ...body }) => api.patch(`/tenants/${id}`, body).then((r) => r.data),
     onSuccess: () => { qc.invalidateQueries(["tenants"]); toast.success("Tenant updated"); },
     onError: (e) => toast.error(formatApiErrorDetail(e.response?.data?.detail) || "Update failed"),
+  });
+
+  const toggleHold = useMutation({
+    mutationFn: ({ id, active }) => api.patch(`/tenants/${id}`, { is_active: active }).then((r) => r.data),
+    onSuccess: (_, v) => { qc.invalidateQueries(["tenants"]); toast.success(v.active ? "Tenant resumed" : "Tenant on hold"); },
+    onError: (e) => toast.error(formatApiErrorDetail(e.response?.data?.detail) || "Update failed"),
+  });
+
+  const deleteTenant = useMutation({
+    mutationFn: (id) => api.delete(`/tenants/${id}/permanent`).then((r) => r.data),
+    onSuccess: () => { qc.invalidateQueries(["tenants"]); toast.success("Tenant deleted"); },
+    onError: (e) => toast.error(formatApiErrorDetail(e.response?.data?.detail) || "Delete failed"),
   });
 
   if (user === null) return null;
@@ -104,10 +116,10 @@ export default function SuperAdminPage() {
           <div className="space-y-3" data-testid="tenants-list">
             {tenants.map((t) => (
               <div key={t.id} data-testid={`tenant-row-${t.id}`}
-                className="surface surface-hover p-5 flex flex-col md:flex-row md:items-center gap-4 md:gap-6 cursor-pointer"
-                onClick={() => setEditingTenant(t)}>
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${t.is_active ? "bg-emerald-500/10 text-emerald-600" : "bg-slate-200 dark:bg-slate-800 text-slate-500"}`}>
+                className="surface surface-hover p-5 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+                <button className="flex items-center gap-3 min-w-0 flex-1 text-left"
+                  onClick={() => setEditingTenant(t)}>
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${t.is_active ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}`}>
                     <Building2 size={18} strokeWidth={2.25} />
                   </div>
                   <div className="min-w-0">
@@ -116,18 +128,45 @@ export default function SuperAdminPage() {
                       {t.admin_email || "no admin"} · {t.slug}
                     </div>
                   </div>
-                </div>
+                </button>
                 <div className="flex items-center gap-4">
-                  <div className="text-right">
+                  <div className="text-right hidden sm:block">
                     <div className="section-eyebrow">Modules</div>
                     <div className="text-sm font-semibold text-slate-900 dark:text-slate-100 tabular-nums">{(t.allowed_modules || []).length}/{modules.length}</div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right hidden sm:block">
                     <div className="section-eyebrow">Users</div>
                     <div className="text-sm font-semibold text-slate-900 dark:text-slate-100 tabular-nums">{t.user_count}</div>
                   </div>
-                  <span className={`chip ${t.is_active ? "chip-success" : "chip-muted"}`}>{t.is_active ? "Active" : "Paused"}</span>
-                  <ChevronRight size={16} className="text-slate-400" />
+                  <span className={`chip ${t.is_active ? "chip-success" : "chip-warning"}`}>{t.is_active ? "Active" : "On Hold"}</span>
+                  <div className="flex items-center gap-0.5 border-l border-slate-200 dark:border-slate-800 pl-3 ml-1">
+                    {t.is_active ? (
+                      <button data-testid={`hold-tenant-${t.id}`} title="Put on hold"
+                        onClick={(e) => { e.stopPropagation(); toggleHold.mutate({ id: t.id, active: false }); }}
+                        className="p-1.5 text-slate-500 hover:text-amber-600 transition-colors">
+                        <Pause size={14} strokeWidth={2.5} />
+                      </button>
+                    ) : (
+                      <button data-testid={`resume-tenant-${t.id}`} title="Resume tenant"
+                        onClick={(e) => { e.stopPropagation(); toggleHold.mutate({ id: t.id, active: true }); }}
+                        className="p-1.5 text-slate-500 hover:text-emerald-600 transition-colors">
+                        <Play size={14} strokeWidth={2.5} />
+                      </button>
+                    )}
+                    {t.id !== 1 && (
+                      <button data-testid={`delete-tenant-${t.id}`} title="Delete permanently"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Delete "${t.name}" and ALL its data? This cannot be undone.`)) {
+                            deleteTenant.mutate(t.id);
+                          }
+                        }}
+                        className="p-1.5 text-slate-500 hover:text-rose-600 transition-colors">
+                        <Trash2 size={14} strokeWidth={2.5} />
+                      </button>
+                    )}
+                  </div>
+                  <ChevronRight size={16} className="text-slate-400 cursor-pointer" onClick={() => setEditingTenant(t)} />
                 </div>
               </div>
             ))}
@@ -252,10 +291,21 @@ function EditTenantModal({ tenant, modules, onClose, onSave }) {
   const [isActive, setIsActive] = useState(tenant.is_active);
   const [selected, setSelected] = useState(new Set(tenant.allowed_modules || []));
 
+  const { data: summary } = useQuery({
+    queryKey: ["tenant-summary", tenant.id],
+    queryFn: () => api.get(`/tenants/${tenant.id}/data-summary`).then((r) => r.data),
+  });
+
   const toggle = (m) => {
     const next = new Set(selected);
     next.has(m) ? next.delete(m) : next.add(m);
     setSelected(next);
+  };
+
+  const SUMMARY_LABELS = {
+    users: "Users", projects: "Projects", clients: "Clients",
+    vendors: "Vendors", employees: "Employees", estimates: "Estimates",
+    concept_generations: "AI Concepts", model3d_files: "3D Models",
   };
 
   return (
@@ -264,8 +314,23 @@ function EditTenantModal({ tenant, modules, onClose, onSave }) {
         <div className="section-eyebrow mb-1">Tenant · #{tenant.id}</div>
         <h2 className="font-heading font-semibold text-xl text-slate-900 dark:text-slate-100 mb-1">{tenant.name}</h2>
         <div className="text-xs text-slate-500 dark:text-slate-400 mb-5 font-mono">
-          Admin: {tenant.admin_email || "—"} · Slug: {tenant.slug} · Users: {tenant.user_count}
+          Admin: {tenant.admin_email || "—"} · Slug: {tenant.slug}
         </div>
+
+        {/* Data drill-down */}
+        {summary && (
+          <div className="mb-6" data-testid="tenant-data-summary">
+            <div className="section-eyebrow mb-2">Data in this tenant</div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {Object.entries(SUMMARY_LABELS).map(([k, label]) => (
+                <div key={k} className="rounded-lg bg-slate-50 dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 px-3 py-2">
+                  <div className="text-[9px] uppercase tracking-[0.15em] font-semibold text-slate-500 dark:text-slate-400">{label}</div>
+                  <div className="text-lg font-heading font-semibold text-slate-900 dark:text-slate-100 tabular-nums leading-tight">{summary[k] ?? 0}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mb-4">
           <label className="section-eyebrow block mb-1.5">Company name</label>
