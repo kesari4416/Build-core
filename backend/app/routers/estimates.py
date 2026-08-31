@@ -122,20 +122,32 @@ def upsert_requirement_master(db, name):
         db.add(RequirementMaster(name=name))
 
 
-def sync_phase_to_project(db, project_name, phase_name):
+def sync_phase_to_project(db, project_name, phase_name, tenant_id=None):
     if not (project_name and phase_name):
         return None
     from app.models import Phase
-    project = db.query(Project).filter(Project.name.ilike(project_name.strip())).first()
+    q = db.query(Project).filter(Project.name.ilike(project_name.strip()))
+    if tenant_id is not None:
+        q = q.filter(Project.tenant_id == tenant_id)
+    project = q.first()
     if not project:
         return None
+    return ensure_phase_on_project(db, project, phase_name)
+
+
+def ensure_phase_on_project(db, project, phase_name):
+    """Create the phase on the project if missing; return the phase id."""
+    from app.models import Phase
+    name = (phase_name or "").strip()
+    if not name:
+        return None
     existing = db.query(Phase).filter(Phase.project_id == project.id,
-                                      Phase.name.ilike(phase_name.strip())).first()
+                                      Phase.name.ilike(name)).first()
     if existing:
         return existing.id
     max_seq = max([p.sequence_order for p in
                    db.query(Phase).filter(Phase.project_id == project.id).all()] or [0])
-    ph = Phase(project_id=project.id, name=phase_name.strip(), sequence_order=max_seq + 1)
+    ph = Phase(project_id=project.id, name=name, sequence_order=max_seq + 1)
     db.add(ph)
     db.flush()
     return ph.id
@@ -220,7 +232,8 @@ def create_estimate(body: EstimateCreate, db: Session = Depends(get_db), user: U
         db.add(EstimateRequirement(estimate_id=e.id, requirement_name=name, price=r.price))
         upsert_requirement_master(db, name)
         out_reqs.append({"requirement_name": name, "price": r.price})
-    synced_phase_id = sync_phase_to_project(db, e.project_name, e.phase)
+    synced_phase_id = sync_phase_to_project(db, e.project_name, e.phase,
+                                            tenant_id=getattr(user, "tenant_id", None))
     db.commit()
     db.refresh(e)
     out = estimate_out(e, clients={client.id: client.name}, reqs=out_reqs)
@@ -461,13 +474,42 @@ def link_project(estimate_id: int, body: LinkProjectIn, db: Session = Depends(ge
         raise HTTPException(status_code=422, detail="Estimate must be approved before creating a project")
     if e.linked_project_id:
         raise HTTPException(status_code=422, detail="Estimate already linked to a project")
-    if not db.get(Project, body.project_id):
+    project = db.get(Project, body.project_id)
+    if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    assert_same_tenant(project, user, "project")
     e.linked_project_id = body.project_id
+
+    # Carry over the estimate's phase (and any other approved estimates that
+    # share the same project_name in this tenant) to the newly created project.
+    synced_phase_ids = []
+    if e.phase:
+        pid = ensure_phase_on_project(db, project, e.phase)
+        if pid:
+            synced_phase_ids.append(pid)
+    if e.project_name:
+        siblings = tenant_scope(db.query(Estimate), Estimate, user).filter(
+            Estimate.id != e.id,
+            Estimate.project_name.ilike(e.project_name.strip()),
+            Estimate.approval_state == "approved",
+            Estimate.linked_project_id.is_(None),
+        ).all()
+        for sib in siblings:
+            if not sib.phase:
+                continue
+            pid = ensure_phase_on_project(db, project, sib.phase)
+            if pid and pid not in synced_phase_ids:
+                synced_phase_ids.append(pid)
+            sib.linked_project_id = project.id
+            log_event(db, sib.id, "project created", user.name,
+                      f"linked to project #{project.id} via estimate #{e.id}")
+
     log_event(db, e.id, "project created", user.name, f"project #{body.project_id}")
     db.commit()
     db.refresh(e)
-    return estimate_out(e)
+    out = estimate_out(e)
+    out["synced_phase_ids"] = synced_phase_ids
+    return out
 
 
 @router.get("/estimates/{estimate_id}/events")
