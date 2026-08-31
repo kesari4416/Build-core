@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Client, Project, ProgressUpdate
 from app.core.security import get_current_user, require_roles
+from app.core.tenant_scope import assert_same_tenant, ensure_tenant_owned, tenant_scope
 from app.crud import project_out, update_out, client_out
 
 router = APIRouter(tags=["clients"])
@@ -22,7 +23,7 @@ def list_clients(db: Session = Depends(get_db),
     billed = dict(db.query(Invoice.client_id,
                            func.sum(Invoice.amount + func.coalesce(Invoice.tax_amount, 0)))
                   .group_by(Invoice.client_id).all())
-    clients = db.query(Client).order_by(Client.created_at.desc(), Client.id.desc()).all()
+    clients = tenant_scope(db.query(Client), Client, user).order_by(Client.created_at.desc(), Client.id.desc()).all()
     result = []
     for c in clients:
         count = db.query(Project).filter(Project.client_id == c.id,
@@ -42,6 +43,7 @@ def create_client(body: dict, db: Session = Depends(get_db),
     c = Client(name=name, company=body.get("company"), email=body.get("email"),
                phone=body.get("phone"), address=body.get("address"),
                tax_id=body.get("tax_id"), notes=body.get("notes"))
+    ensure_tenant_owned(c, user)
     db.add(c); db.commit(); db.refresh(c)
     return client_out(c)
 
@@ -50,8 +52,7 @@ def create_client(body: dict, db: Session = Depends(get_db),
 def patch_client(client_id: int, body: dict, db: Session = Depends(get_db),
                  user: User = Depends(require_roles("Admin"))):
     c = db.get(Client, client_id)
-    if not c:
-        raise HTTPException(status_code=404, detail="Client not found")
+    assert_same_tenant(c, user, "client")
     for k in ("name", "company", "email", "phone", "address", "tax_id", "notes", "is_active"):
         if k in body:
             setattr(c, k, body[k])
@@ -63,8 +64,7 @@ def patch_client(client_id: int, body: dict, db: Session = Depends(get_db),
 def deactivate_client(client_id: int, db: Session = Depends(get_db),
                       user: User = Depends(require_roles("Admin"))):
     c = db.get(Client, client_id)
-    if not c:
-        raise HTTPException(status_code=404, detail="Client not found")
+    assert_same_tenant(c, user, "client")
     active = db.query(Project).filter(Project.client_id == client_id,
                                       Project.is_archived == False,  # noqa: E712
                                       Project.status.in_(["Planning", "Ongoing", "OnHold"])).count()
@@ -93,8 +93,7 @@ def get_client(client_id: int, db: Session = Depends(get_db),
                user: User = Depends(get_current_user)):
     check_client_access(user, client_id)
     client = db.get(Client, client_id)
-    if not client:
-        raise HTTPException(status_code=404, detail="Client not found")
+    assert_same_tenant(client, user, "client")
     return client_out(client)
 
 
@@ -102,8 +101,8 @@ def get_client(client_id: int, db: Session = Depends(get_db),
 def client_projects(client_id: int, db: Session = Depends(get_db),
                     user: User = Depends(get_current_user)):
     check_client_access(user, client_id)
-    if not db.get(Client, client_id):
-        raise HTTPException(status_code=404, detail="Client not found")
+    client = db.get(Client, client_id)
+    assert_same_tenant(client, user, "client")
     projects = (db.query(Project).filter(Project.client_id == client_id,
                                          Project.is_archived == False)  # noqa: E712
                 .order_by(Project.created_at.desc()).all())

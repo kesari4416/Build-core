@@ -7,16 +7,20 @@ from app.models import User, Client, Project, Phase, ProgressUpdate, Milestone
 from app.schemas import (ProjectCreate, ProjectUpdate, PhaseCreate, PhaseUpdate,
                          ProgressUpdateCreate, PhaseReorder, MilestoneCreate, MilestoneUpdate)
 from app.core.security import get_current_user, require_roles
+from app.core.tenant_scope import assert_same_tenant, ensure_tenant_owned, tenant_scope
 from app.crud import project_out, phase_out, update_out, milestone_out, has_active_issues
 from datetime import date, datetime, timezone
 
 router = APIRouter(tags=["projects"])
 
 
-def get_project_or_404(db: Session, project_id: int, include_archived=False) -> Project:
+def get_project_or_404(db: Session, project_id: int, include_archived=False,
+                         user: User = None) -> Project:
     project = db.get(Project, project_id)
     if not project or (project.is_archived and not include_archived):
         raise HTTPException(status_code=404, detail="Project not found")
+    if user is not None:
+        assert_same_tenant(project, user, "project")
     return project
 
 
@@ -36,9 +40,12 @@ def check_read_access(user: User, project: Project):
 @router.post("/projects", status_code=201)
 def create_project(body: ProjectCreate, db: Session = Depends(get_db),
                    user: User = Depends(require_roles("Admin"))):
-    if not db.get(Client, body.client_id):
+    client = db.get(Client, body.client_id)
+    if not client:
         raise HTTPException(status_code=404, detail="Client not found")
+    assert_same_tenant(client, user, "client")
     project = Project(**body.model_dump())
+    ensure_tenant_owned(project, user)
     db.add(project)
     db.commit()
     db.refresh(project)
@@ -46,6 +53,7 @@ def create_project(body: ProjectCreate, db: Session = Depends(get_db),
 
 
 def scope_by_role(q, db, user):
+    q = tenant_scope(q, Project, user)
     if user.role == "Client":
         return q.filter(Project.client_id == user.client_id)
     if user.role == "SiteEngineer":
@@ -159,7 +167,7 @@ def dashboard_charts(db: Session = Depends(get_db), user: User = Depends(get_cur
 @router.get("/projects/{project_id}")
 def get_project(project_id: int, db: Session = Depends(get_db),
                 user: User = Depends(get_current_user)):
-    project = get_project_or_404(db, project_id)
+    project = get_project_or_404(db, project_id, user=user)
     check_read_access(user, project)
     out = project_out(db, project, detail=True)
     if "phases" in out:
@@ -173,7 +181,7 @@ def get_project(project_id: int, db: Session = Depends(get_db),
 @router.put("/projects/{project_id}")
 def update_project(project_id: int, body: ProjectUpdate, db: Session = Depends(get_db),
                    user: User = Depends(get_current_user)):
-    project = get_project_or_404(db, project_id)
+    project = get_project_or_404(db, project_id, user=user)
     check_write_access(user, project)
     for k, v in body.model_dump(exclude_unset=True).items():
         setattr(project, k, v)
@@ -185,7 +193,7 @@ def update_project(project_id: int, body: ProjectUpdate, db: Session = Depends(g
 @router.delete("/projects/{project_id}", status_code=204)
 def archive_project(project_id: int, db: Session = Depends(get_db),
                     user: User = Depends(require_roles("Admin"))):
-    project = get_project_or_404(db, project_id)
+    project = get_project_or_404(db, project_id, user=user)
     project.is_archived = True
     db.commit()
 
@@ -193,7 +201,7 @@ def archive_project(project_id: int, db: Session = Depends(get_db),
 @router.post("/projects/{project_id}/archive")
 def archive_project_post(project_id: int, db: Session = Depends(get_db),
                          user: User = Depends(require_roles("Admin"))):
-    project = get_project_or_404(db, project_id)
+    project = get_project_or_404(db, project_id, user=user)
     project.is_archived = True
     db.commit()
     db.refresh(project)

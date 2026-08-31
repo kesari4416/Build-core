@@ -10,6 +10,7 @@ from app.models import User
 from app.models.procurement import Vendor, VendorDocument
 from app.schemas.procurement import VendorCreate, VendorUpdate, VendorDocPatch
 from app.core.security import get_current_user, require_roles
+from app.core.tenant_scope import assert_same_tenant, ensure_tenant_owned, tenant_scope
 from app.crud.procurement import vendor_out, vdoc_out
 from app.routers.uploads import UPLOAD_DIR
 
@@ -22,6 +23,7 @@ def create_vendor(body: VendorCreate, db: Session = Depends(get_db), user: User 
     if body.insurance_expiry and body.insurance_expiry < date.today():
         raise HTTPException(status_code=422, detail="Insurance expiry date cannot be in the past")
     v = Vendor(**body.model_dump())
+    ensure_tenant_owned(v, user)
     db.add(v)
     db.commit()
     db.refresh(v)
@@ -32,7 +34,7 @@ def create_vendor(body: VendorCreate, db: Session = Depends(get_db), user: User 
 def list_vendors(db: Session = Depends(get_db), user: User = Depends(STAFF),
                  trade: str = None, status: str = None, prequalified: bool = None,
                  expiring_insurance: bool = None, search: str = None):
-    q = db.query(Vendor)
+    q = tenant_scope(db.query(Vendor), Vendor, user)
     if trade:
         q = q.filter(Vendor.trade.ilike(f"%{trade}%"))
     if status:
@@ -51,8 +53,7 @@ def list_vendors(db: Session = Depends(get_db), user: User = Depends(STAFF),
 @router.get("/vendors/{vendor_id}")
 def get_vendor(vendor_id: int, db: Session = Depends(get_db), user: User = Depends(STAFF)):
     v = db.get(Vendor, vendor_id)
-    if not v:
-        raise HTTPException(status_code=404, detail="Vendor not found")
+    assert_same_tenant(v, user, "vendor")
     out = vendor_out(v, db)
     docs = db.query(VendorDocument).filter(VendorDocument.vendor_id == vendor_id).all()
     out["documents"] = [vdoc_out(doc) for doc in docs]
@@ -63,8 +64,7 @@ def get_vendor(vendor_id: int, db: Session = Depends(get_db), user: User = Depen
 def patch_vendor(vendor_id: int, body: VendorUpdate, db: Session = Depends(get_db),
                  user: User = Depends(STAFF)):
     v = db.get(Vendor, vendor_id)
-    if not v:
-        raise HTTPException(status_code=404, detail="Vendor not found")
+    assert_same_tenant(v, user, "vendor")
     for k, val in body.model_dump(exclude_unset=True).items():
         setattr(v, k, val)
     db.commit()
@@ -77,8 +77,8 @@ async def upload_vendor_doc(vendor_id: int, file: UploadFile = File(...),
                             document_name: str = Form(None), category: str = Form("Other"),
                             expiry_date: str = Form(None),
                             db: Session = Depends(get_db), user: User = Depends(STAFF)):
-    if not db.get(Vendor, vendor_id):
-        raise HTTPException(status_code=404, detail="Vendor not found")
+    v = db.get(Vendor, vendor_id)
+    assert_same_tenant(v, user, "vendor")
     ext = FSPath(file.filename or "file").suffix.lower()
     content = await file.read()
     fname = f"{uuid.uuid4().hex}{ext}"

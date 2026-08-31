@@ -11,6 +11,7 @@ from app.database import get_db
 from app.models import User, Project, Phase
 from app.models.finance import Employee, Attendance, EmployeeCategory, ProjectAssignment, PhaseEmployee, ExpenseEntry
 from app.core.security import require_roles
+from app.core.tenant_scope import assert_same_tenant, ensure_tenant_owned, tenant_scope
 
 router = APIRouter(tags=["employees"])
 INTERNAL = require_roles("Admin", "SiteEngineer", "Accountant", "ProcurementOfficer")
@@ -212,7 +213,7 @@ def employee_in_project(db: Session, employee: Employee, project_id: int) -> boo
 @router.get("/employees")
 def list_all_employees(db: Session = Depends(get_db), user: User = Depends(INTERNAL),
                        status: Optional[str] = None, search: Optional[str] = None):
-    q = db.query(Employee)
+    q = tenant_scope(db.query(Employee), Employee, user)
     if user.role == "SiteEngineer":
         from app.routers.projects import scope_by_role
         pids = [p.id for p in scope_by_role(
@@ -254,6 +255,7 @@ def create_org_employee(body: EmployeeCreate, db: Session = Depends(get_db),
             raise HTTPException(status_code=422, detail="Project not found")
     data["wage_type"] = body.wage_type or (cat.default_wage_type if cat else None) or "daily"
     e = Employee(created_by=user.id, **data)
+    ensure_tenant_owned(e, user)
     db.add(e); db.commit(); db.refresh(e)
     return employee_out(e)
 

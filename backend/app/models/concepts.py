@@ -18,6 +18,7 @@ class ConceptGeneration(Base):
     __tablename__ = "concept_generations"
 
     id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 

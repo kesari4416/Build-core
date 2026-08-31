@@ -9,6 +9,7 @@ class Vendor(Base):
     __tablename__ = "vendors"
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     vendor_type = Column(String, default="Supplier")
     trade = Column(String)
     contact_name = Column(String)

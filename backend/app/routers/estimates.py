@@ -10,6 +10,7 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
 from app.core.security import require_roles
+from app.core.tenant_scope import assert_same_tenant, ensure_tenant_owned, tenant_scope
 from app.database import get_db
 from app.models import Project, User
 from app.models.finance import (Estimate, EstimateApprovalEvent, EstimateCategory, EstimateStatus,
@@ -173,14 +174,14 @@ def list_estimates(db: Session = Depends(get_db), user: User = Depends(STAFF)):
         req_map.setdefault(r.estimate_id, []).append(
             {"requirement_name": r.requirement_name, "price": float(r.price)})
     return [estimate_out(e, clients=clients, reqs=req_map.get(e.id)) for e in
-            db.query(Estimate).order_by(Estimate.created_at.desc()).all()]
+            tenant_scope(db.query(Estimate), Estimate, user).order_by(Estimate.created_at.desc()).all()]
 
 
 @router.get("/estimate-clients")
 def estimate_clients(db: Session = Depends(get_db), user: User = Depends(STAFF)):
     from app.models import Client
     return [{"id": c.id, "name": c.name, "email": c.email}
-            for c in db.query(Client).order_by(Client.name).all()]
+            for c in tenant_scope(db.query(Client), Client, user).order_by(Client.name).all()]
 
 
 @router.post("/estimates", status_code=201)
@@ -189,6 +190,7 @@ def create_estimate(body: EstimateCreate, db: Session = Depends(get_db), user: U
     client = db.get(Client, body.client_id)
     if not client:
         raise HTTPException(status_code=422, detail="Client is required — select a valid client")
+    assert_same_tenant(client, user, "client")
     if not db.get(EstimateCategory, body.category_id):
         raise HTTPException(status_code=422, detail="Invalid category")
     if not db.get(EstimateStatus, body.status_id):
@@ -209,6 +211,7 @@ def create_estimate(body: EstimateCreate, db: Session = Depends(get_db), user: U
                  status_id=body.status_id, created_by=user.id,
                  estimate_date=body.estimate_date or date.today(),
                  client_email=client.email or None)
+    ensure_tenant_owned(e, user)
     db.add(e)
     db.flush()
     out_reqs = []
@@ -229,8 +232,7 @@ def create_estimate(body: EstimateCreate, db: Session = Depends(get_db), user: U
 def delete_estimate(estimate_id: int, db: Session = Depends(get_db),
                     user: User = Depends(require_roles("Admin", "Accountant"))):
     e = db.get(Estimate, estimate_id)
-    if not e:
-        raise HTTPException(status_code=404, detail="Estimate not found")
+    assert_same_tenant(e, user, "estimate")
     db.query(EstimateApprovalEvent).filter(EstimateApprovalEvent.estimate_id == estimate_id).delete()
     db.delete(e)
     db.commit()
@@ -246,10 +248,12 @@ def now_utc():
     return datetime.now(timezone.utc)
 
 
-def get_estimate_or_404(db, estimate_id):
+def get_estimate_or_404(db, estimate_id, user=None):
     e = db.get(Estimate, estimate_id)
     if not e:
         raise HTTPException(status_code=404, detail="Estimate not found")
+    if user is not None:
+        assert_same_tenant(e, user, "estimate")
     return e
 
 

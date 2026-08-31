@@ -67,6 +67,9 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
 
 def require_roles(*roles):
     def dep(user: User = Depends(get_current_user)) -> User:
+        # SuperAdmin bypasses role checks (they see every tenant's data).
+        if user.role == "SuperAdmin":
+            return user
         if user.role not in roles:
             raise HTTPException(status_code=403, detail="Not authorized for this action")
         return user

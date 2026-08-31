@@ -34,6 +34,7 @@ class Client(Base):
     __tablename__ = "clients"
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     company = Column(String)
     email = Column(String)
     phone = Column(String)
@@ -49,6 +50,7 @@ class Project(Base):
     __tablename__ = "projects"
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=False, index=True)
     site_engineer_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     location = Column(String)

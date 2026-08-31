@@ -120,6 +120,7 @@ class EstimateRequirement(Base):
 class Estimate(Base):
     __tablename__ = "estimates"
     id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
     project_name = Column(String, nullable=True)
     phase = Column(String, nullable=True)
@@ -217,6 +218,7 @@ class EmployeeCategory(Base):
 class Employee(Base):
     __tablename__ = "employees"
     id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=True, index=True)
     name = Column(String, nullable=False)
     role_title = Column(String, nullable=True)

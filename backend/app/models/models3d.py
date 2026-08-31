@@ -18,6 +18,7 @@ class Model3D(Base):
     __tablename__ = "model3d_files"
 
     id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
     phase_id = Column(Integer, ForeignKey("phases.id"), nullable=True, index=True)
 
