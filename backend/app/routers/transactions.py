@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.security import require_roles
+from app.core.tenant_scope import assert_same_tenant, ensure_tenant_owned, tenant_scope
 from app.database import get_db
 from app.models import Phase, Project, User
 from app.models.finance import Employee, ExpenseEntry, IncomeEntry, Invoice
@@ -24,10 +25,12 @@ def f(x):
     return float(x) if x is not None else 0.0
 
 
-def get_active_project(db, project_id):
+def get_active_project(db, project_id, user=None):
     p = db.get(Project, project_id)
     if not p:
         raise HTTPException(status_code=404, detail="Project not found")
+    if user is not None:
+        assert_same_tenant(p, user, "project")
     if p.is_archived or p.status in CLOSED_STATUSES:
         raise HTTPException(status_code=422, detail=f"Project is {'archived' if p.is_archived else p.status.lower()} — transactions not allowed")
     return p
@@ -59,7 +62,8 @@ def ensure_invoice_for_income(db, project, income, user):
                   invoice_number=inv_number, amount=income.amount, tax_amount=0,
                   issue_date=income.income_date, due_date=income.income_date,
                   status="Paid", description=" · ".join(desc_bits),
-                  income_entry_id=income.id, created_by=(user.id if user else None))
+                  income_entry_id=income.id, tenant_id=project.tenant_id,
+                  created_by=(user.id if user else None))
     db.add(inv)
     try:
         db.commit()
@@ -78,7 +82,7 @@ def budget_remaining(db, project):
 
 @router.get("/finance/transaction-context")
 def transaction_context(db: Session = Depends(get_db), user: User = Depends(STAFF)):
-    projects = (db.query(Project)
+    projects = (tenant_scope(db.query(Project), Project, user)
                 .filter(Project.is_archived == False,  # noqa: E712
                         Project.status.notin_(CLOSED_STATUSES))
                 .order_by(Project.name).all())
@@ -114,12 +118,13 @@ def income_out(i, users=None):
 def add_income(body: IncomeCreate, db: Session = Depends(get_db), user: User = Depends(FIN)):
     if body.payment_type not in PAYMENT_TYPES:
         raise HTTPException(status_code=422, detail=f"payment_type must be one of {PAYMENT_TYPES}")
-    project = get_active_project(db, body.project_id)
+    project = get_active_project(db, body.project_id, user=user)
     auto = round(f(project.budget or 0) - body.amount, 2)
     inc = IncomeEntry(project_id=project.id, phase=(body.phase or "").strip() or None,
                       amount=body.amount, payment_type=body.payment_type,
                       balance=auto, balance_auto=auto,
                       income_date=date.today(), created_by=user.id)
+    ensure_tenant_owned(inc, user)
     if body.balance is not None and round(body.balance, 2) != auto:
         inc.balance = round(body.balance, 2)
         inc.override_old = auto
@@ -135,8 +140,8 @@ def add_income(body: IncomeCreate, db: Session = Depends(get_db), user: User = D
 
 @router.get("/projects/{project_id}/income")
 def list_income(project_id: int, db: Session = Depends(get_db), user: User = Depends(STAFF)):
-    if not db.get(Project, project_id):
-        raise HTTPException(status_code=404, detail="Project not found")
+    p = db.get(Project, project_id)
+    assert_same_tenant(p, user, "project")
     users = {u.id: u.name for u in db.query(User).all()}
     rows = (db.query(IncomeEntry).filter(IncomeEntry.project_id == project_id)
             .order_by(IncomeEntry.created_at.desc()).all())
@@ -146,7 +151,7 @@ def list_income(project_id: int, db: Session = Depends(get_db), user: User = Dep
 @router.get("/transactions/vendors")
 def txn_vendors(db: Session = Depends(get_db), user: User = Depends(STAFF)):
     return [{"id": v.id, "name": v.name} for v in
-            db.query(Vendor).filter(Vendor.status == "Active").order_by(Vendor.name).all()]
+            tenant_scope(db.query(Vendor), Vendor, user).filter(Vendor.status == "Active").order_by(Vendor.name).all()]
 
 
 class NewVendorIn(BaseModel):
@@ -175,6 +180,7 @@ class NewEmployeeIn(BaseModel):
 def inline_vendor(body: NewVendorIn, db: Session = Depends(get_db), user: User = Depends(STAFF)):
     v = Vendor(name=body.name.strip(), contact_name=body.contact_name, phone=body.phone,
                vendor_type=body.vendor_type or "Supplier", trade=body.trade)
+    ensure_tenant_owned(v, user)
     db.add(v)
     db.commit()
     db.refresh(v)
@@ -184,8 +190,8 @@ def inline_vendor(body: NewVendorIn, db: Session = Depends(get_db), user: User =
 @router.post("/transactions/inline/vendor/{vendor_id}/product", status_code=201)
 def inline_product(vendor_id: int, body: NewProductIn, db: Session = Depends(get_db),
                    user: User = Depends(STAFF)):
-    if not db.get(Vendor, vendor_id):
-        raise HTTPException(status_code=404, detail="Vendor not found")
+    v = db.get(Vendor, vendor_id)
+    assert_same_tenant(v, user, "vendor")
     p = VendorProduct(vendor_id=vendor_id, name=body.name.strip(),
                       unit=body.unit or "unit", unit_price=body.unit_price)
     db.add(p)
@@ -201,6 +207,7 @@ def inline_employee(body: NewEmployeeIn, project_id: Optional[int] = None, phase
                  daily_wage=body.daily_wage, wage_type=body.wage_type or "daily",
                  project_id=project_id, joining_date=date.today(),
                  created_by=user.id)
+    ensure_tenant_owned(e, user)
     db.add(e)
     db.flush()
     if phase_id:
@@ -233,7 +240,7 @@ def add_expense_txn(body: ExpenseTxnCreate, db: Session = Depends(get_db),
         raise HTTPException(status_code=422, detail=f"payment_type must be one of {PAYMENT_TYPES}")
     if body.source_type not in SOURCES:
         raise HTTPException(status_code=422, detail=f"source_type must be one of {SOURCES}")
-    project = get_active_project(db, body.project_id)
+    project = get_active_project(db, body.project_id, user=user)
     phase = db.query(Phase).filter(Phase.id == body.phase_id, Phase.project_id == project.id).first()
     if not phase:
         raise HTTPException(status_code=422, detail="Phase is required and must belong to the selected project")
@@ -243,6 +250,7 @@ def add_expense_txn(body: ExpenseTxnCreate, db: Session = Depends(get_db),
         vendor = db.get(Vendor, body.vendor_id) if body.vendor_id else None
         if not vendor:
             raise HTTPException(status_code=422, detail="Vendor is required")
+        assert_same_tenant(vendor, user, "vendor")
         product = db.get(VendorProduct, body.product_id) if body.product_id else None
         if not product or product.vendor_id != vendor.id:
             raise HTTPException(status_code=422, detail="Product is required and must belong to the selected vendor")
@@ -250,6 +258,7 @@ def add_expense_txn(body: ExpenseTxnCreate, db: Session = Depends(get_db),
         employee = db.get(Employee, body.employee_id) if body.employee_id else None
         if not employee:
             raise HTTPException(status_code=422, detail="Employee is required")
+        assert_same_tenant(employee, user, "employee")
     else:
         if not (body.description or "").strip():
             raise HTTPException(status_code=422, detail="Description is required for 'Other' expenses")
@@ -271,6 +280,7 @@ def add_expense_txn(body: ExpenseTxnCreate, db: Session = Depends(get_db),
                        source_id=vendor.id if vendor else (employee.id if employee else None),
                        product_id=product.id if product else None,
                        payment_type=body.payment_type, balance_after=balance_after)
+    ensure_tenant_owned(exp, user)
     db.add(exp)
     db.flush()
 
@@ -282,6 +292,7 @@ def add_expense_txn(body: ExpenseTxnCreate, db: Session = Depends(get_db),
                                     notes=f"Auto-generated from Add Expense ({phase.name})",
                                     total_amount=body.amount, created_by=user.id,
                                     expense_entry_id=exp.id)
+        ensure_tenant_owned(quotation, user)
         quotation.items.append(VendorQuotationItem(
             product_id=product.id, product_name=product.name, unit=product.unit,
             quantity=body.quantity, unit_price=product.unit_price, line_total=body.amount))

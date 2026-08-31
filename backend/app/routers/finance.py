@@ -12,6 +12,7 @@ from app.models import User, Project, Client
 from app.models.finance import Invoice, Payment, PayrollRun, PayrollEntry, ExpenseEntry
 from app.models.procurement import PurchaseOrder, Subcontract
 from app.core.security import get_current_user, require_roles
+from app.core.tenant_scope import assert_same_tenant, ensure_tenant_owned, tenant_scope
 from app.crud.procurement import committed_amount, f, d
 from app.routers.projects import get_project_or_404
 
@@ -302,10 +303,11 @@ def project_ledger(project_id: int, db: Session = Depends(get_db), user: User = 
 @router.post("/projects/{project_id}/invoices", status_code=201)
 def create_invoice(project_id: int, body: InvoiceCreate, db: Session = Depends(get_db),
                    user: User = Depends(FIN)):
-    project = get_project_or_404(db, project_id)
+    project = get_project_or_404(db, project_id, user=user)
     count = db.query(Invoice).filter_by(project_id=project_id).count()
     inv = Invoice(project_id=project_id, client_id=project.client_id,
                   invoice_number=f"INV-{project_id}-{count + 1:03d}", created_by=user.id,
+                  tenant_id=project.tenant_id,
                   **body.model_dump())
     db.add(inv); db.commit(); db.refresh(inv)
     return invoice_out(db, inv)
@@ -314,7 +316,7 @@ def create_invoice(project_id: int, body: InvoiceCreate, db: Session = Depends(g
 @router.get("/projects/{project_id}/invoices")
 def list_invoices(project_id: int, db: Session = Depends(get_db),
                   user: User = Depends(get_current_user)):
-    project = get_project_or_404(db, project_id)
+    project = get_project_or_404(db, project_id, user=user)
     if user.role == "Client" and user.client_id != project.client_id:
         raise HTTPException(status_code=403, detail="Not authorized")
     invs = db.query(Invoice).filter_by(project_id=project_id).order_by(Invoice.created_at.desc()).all()
@@ -325,8 +327,7 @@ def list_invoices(project_id: int, db: Session = Depends(get_db),
 def get_invoice(invoice_id: int, db: Session = Depends(get_db),
                 user: User = Depends(get_current_user)):
     inv = db.get(Invoice, invoice_id)
-    if not inv:
-        raise HTTPException(status_code=404, detail="Invoice not found")
+    assert_same_tenant(inv, user, "invoice")
     if user.role == "Client" and user.client_id != inv.client_id:
         raise HTTPException(status_code=403, detail="Not authorized")
     out = invoice_out(db, inv)
@@ -338,8 +339,7 @@ def get_invoice(invoice_id: int, db: Session = Depends(get_db),
 def patch_invoice(invoice_id: int, body: InvoicePatch, db: Session = Depends(get_db),
                   user: User = Depends(FIN)):
     inv = db.get(Invoice, invoice_id)
-    if not inv:
-        raise HTTPException(status_code=404, detail="Invoice not found")
+    assert_same_tenant(inv, user, "invoice")
     for k, v in body.model_dump(exclude_unset=True).items():
         setattr(inv, k, v)
     db.commit(); db.refresh(inv)
@@ -350,10 +350,10 @@ def patch_invoice(invoice_id: int, body: InvoicePatch, db: Session = Depends(get
 def record_payment(invoice_id: int, body: PaymentCreate, db: Session = Depends(get_db),
                    user: User = Depends(FIN)):
     inv = db.get(Invoice, invoice_id)
-    if not inv:
-        raise HTTPException(status_code=404, detail="Invoice not found")
+    assert_same_tenant(inv, user, "invoice")
     p = Payment(invoice_id=invoice_id, project_id=inv.project_id, client_id=inv.client_id,
                 received_by=user.id, payment_date=body.payment_date or date.today(),
+                tenant_id=inv.tenant_id,
                 **body.model_dump(exclude={"payment_date"}))
     db.add(p); db.commit()
     refresh_invoice_status(db, inv)
@@ -365,8 +365,7 @@ def record_payment(invoice_id: int, body: PaymentCreate, db: Session = Depends(g
 def invoice_payments(invoice_id: int, db: Session = Depends(get_db),
                      user: User = Depends(get_current_user)):
     inv = db.get(Invoice, invoice_id)
-    if not inv:
-        raise HTTPException(status_code=404, detail="Invoice not found")
+    assert_same_tenant(inv, user, "invoice")
     if user.role == "Client" and user.client_id != inv.client_id:
         raise HTTPException(status_code=403, detail="Not authorized")
     return [payment_out(p) for p in inv.payments]
@@ -375,7 +374,7 @@ def invoice_payments(invoice_id: int, db: Session = Depends(get_db),
 @router.post("/projects/{project_id}/payments", status_code=201)
 def project_payment(project_id: int, body: PaymentCreate, db: Session = Depends(get_db),
                     user: User = Depends(FIN)):
-    project = get_project_or_404(db, project_id)
+    project = get_project_or_404(db, project_id, user=user)
     p = Payment(project_id=project_id, client_id=project.client_id, received_by=user.id,
                 payment_date=body.payment_date or date.today(),
                 **body.model_dump(exclude={"payment_date"}))
@@ -386,7 +385,7 @@ def project_payment(project_id: int, body: PaymentCreate, db: Session = Depends(
 @router.get("/projects/{project_id}/payments")
 def list_payments(project_id: int, db: Session = Depends(get_db),
                   user: User = Depends(get_current_user)):
-    project = get_project_or_404(db, project_id)
+    project = get_project_or_404(db, project_id, user=user)
     if user.role == "Client" and user.client_id != project.client_id:
         raise HTTPException(status_code=403, detail="Not authorized")
     ps = db.query(Payment).filter_by(project_id=project_id).order_by(Payment.created_at.desc()).all()
@@ -457,7 +456,7 @@ def mark_entry_paid(entry_id: int, db: Session = Depends(get_db), user: User = D
 @router.post("/projects/{project_id}/expenses", status_code=201)
 def add_expense(project_id: int, body: ExpenseCreate, db: Session = Depends(get_db),
                 user: User = Depends(STAFF)):
-    get_project_or_404(db, project_id)
+    get_project_or_404(db, project_id, user=user)
     e = ExpenseEntry(project_id=project_id, recorded_by=user.id,
                      expense_date=body.expense_date or date.today(),
                      **body.model_dump(exclude={"expense_date"}))
@@ -494,7 +493,7 @@ def delete_expense(expense_id: int, db: Session = Depends(get_db), user: User = 
 @router.get("/projects/{project_id}/finance/summary")
 def finance_summary(project_id: int, db: Session = Depends(get_db), user: User = Depends(STAFF)):
     from app.routers.change_orders import co_totals
-    project = get_project_or_404(db, project_id)
+    project = get_project_or_404(db, project_id, user=user)
     out = project_finance(db, project)
     approved, pending, n = co_totals(db, project_id)
     budget = f(project.budget or 0)
@@ -564,7 +563,8 @@ def balance_row(db, p):
 @router.get("/finance/balance-sheet")
 def org_balance_sheet(db: Session = Depends(get_db), user: User = Depends(FIN)):
     from app.models.finance import Employee, Attendance
-    projects = db.query(Project).filter(Project.is_archived == False).all()  # noqa: E712
+    projects = tenant_scope(db.query(Project), Project, user).filter(Project.is_archived == False).all()  # noqa: E712
+    proj_ids = [p.id for p in projects]
     rows = [balance_row(db, p) for p in projects]
     rows.sort(key=lambda r: r["profit_loss"])
     total_credit = round(sum(r["credit"] for r in rows), 2)
@@ -572,12 +572,16 @@ def org_balance_sheet(db: Session = Depends(get_db), user: User = Depends(FIN)):
     overall_profit = round(sum(r["profit_loss"] for r in rows if r["profit_loss"] > 0), 2)
     overall_loss = round(sum(-r["profit_loss"] for r in rows if r["profit_loss"] < 0), 2)
     payroll_pending = f(db.query(func.coalesce(func.sum(PayrollEntry.net_pay), 0))
-                        .filter(PayrollEntry.payment_status != "Paid").scalar())
+                        .filter(PayrollEntry.payment_status != "Paid",
+                                PayrollEntry.project_id.in_(proj_ids) if proj_ids else False).scalar())
     by_cat = {}
     earned_emp, cat_emp = {}, {}
-    for a, e in (db.query(Attendance, Employee)
-                 .join(Employee, Attendance.employee_id == Employee.id)
-                 .filter(Employee.wage_type == "daily", Employee.daily_wage.isnot(None)).all()):
+    emp_q = (db.query(Attendance, Employee)
+             .join(Employee, Attendance.employee_id == Employee.id)
+             .filter(Employee.wage_type == "daily", Employee.daily_wage.isnot(None)))
+    if user.role != "SuperAdmin":
+        emp_q = emp_q.filter(Employee.tenant_id == user.tenant_id)
+    for a, e in emp_q.all():
         day = DAY_VALUE.get(a.status, 0.0)
         if not day:
             continue
@@ -609,7 +613,7 @@ def org_balance_sheet(db: Session = Depends(get_db), user: User = Depends(FIN)):
 @router.get("/projects/{project_id}/balance-sheet")
 def project_balance_sheet(project_id: int, db: Session = Depends(get_db),
                           user: User = Depends(STAFF)):
-    project = get_project_or_404(db, project_id)
+    project = get_project_or_404(db, project_id, user=user)
     row = balance_row(db, project)
     invoices = db.query(Invoice).filter(Invoice.project_id == project_id,
                                         Invoice.status.notin_(["Draft", "Cancelled"])).all()

@@ -51,6 +51,7 @@ class CostCodeBudget(Base):
 class BidPackage(Base):
     __tablename__ = "bid_packages"
     id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
     title = Column(String, nullable=False)
     scope_description = Column(Text)
@@ -87,6 +88,7 @@ class Bid(Base):
 class PurchaseOrder(Base):
     __tablename__ = "purchase_orders"
     id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
     vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False)
     po_number = Column(String, nullable=False)
@@ -120,6 +122,7 @@ class POLineItem(Base):
 class Subcontract(Base):
     __tablename__ = "subcontracts"
     id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
     vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False)
     contract_number = Column(String, nullable=False)
@@ -142,6 +145,7 @@ class Subcontract(Base):
 class ChangeOrder(Base):
     __tablename__ = "change_orders"
     id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     commitment_type = Column(String, nullable=False)
     commitment_id = Column(Integer, nullable=False, index=True)
     co_number = Column(String, nullable=False)
@@ -241,6 +245,7 @@ class VendorProduct(Base):
 class VendorQuotation(Base):
     __tablename__ = "vendor_quotations"
     id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
     vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False, index=True)
     quote_number = Column(String, nullable=False)
@@ -283,6 +288,7 @@ class Product(Base):
 class Quotation(Base):
     __tablename__ = "quotations"
     id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
     vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False)
     status = Column(String, default="draft")

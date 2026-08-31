@@ -145,15 +145,15 @@ def wipe(mode: str) -> None:
         if mode == "full":
             print(f"[wipe] lookup tables to truncate: {len(lookups)}")
             truncate_tables(session, lookups)
-            print("[wipe] deleting non-admin users")
+            print("[wipe] deleting non-admin users (SuperAdmin preserved)")
             session.execute(text(
-                "DELETE FROM users WHERE lower(role) != 'admin'"
+                "DELETE FROM users WHERE lower(role) NOT IN ('admin', 'superadmin')"
             ))
         else:
             print("[wipe] keeping lookup tables intact")
-            print("[wipe] deleting non-admin users")
+            print("[wipe] deleting non-admin users (SuperAdmin preserved)")
             session.execute(text(
-                "DELETE FROM users WHERE lower(role) != 'admin'"
+                "DELETE FROM users WHERE lower(role) NOT IN ('admin', 'superadmin')"
             ))
 
         session.commit()

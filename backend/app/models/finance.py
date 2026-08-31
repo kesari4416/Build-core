@@ -8,6 +8,7 @@ from app.models import utcnow
 class Invoice(Base):
     __tablename__ = "invoices"
     id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=False, index=True)
     invoice_number = Column(String, nullable=False)
@@ -27,6 +28,7 @@ class Invoice(Base):
 class Payment(Base):
     __tablename__ = "payments"
     id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
@@ -72,6 +74,7 @@ class PayrollEntry(Base):
 class ExpenseEntry(Base):
     __tablename__ = "expense_entries"
     id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
     category = Column(String, default="Misc")
     amount = Column(Numeric(14, 2), nullable=False)
@@ -160,6 +163,7 @@ class EstimateApprovalEvent(Base):
 class IncomeEntry(Base):
     __tablename__ = "income_entries"
     id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
     phase = Column(String, nullable=True)
     amount = Column(Numeric(14, 2), nullable=False)

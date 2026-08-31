@@ -39,6 +39,16 @@ ALTER TABLE clients             ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFER
 ALTER TABLE vendors             ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);
 ALTER TABLE employees           ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);
 ALTER TABLE estimates           ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);
+ALTER TABLE invoices            ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);
+ALTER TABLE payments            ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);
+ALTER TABLE expense_entries     ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);
+ALTER TABLE income_entries      ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);
+ALTER TABLE purchase_orders     ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);
+ALTER TABLE subcontracts        ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);
+ALTER TABLE change_orders       ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);
+ALTER TABLE quotations          ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);
+ALTER TABLE bid_packages        ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);
+ALTER TABLE vendor_quotations   ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);
 ALTER TABLE concept_generations ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);
 ALTER TABLE model3d_files       ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);
 
@@ -49,6 +59,16 @@ CREATE INDEX IF NOT EXISTS ix_clients_tenant_id              ON clients(tenant_i
 CREATE INDEX IF NOT EXISTS ix_vendors_tenant_id              ON vendors(tenant_id);
 CREATE INDEX IF NOT EXISTS ix_employees_tenant_id            ON employees(tenant_id);
 CREATE INDEX IF NOT EXISTS ix_estimates_tenant_id            ON estimates(tenant_id);
+CREATE INDEX IF NOT EXISTS ix_invoices_tenant_id             ON invoices(tenant_id);
+CREATE INDEX IF NOT EXISTS ix_payments_tenant_id             ON payments(tenant_id);
+CREATE INDEX IF NOT EXISTS ix_expense_entries_tenant_id      ON expense_entries(tenant_id);
+CREATE INDEX IF NOT EXISTS ix_income_entries_tenant_id       ON income_entries(tenant_id);
+CREATE INDEX IF NOT EXISTS ix_purchase_orders_tenant_id      ON purchase_orders(tenant_id);
+CREATE INDEX IF NOT EXISTS ix_subcontracts_tenant_id         ON subcontracts(tenant_id);
+CREATE INDEX IF NOT EXISTS ix_change_orders_tenant_id        ON change_orders(tenant_id);
+CREATE INDEX IF NOT EXISTS ix_quotations_tenant_id           ON quotations(tenant_id);
+CREATE INDEX IF NOT EXISTS ix_bid_packages_tenant_id         ON bid_packages(tenant_id);
+CREATE INDEX IF NOT EXISTS ix_vendor_quotations_tenant_id    ON vendor_quotations(tenant_id);
 CREATE INDEX IF NOT EXISTS ix_concept_generations_tenant_id  ON concept_generations(tenant_id);
 CREATE INDEX IF NOT EXISTS ix_model3d_files_tenant_id        ON model3d_files(tenant_id);
 
@@ -77,6 +97,16 @@ UPDATE clients             SET tenant_id = 1 WHERE tenant_id IS NULL;
 UPDATE vendors             SET tenant_id = 1 WHERE tenant_id IS NULL;
 UPDATE employees           SET tenant_id = 1 WHERE tenant_id IS NULL;
 UPDATE estimates           SET tenant_id = 1 WHERE tenant_id IS NULL;
+UPDATE invoices            SET tenant_id = 1 WHERE tenant_id IS NULL;
+UPDATE payments            SET tenant_id = 1 WHERE tenant_id IS NULL;
+UPDATE expense_entries     SET tenant_id = 1 WHERE tenant_id IS NULL;
+UPDATE income_entries      SET tenant_id = 1 WHERE tenant_id IS NULL;
+UPDATE purchase_orders     SET tenant_id = 1 WHERE tenant_id IS NULL;
+UPDATE subcontracts        SET tenant_id = 1 WHERE tenant_id IS NULL;
+UPDATE change_orders       SET tenant_id = 1 WHERE tenant_id IS NULL;
+UPDATE quotations          SET tenant_id = 1 WHERE tenant_id IS NULL;
+UPDATE bid_packages        SET tenant_id = 1 WHERE tenant_id IS NULL;
+UPDATE vendor_quotations   SET tenant_id = 1 WHERE tenant_id IS NULL;
 UPDATE concept_generations SET tenant_id = 1 WHERE tenant_id IS NULL;
 UPDATE model3d_files       SET tenant_id = 1 WHERE tenant_id IS NULL;
 

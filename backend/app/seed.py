@@ -24,7 +24,10 @@ def seed_default_tenant(db: Session) -> Tenant:
     # Backfill any rows still NULL to tenant_id=1
     from sqlalchemy import text
     for tbl in ("users", "projects", "clients", "vendors", "employees",
-                  "estimates", "concept_generations", "model3d_files"):
+                  "estimates", "concept_generations", "model3d_files",
+                  "invoices", "payments", "expense_entries", "income_entries",
+                  "purchase_orders", "subcontracts", "change_orders",
+                  "quotations", "bid_packages", "vendor_quotations"):
         try:
             db.execute(text(f"UPDATE {tbl} SET tenant_id = 1 WHERE tenant_id IS NULL"))
         except Exception:  # noqa: BLE001 — table may not exist yet

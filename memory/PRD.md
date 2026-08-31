@@ -19,6 +19,7 @@ Reference: "Zoho Books but nicer" (user's verbatim direction). Mobile-first prio
 - Full spec at `/app/design_guidelines.json`
 
 ## What's Implemented (recent → oldest)
+- **2026-02-29** — Phase 2 continued (Finance / Procurement isolation): `tenant_id` mapped on Invoice, Payment, ExpenseEntry, IncomeEntry, PurchaseOrder, Subcontract, ChangeOrder, Quotation, BidPackage, VendorQuotation. Auto-migration + `/app/scripts/multitenant_migration.sql` updated. Routers patched: `/finance/balance-sheet` scopes projects + payroll via project_id; `/transactions/*` (income, expense, vendor, employee, product) set `tenant_id` and assert same-tenant on vendor/employee lookups; `/invoices/{id}` GET/PATCH + `/invoices/{id}/payments` assert same tenant. Auto-generated invoices from income now carry `project.tenant_id`. Wipe script preserves SuperAdmin (`role='superadmin'` protected). **End-to-end verified**: two tenants each create client + project + vendor + income, and every list endpoint returns only their own rows; cross-tenant URL probe returns 404.
 - **2026-02-29** — Phase 2 Tenant Data Isolation + SuperAdmin professional redesign:
   - New `app.core.tenant_scope` helper: `tenant_scope(query, model, user)`, `ensure_tenant_owned(instance, user)`, `assert_same_tenant(instance, user)`. `require_roles` now treats SuperAdmin as implicitly authorized everywhere.
   - `tenant_id` added to ORM models: Client, Project, Vendor, Employee, Estimate, ConceptGeneration, Model3D (was DB-only before).
