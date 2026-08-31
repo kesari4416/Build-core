@@ -18,10 +18,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
-from app.core.security import get_current_user, hash_password
+from app.core.security import (get_current_user, hash_password,
+                                  create_access_token, create_refresh_token,
+                                  set_auth_cookies, user_out)
 from app.database import get_db
 from app.models import User
 from app.models.tenant import MODULE_KEYS, Tenant
+
+from fastapi import Response
 
 router = APIRouter()
 
@@ -80,6 +84,41 @@ class UserCreate(BaseModel):
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
+@router.post("/tenants/{tid}/impersonate")
+def impersonate_tenant(tid: int, response: Response,
+                          db: Session = Depends(get_db),
+                          su: User = Depends(_require_super)):
+    """SuperAdmin-only: issue an access token for the tenant's primary Admin
+    so the SuperAdmin can enter the tenant's admin app in one click.
+
+    We deliberately re-use the tenant Admin's own user id so all downstream
+    tenant scoping continues to work correctly. Session cookies are rewritten
+    just like a normal login.
+    """
+    tenant = db.get(Tenant, tid)
+    if not tenant:
+        raise HTTPException(404, "Tenant not found")
+    if not tenant.is_active:
+        raise HTTPException(400, "Tenant is on hold; resume it first")
+
+    target = (db.query(User)
+                .filter(User.tenant_id == tid, User.role == "Admin",
+                        User.status != "Disabled")
+                .order_by(User.id.asc()).first())
+    if not target:
+        raise HTTPException(400, "This tenant has no active Admin to impersonate")
+
+    access = create_access_token(target.id, target.email)
+    refresh = create_refresh_token(target.id)
+    set_auth_cookies(response, access, refresh)
+    return {
+        "user": user_out(target),
+        "access_token": access,
+        "impersonated_by": su.email,
+        "tenant_name": tenant.name,
+    }
+
 
 @router.get("/tenants/modules")
 def list_module_keys(_: User = Depends(_require_super)):

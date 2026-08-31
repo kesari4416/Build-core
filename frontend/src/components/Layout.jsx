@@ -164,8 +164,38 @@ export default function Layout({ children }) {
             </div>
           </div>
         </header>
+        <ImpersonationBanner />
         <main className="flex-1 min-w-0">{children}</main>
       </div>
+    </div>
+  );
+}
+
+
+function ImpersonationBanner() {
+  const [info, setInfo] = useState(null);
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("sitera_impersonation");
+      if (raw) setInfo(JSON.parse(raw));
+    } catch (e) { /* ignore */ }
+  }, []);
+  if (!info) return null;
+  const exit = async () => {
+    try { sessionStorage.removeItem("sitera_impersonation"); } catch (e) {}
+    // Sign out the impersonated session and return to SuperAdmin login.
+    try { await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/logout`, {
+      method: "POST", credentials: "include" }); } catch (e) {}
+    window.location.href = "/login";
+  };
+  return (
+    <div className="sticky top-0 z-40 bg-amber-500 text-slate-900 px-4 py-2 flex items-center justify-center gap-3 text-xs sm:text-sm font-semibold shadow-md" data-testid="impersonation-banner">
+      <span className="inline-block w-2 h-2 rounded-full bg-slate-900 animate-pulse" />
+      Impersonating <span className="font-mono">{info.admin_email}</span> · {info.tenant_name}
+      <button onClick={exit} data-testid="exit-impersonation"
+        className="ml-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-900 text-white text-[10px] uppercase tracking-[0.15em] font-semibold hover:bg-slate-800 transition-colors">
+        Exit
+      </button>
     </div>
   );
 }
