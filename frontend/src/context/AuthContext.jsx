@@ -23,10 +23,13 @@ export function AuthProvider({ children }) {
     setUser(false);
   };
 
-  const canWrite = user && (user.role === "Admin" || user.role === "SiteEngineer");
+  const canWrite = user && (user.role === "Admin" || user.role === "SuperAdmin" || user.role === "SiteEngineer");
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, canWrite, isAdmin: user?.role === "Admin" }}>
+    <AuthContext.Provider value={{ user, login, logout, canWrite,
+        isAdmin: user?.role === "Admin",
+        isSuperAdmin: user?.role === "SuperAdmin",
+        tenantId: user?.tenant_id ?? null }}>
       {children}
     </AuthContext.Provider>
   );

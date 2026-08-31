@@ -16,6 +16,8 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     name = Column(String, nullable=False)
     role = Column(String, nullable=False, default="Client")
+    # NULL for SuperAdmin (platform-wide), FK to tenants.id for everyone else.
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=True)
     phone = Column(String, nullable=True)
     status = Column(String, default="Active", nullable=False)

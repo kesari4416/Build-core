@@ -11,10 +11,11 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
 from app.database import engine, Base, SessionLocal
-from app.routers import auth, projects, clients, uploads, documents, vendors, procurement, finance, users_admin, quotation, notifications, employees, exports, vendor_products, change_orders, transactions, estimates, quotations_v2, concepts, models3d
+from app.routers import auth, projects, clients, uploads, documents, vendors, procurement, finance, users_admin, quotation, notifications, employees, exports, vendor_products, change_orders, transactions, estimates, quotations_v2, concepts, models3d, tenants
 from app.routers.uploads import UPLOAD_DIR
 from app.models import concepts as _concepts_models  # noqa: F401 — register tables
 from app.models import models3d as _models3d_models  # noqa: F401 — register tables
+from app.models import tenant as _tenant_model  # noqa: F401 — register tables
 from app.seed import seed_admin, seed_demo_data
 from app.seed_procurement import seed_procurement
 
@@ -43,6 +44,7 @@ api_router.include_router(estimates.router)
 api_router.include_router(quotations_v2.router)
 api_router.include_router(concepts.router)
 api_router.include_router(models3d.router)
+api_router.include_router(tenants.router)
 
 
 @api_router.get("/")
@@ -127,10 +129,29 @@ def startup():
                      "ALTER TABLE project_change_orders ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ",
                      "ALTER TABLE estimates ALTER COLUMN project_name DROP NOT NULL",
                      "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS income_entry_id INTEGER REFERENCES income_entries(id)",
-                     "CREATE UNIQUE INDEX IF NOT EXISTS uq_invoices_income_entry_id ON invoices(income_entry_id) WHERE income_entry_id IS NOT NULL"]:
+                     "CREATE UNIQUE INDEX IF NOT EXISTS uq_invoices_income_entry_id ON invoices(income_entry_id) WHERE income_entry_id IS NOT NULL",
+                     # -- Phase 1 multi-tenant scaffolding -------------------
+                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id)",
+                     "ALTER TABLE projects ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id)",
+                     "ALTER TABLE clients ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id)",
+                     "ALTER TABLE vendors ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id)",
+                     "ALTER TABLE employees ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id)",
+                     "ALTER TABLE estimates ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id)",
+                     "ALTER TABLE concept_generations ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id)",
+                     "ALTER TABLE model3d_files ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id)",
+                     "CREATE INDEX IF NOT EXISTS ix_users_tenant_id ON users(tenant_id)",
+                     "CREATE INDEX IF NOT EXISTS ix_projects_tenant_id ON projects(tenant_id)",
+                     "CREATE INDEX IF NOT EXISTS ix_clients_tenant_id ON clients(tenant_id)",
+                     "CREATE INDEX IF NOT EXISTS ix_vendors_tenant_id ON vendors(tenant_id)",
+                     "CREATE INDEX IF NOT EXISTS ix_employees_tenant_id ON employees(tenant_id)",
+                     "CREATE INDEX IF NOT EXISTS ix_estimates_tenant_id ON estimates(tenant_id)"]:
             conn.execute(text(stmt))
     db = SessionLocal()
     try:
+        # Multi-tenant Phase 1: default tenant + SuperAdmin BEFORE anything else
+        from app.seed import seed_default_tenant, seed_superadmin
+        seed_default_tenant(db)
+        seed_superadmin(db)
         seed_admin(db)
         if os.environ.get("SEED_DEMO_DATA", "false").lower() == "true":
             seed_demo_data(db)

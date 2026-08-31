@@ -4,10 +4,57 @@ from datetime import date, timedelta
 from sqlalchemy.orm import Session
 
 from app.models import User, Client, Project, Phase, ProgressUpdate
+from app.models.tenant import MODULE_KEYS, Tenant
 from app.core.security import hash_password, verify_password
 
 PHOTO_1 = "https://images.unsplash.com/photo-1609867271967-a82f85c48531?crop=entropy&cs=srgb&fm=jpg&q=85&w=900"
 PHOTO_2 = "https://images.pexels.com/photos/11827689/pexels-photo-11827689.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+
+
+def seed_default_tenant(db: Session) -> Tenant:
+    """Ensure a "Default Company" tenant with id=1 exists. Every legacy row
+    (tenant_id NULL) belongs to this tenant."""
+    t = db.query(Tenant).filter(Tenant.id == 1).first()
+    if t is None:
+        # allow id=1 explicitly by setting it before insert
+        t = Tenant(id=1, name="Default Company", slug="default",
+                    allowed_modules=list(MODULE_KEYS), is_active=True)
+        db.add(t)
+        db.commit()
+    # Backfill any rows still NULL to tenant_id=1
+    from sqlalchemy import text
+    for tbl in ("users", "projects", "clients", "vendors", "employees",
+                  "estimates", "concept_generations", "model3d_files"):
+        try:
+            db.execute(text(f"UPDATE {tbl} SET tenant_id = 1 WHERE tenant_id IS NULL"))
+        except Exception:  # noqa: BLE001 — table may not exist yet
+            db.rollback()
+    db.commit()
+    return t
+
+
+def seed_superadmin(db: Session):
+    """The platform-level SuperAdmin — tenant_id=NULL, sees every tenant.
+    Configurable via env; safe to run multiple times."""
+    email = os.environ.get("SUPERADMIN_EMAIL", "ponish.jino@sparkcurv.com")
+    password = os.environ.get("SUPERADMIN_PASSWORD", "superadmin123")
+    existing = db.query(User).filter(User.email == email).first()
+    if existing is None:
+        db.add(User(email=email, password_hash=hash_password(password),
+                     name="Sitera SuperAdmin", role="SuperAdmin",
+                     tenant_id=None, status="Active"))
+        db.commit()
+    else:
+        # Ensure the role and password are always what we expect
+        changed = False
+        if existing.role != "SuperAdmin":
+            existing.role = "SuperAdmin"; changed = True
+        if existing.tenant_id is not None:
+            existing.tenant_id = None; changed = True
+        if not verify_password(password, existing.password_hash):
+            existing.password_hash = hash_password(password); changed = True
+        if changed:
+            db.commit()
 
 
 def seed_admin(db: Session):
@@ -15,11 +62,17 @@ def seed_admin(db: Session):
     password = os.environ.get("ADMIN_PASSWORD", "admin123")
     existing = db.query(User).filter(User.email == email).first()
     if existing is None:
-        db.add(User(email=email, password_hash=hash_password(password), name="Kesari", role="Admin"))
+        db.add(User(email=email, password_hash=hash_password(password),
+                     name="Kesari", role="Admin", tenant_id=1))
         db.commit()
-    elif not verify_password(password, existing.password_hash):
-        existing.password_hash = hash_password(password)
-        db.commit()
+    else:
+        changed = False
+        if existing.tenant_id is None:
+            existing.tenant_id = 1; changed = True
+        if not verify_password(password, existing.password_hash):
+            existing.password_hash = hash_password(password); changed = True
+        if changed:
+            db.commit()
 
 
 def seed_demo_data(db: Session):

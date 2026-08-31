@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  if (user) return <Navigate to="/admin" replace />;
+  if (user) return <Navigate to={user.role === "SuperAdmin" ? "/superadmin" : "/admin"} replace />;
 
   const submit = async (ev, e = email, p = password) => {
     ev?.preventDefault();
@@ -24,8 +24,8 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     try {
-      await login(e, p);
-      navigate("/admin");
+      const u = await login(e, p);
+      navigate(u?.role === "SuperAdmin" ? "/superadmin" : "/admin");
     } catch (err) {
       setError(formatApiErrorDetail(err.response?.data?.detail) || err.message);
     } finally {

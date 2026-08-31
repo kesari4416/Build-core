@@ -30,6 +30,7 @@ import EstimatesPage from "./features/projectPlanning/pages/EstimatesPage";
 import EstimateApprovalPage from "./features/projectPlanning/pages/EstimateApprovalPage";
 import ConceptStudioPage from "./features/projectPlanning/pages/ConceptStudioPage";
 import Model3DViewerPage from "./features/projectPlanning/pages/Model3DViewerPage";
+import SuperAdminPage from "./features/projectPlanning/pages/SuperAdminPage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -44,7 +45,21 @@ const ProtectedRoute = ({ children }) => {
       </div>
     );
   if (user === false) return <Navigate to="/login" replace />;
+  if (user.role === "SuperAdmin") return <Navigate to="/superadmin" replace />;
   return <Layout>{children}</Layout>;
+};
+
+const SuperAdminRoute = ({ children }) => {
+  const { user } = useAuth();
+  if (user === null)
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center" data-testid="auth-loading">
+        <Loader2 size={28} className="animate-spin text-blue-600" />
+      </div>
+    );
+  if (user === false) return <Navigate to="/login" replace />;
+  if (user.role !== "SuperAdmin") return <Navigate to="/admin" replace />;
+  return children;
 };
 
 const AdminHome = () => {
@@ -61,6 +76,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/superadmin" element={<SuperAdminRoute><SuperAdminPage /></SuperAdminRoute>} />
             <Route path="/estimate-approval/:id/:token" element={<EstimateApprovalPage />} />
             <Route path="/admin" element={<ProtectedRoute><AdminHome /></ProtectedRoute>} />
             <Route path="/admin/projects" element={<ProtectedRoute><ProjectListPage /></ProtectedRoute>} />
