@@ -34,6 +34,63 @@ const InfoCell = ({ icon: Icon, label, value, testId }) => (
   </div>
 );
 
+const SubcontractorsCard = ({ subs }) => {
+  const total = subs.reduce((sum, s) => sum + Number(s.allocated_amount || 0), 0);
+  return (
+    <div className="surface p-5 mt-6" data-testid="overview-subcontractors">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-semibold">Sub-Contractors</div>
+          <div className="font-heading font-semibold text-lg mt-1 text-slate-900 dark:text-slate-100">
+            {subs.length} allocated
+            {subs.length > 0 && <span className="ml-2 text-sm text-slate-500 dark:text-slate-400 font-normal">· ₹{total.toLocaleString("en-IN")} total</span>}
+          </div>
+        </div>
+      </div>
+      {subs.length === 0 ? (
+        <div className="text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-700 rounded-md p-4 text-center" data-testid="overview-subcontractors-empty">
+          None allocated yet. Use "Edit Project" to add sub-contractors, budgets and materials.
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="data-table w-full" data-testid="overview-subcontractors-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Firm / Contact</th>
+                <th className="text-right">Allocated</th>
+                <th>Materials</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {subs.map((s) => (
+                <tr key={s.id} data-testid={`overview-subcontractor-row-${s.id}`}>
+                  <td className="font-semibold text-slate-900 dark:text-slate-100">{s.type}</td>
+                  <td className="text-slate-700 dark:text-slate-300">{s.name || "—"}</td>
+                  <td className="text-right font-heading font-semibold tabular-nums num-wrap">₹{Number(s.allocated_amount || 0).toLocaleString("en-IN")}</td>
+                  <td>
+                    {(s.materials || []).length === 0 ? <span className="text-slate-400">—</span> : (
+                      <div className="flex flex-wrap gap-1">
+                        {s.materials.map((m) => (
+                          <span key={m} className="inline-block bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-300">
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </td>
+                  <td className="text-slate-600 dark:text-slate-400 text-xs">{s.notes || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function ProjectDetailPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
@@ -152,6 +209,7 @@ export default function ProjectDetailPage() {
             <InfoCell icon={CalendarDays} label="Planned End" value={project.end_date_planned} testId="overview-end-planned" />
             <InfoCell icon={CalendarDays} label="Actual Start" value={project.start_date_actual} testId="overview-start-actual" />
           </div>
+          <SubcontractorsCard subs={project.subcontractors || []} />
         </TabsContent>
 
         <TabsContent value="phases" className="mt-6" data-testid="phases-tab-content">

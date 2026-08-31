@@ -212,3 +212,25 @@ class ProjectChangeOrderEvent(Base):
     comment = Column(Text, nullable=True)
     actor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
+
+class ProjectSubcontractor(Base):
+    """Lightweight sub-contractor allocation captured during project planning.
+
+    Distinct from `procurement.Subcontract` (which is a full contract entity
+    tied to a Vendor). This model captures the Admin's intent at project-creation
+    time: what work type is being sub-contracted, how much budget is allocated,
+    and which materials are being supplied to that sub-contractor.
+    """
+    __tablename__ = "project_subcontractors"
+    id = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False, index=True)
+    type = Column(String, nullable=False)          # Electrical / Plumbing / Custom …
+    name = Column(String, nullable=True)           # Firm or point-of-contact name
+    allocated_amount = Column(Numeric(14, 2), nullable=False, default=0)
+    materials = Column(JSON, nullable=False, default=list)  # list[str]
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+    updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)

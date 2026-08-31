@@ -8,6 +8,7 @@ import { Button } from "../../../components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import api, { formatApiErrorDetail } from "../../../api/client";
 import { useCreateProject, useUpdateProject, useClients, useEngineers } from "../hooks/useProjects";
+import { SubcontractorsSection, validateSubcontractors } from "./SubcontractorsSection";
 
 const STATUSES = ["Planning", "Ongoing", "OnHold", "Completed", "Cancelled"];
 const empty = { name: "", client_id: "", site_engineer_id: "", location: "", budget: "", start_date_planned: "", end_date_planned: "", status: "Planning" };
@@ -16,6 +17,9 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId,
   const [form, setForm] = useState(empty);
   const [errors, setErrors] = useState({});
   const [detecting, setDetecting] = useState(false);
+  const [subs, setSubs] = useState([]);
+  const [subsErrors, setSubsErrors] = useState([]);
+  const [existingSubs, setExistingSubs] = useState([]); // for Edit-mode diffing
 
   const detectLocation = () => {
     if (!navigator.geolocation) { toast.error("Geolocation is not supported by this browser — please type the address"); return; }
@@ -44,6 +48,7 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId,
   useEffect(() => {
     if (open) {
       setErrors({});
+      setSubsErrors([]);
       setForm(project ? {
         name: project.name || "",
         client_id: String(project.client_id || ""),
@@ -59,10 +64,45 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId,
         name: fromEstimate?.project_name || "",
         budget: fromEstimate?.total_amount ?? "",
       });
+      if (project?.id) {
+        // load existing subcontractors for edit
+        api.get(`/projects/${project.id}/subcontractors`)
+          .then((r) => {
+            const list = (r.data || []).map((s) => ({
+              id: s.id, type: s.type, name: s.name || "",
+              allocated_amount: s.allocated_amount, materials: s.materials || [], notes: s.notes || "",
+            }));
+            setSubs(list);
+            setExistingSubs(list.map((s) => ({ ...s })));
+          })
+          .catch(() => { setSubs([]); setExistingSubs([]); });
+      } else {
+        setSubs([]);
+        setExistingSubs([]);
+      }
     }
   }, [open, project, defaultClientId, fromEstimate]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const syncSubcontractors = async (projectId, prev, current, cleaned) => {
+    // prev/current/cleaned are aligned by index but 'current' may contain
+    // items without an id (newly added) and prev may contain items no
+    // longer present (removed). Use item.id to reconcile.
+    const currentIds = new Set(current.filter((s) => s.id).map((s) => s.id));
+    const removed = prev.filter((s) => s.id && !currentIds.has(s.id));
+    await Promise.all(removed.map((s) => api.delete(`/subcontractors/${s.id}`)));
+
+    for (let i = 0; i < current.length; i++) {
+      const item = current[i];
+      const cleanedItem = cleaned[i];
+      if (item.id) {
+        await api.patch(`/subcontractors/${item.id}`, cleanedItem);
+      } else {
+        await api.post(`/projects/${projectId}/subcontractors`, cleanedItem);
+      }
+    }
+  };
 
   useEffect(() => {
     if (project) return;
@@ -90,6 +130,12 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId,
   const submit = async (ev) => {
     ev.preventDefault();
     if (!validate()) return;
+    const { valid: subValid, errors: subErrs, cleaned: cleanedSubs } = validateSubcontractors(subs);
+    setSubsErrors(subErrs);
+    if (!subValid) {
+      toast.error("Fix sub-contractor errors before saving");
+      return;
+    }
     const payload = {
       name: form.name.trim(),
       client_id: Number(form.client_id),
@@ -103,9 +149,11 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId,
     try {
       if (project) {
         await update.mutateAsync({ id: project.id, data: payload });
+        // Diff & sync sub-contractors
+        await syncSubcontractors(project.id, existingSubs, subs, cleanedSubs);
         toast.success("Project updated");
       } else {
-        const created = await create.mutateAsync(payload);
+        const created = await create.mutateAsync({ ...payload, subcontractors: cleanedSubs });
         if (fromEstimate && onCreated) onCreated(created);
         else toast.success("Project created");
       }
@@ -117,7 +165,7 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId,
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md max-w-lg" data-testid="project-form-modal">
+      <DialogContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 rounded-md max-w-3xl max-h-[90vh] overflow-y-auto" data-testid="project-form-modal">
         <DialogHeader>
           <DialogTitle className="font-heading text-2xl uppercase tracking-wide">
             {project ? "Edit Project" : "New Project"}
@@ -200,6 +248,9 @@ export const ProjectFormModal = ({ open, onOpenChange, project, defaultClientId,
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+            <SubcontractorsSection value={subs} onChange={setSubs} errors={subsErrors} />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-md border-slate-300 dark:border-slate-700" data-testid="project-form-cancel">Cancel</Button>

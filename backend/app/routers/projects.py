@@ -3,9 +3,11 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User, Client, Project, Phase, ProgressUpdate, Milestone
+from app.models import (User, Client, Project, Phase, ProgressUpdate, Milestone,
+                        ProjectSubcontractor)
 from app.schemas import (ProjectCreate, ProjectUpdate, PhaseCreate, PhaseUpdate,
-                         ProgressUpdateCreate, PhaseReorder, MilestoneCreate, MilestoneUpdate)
+                         ProgressUpdateCreate, PhaseReorder, MilestoneCreate, MilestoneUpdate,
+                         SubcontractorItem, SubcontractorUpdate)
 from app.core.security import get_current_user, require_roles
 from app.core.tenant_scope import assert_same_tenant, ensure_tenant_owned, tenant_scope
 from app.crud import project_out, phase_out, update_out, milestone_out, has_active_issues
@@ -44,12 +46,26 @@ def create_project(body: ProjectCreate, db: Session = Depends(get_db),
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
     assert_same_tenant(client, user, "client")
-    project = Project(**body.model_dump())
+    data = body.model_dump()
+    subs = data.pop("subcontractors", []) or []
+    project = Project(**data)
     ensure_tenant_owned(project, user)
     db.add(project)
+    db.flush()
+    for item in subs:
+        sc = ProjectSubcontractor(
+            project_id=project.id,
+            type=item["type"],
+            name=item.get("name"),
+            allocated_amount=item["allocated_amount"],
+            materials=item.get("materials") or [],
+            notes=item.get("notes"),
+        )
+        ensure_tenant_owned(sc, user)
+        db.add(sc)
     db.commit()
     db.refresh(project)
-    return project_out(db, project)
+    return project_out(db, project, detail=True)
 
 
 def scope_by_role(q, db, user):
@@ -471,3 +487,89 @@ def update_milestone(milestone_id: int, body: MilestoneUpdate, db: Session = Dep
     db.commit()
     db.refresh(m)
     return milestone_out(m)
+
+
+
+# ============================================================================
+# Sub-Contractors (project-level lightweight allocation)
+# ============================================================================
+
+def subcontractor_out(s: ProjectSubcontractor) -> dict:
+    return {
+        "id": s.id, "project_id": s.project_id,
+        "type": s.type, "name": s.name,
+        "allocated_amount": float(s.allocated_amount or 0),
+        "materials": s.materials or [],
+        "notes": s.notes,
+        "created_at": s.created_at.isoformat() if s.created_at else None,
+        "updated_at": s.updated_at.isoformat() if s.updated_at else None,
+    }
+
+
+@router.get("/projects/{project_id}/subcontractors")
+def list_project_subcontractors(project_id: int, db: Session = Depends(get_db),
+                                user: User = Depends(get_current_user)):
+    project = get_project_or_404(db, project_id, user=user)
+    check_read_access(user, project)
+    rows = (db.query(ProjectSubcontractor)
+            .filter(ProjectSubcontractor.project_id == project_id)
+            .order_by(ProjectSubcontractor.id.asc()).all())
+    return [subcontractor_out(s) for s in rows]
+
+
+@router.post("/projects/{project_id}/subcontractors", status_code=201)
+def add_project_subcontractor(project_id: int, body: SubcontractorItem,
+                              db: Session = Depends(get_db),
+                              user: User = Depends(require_roles("Admin"))):
+    project = get_project_or_404(db, project_id, user=user)
+    check_write_access(user, project)
+    sc = ProjectSubcontractor(
+        project_id=project_id,
+        type=body.type, name=body.name,
+        allocated_amount=body.allocated_amount,
+        materials=body.materials, notes=body.notes,
+    )
+    ensure_tenant_owned(sc, user)
+    db.add(sc)
+    db.commit()
+    db.refresh(sc)
+    return subcontractor_out(sc)
+
+
+@router.patch("/subcontractors/{sc_id}")
+def update_project_subcontractor(sc_id: int, body: SubcontractorUpdate,
+                                 db: Session = Depends(get_db),
+                                 user: User = Depends(require_roles("Admin"))):
+    sc = db.get(ProjectSubcontractor, sc_id)
+    if not sc:
+        raise HTTPException(status_code=404, detail="Sub-contractor not found")
+    assert_same_tenant(sc, user, "subcontractor")
+    check_write_access(user, sc.project if hasattr(sc, "project") else db.get(Project, sc.project_id))
+    data = body.model_dump(exclude_unset=True)
+    if "type" in data:
+        t = (data["type"] or "").strip()
+        if not t:
+            raise HTTPException(status_code=422, detail="Sub-contractor type is required")
+        sc.type = t
+    if "name" in data:
+        sc.name = (data["name"] or "").strip() or None
+    if "allocated_amount" in data:
+        sc.allocated_amount = data["allocated_amount"]
+    if "materials" in data:
+        sc.materials = [m.strip() for m in (data["materials"] or []) if (m or "").strip()]
+    if "notes" in data:
+        sc.notes = data["notes"]
+    db.commit()
+    db.refresh(sc)
+    return subcontractor_out(sc)
+
+
+@router.delete("/subcontractors/{sc_id}", status_code=204)
+def delete_project_subcontractor(sc_id: int, db: Session = Depends(get_db),
+                                 user: User = Depends(require_roles("Admin"))):
+    sc = db.get(ProjectSubcontractor, sc_id)
+    if not sc:
+        raise HTTPException(status_code=404, detail="Sub-contractor not found")
+    assert_same_tenant(sc, user, "subcontractor")
+    db.delete(sc)
+    db.commit()

@@ -22,6 +22,33 @@ class RegisterIn(BaseModel):
     client_id: Optional[int] = None
 
 
+class SubcontractorItem(BaseModel):
+    """Sub-contractor allocation captured on a project."""
+    type: str = Field(min_length=1, max_length=80)
+    name: Optional[str] = Field(default=None, max_length=160)
+    allocated_amount: Decimal = Field(ge=0)
+    materials: List[str] = Field(default_factory=list)
+    notes: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _clean(self):
+        self.type = self.type.strip()
+        if not self.type:
+            raise ValueError("Sub-contractor type is required")
+        self.materials = [m.strip() for m in (self.materials or []) if (m or "").strip()]
+        if self.name is not None:
+            self.name = self.name.strip() or None
+        return self
+
+
+class SubcontractorUpdate(BaseModel):
+    type: Optional[str] = Field(default=None, min_length=1, max_length=80)
+    name: Optional[str] = Field(default=None, max_length=160)
+    allocated_amount: Optional[Decimal] = Field(default=None, ge=0)
+    materials: Optional[List[str]] = None
+    notes: Optional[str] = None
+
+
 class ProjectCreate(BaseModel):
     name: str = Field(min_length=1)
     client_id: int
@@ -35,6 +62,7 @@ class ProjectCreate(BaseModel):
     start_date_actual: Optional[date] = None
     end_date_actual: Optional[date] = None
     status: ProjectStatus = "Planning"
+    subcontractors: List[SubcontractorItem] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def check_dates(self):

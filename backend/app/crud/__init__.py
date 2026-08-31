@@ -74,6 +74,17 @@ def project_out(db: Session, p: Project, detail: bool = False) -> dict:
                   .order_by(ProgressUpdate.update_date.desc(), ProgressUpdate.created_at.desc())
                   .limit(5).all())
         out["latest_updates"] = [update_out(u) for u in latest]
+        from app.models import ProjectSubcontractor
+        subs = (db.query(ProjectSubcontractor)
+                .filter(ProjectSubcontractor.project_id == p.id)
+                .order_by(ProjectSubcontractor.id.asc()).all())
+        out["subcontractors"] = [{
+            "id": s.id, "project_id": s.project_id,
+            "type": s.type, "name": s.name,
+            "allocated_amount": float(s.allocated_amount or 0),
+            "materials": s.materials or [], "notes": s.notes,
+            "created_at": d(s.created_at), "updated_at": d(s.updated_at),
+        } for s in subs]
     return out
 
 
