@@ -81,4 +81,33 @@ def user_out(user: User) -> dict:
             "role": user.role, "client_id": user.client_id,
             "tenant_id": getattr(user, "tenant_id", None),
             "linked_vendor_id": getattr(user, "linked_vendor_id", None),
-            "status": getattr(user, "status", "Active")}
+            "status": getattr(user, "status", "Active"),
+            "effective_modules": _effective_modules(user)}
+
+
+def _effective_modules(user: User) -> list[str]:
+    """Modules this user can actually see = intersect(user.allowed_modules or full,
+    tenant.allowed_modules).
+
+    * SuperAdmin: sees every possible module (returns None so the frontend
+      treats it as unrestricted).
+    * No tenant: returns [] (locked out).
+    * user.allowed_modules empty/None: inherits the full tenant set.
+    """
+    if user.role == "SuperAdmin":
+        return None  # unrestricted
+    from app.database import SessionLocal
+    from app.models.tenant import Tenant
+    tid = getattr(user, "tenant_id", None)
+    if not tid:
+        return []
+    db = SessionLocal()
+    try:
+        t = db.get(Tenant, tid)
+        tenant_allowed = list(t.allowed_modules or []) if t else []
+    finally:
+        db.close()
+    user_allowed = list(getattr(user, "allowed_modules", None) or [])
+    if not user_allowed:
+        return tenant_allowed
+    return [m for m in user_allowed if m in tenant_allowed]

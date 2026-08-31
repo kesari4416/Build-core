@@ -7,17 +7,17 @@ import { NotificationBell } from "./NotificationBell";
 
 const STAFF = ["Admin", "SiteEngineer", "Accountant", "ProcurementOfficer"];
 const navItems = [
-  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true, roles: [...STAFF, "Client"] },
-  { to: "/admin/projects", label: "Projects", icon: Building2, roles: [...STAFF, "Client"] },
-  { to: "/portal/site-engineer", label: "Field Ops", icon: ClipboardCheck, roles: ["Admin", "SiteEngineer", "Client"] },
-  { to: "/admin/clients", label: "Clients", icon: Users, roles: ["Admin", "SiteEngineer", "Accountant"] },
-  { to: "/admin/finance", label: "Finance", icon: IndianRupee, roles: ["Admin", "Accountant"] },
-  { to: "/admin/estimates", label: "Estimates", icon: Calculator, roles: ["Admin", "Accountant", "SiteEngineer", "ProcurementOfficer"] },
-  { to: "/admin/concepts", label: "AI Studio", icon: Sparkles, roles: ["Admin", "Accountant", "SiteEngineer", "ProcurementOfficer", "Client"] },
-  { to: "/admin/procurement/vendors", label: "Vendors", icon: Truck, roles: ["Admin", "SiteEngineer", "ProcurementOfficer"] },
-  { to: "/admin/users", label: "Users", icon: UserCog, roles: ["Admin"] },
-  { to: "/portal/vendor/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["Vendor"] },
-  { to: "/portal/vendor/bid-packages", label: "Bid Invites", icon: FileText, roles: ["Vendor"] },
+  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true, roles: [...STAFF, "Client"], module: null },
+  { to: "/admin/projects", label: "Projects", icon: Building2, roles: [...STAFF, "Client"], module: "projects" },
+  { to: "/portal/site-engineer", label: "Field Ops", icon: ClipboardCheck, roles: ["Admin", "SiteEngineer", "Client"], module: "field_ops" },
+  { to: "/admin/clients", label: "Clients", icon: Users, roles: ["Admin", "SiteEngineer", "Accountant"], module: "clients" },
+  { to: "/admin/finance", label: "Finance", icon: IndianRupee, roles: ["Admin", "Accountant"], module: "finance" },
+  { to: "/admin/estimates", label: "Estimates", icon: Calculator, roles: ["Admin", "Accountant", "SiteEngineer", "ProcurementOfficer"], module: "estimates" },
+  { to: "/admin/concepts", label: "AI Studio", icon: Sparkles, roles: ["Admin", "Accountant", "SiteEngineer", "ProcurementOfficer", "Client"], module: "concept_studio" },
+  { to: "/admin/procurement/vendors", label: "Vendors", icon: Truck, roles: ["Admin", "SiteEngineer", "ProcurementOfficer"], module: "procurement" },
+  { to: "/admin/users", label: "Users", icon: UserCog, roles: ["Admin"], module: null },
+  { to: "/portal/vendor/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["Vendor"], module: "vendor_portal" },
+  { to: "/portal/vendor/bid-packages", label: "Bid Invites", icon: FileText, roles: ["Vendor"], module: "vendor_portal" },
 ];
 
 export default function Layout({ children }) {
@@ -35,7 +35,16 @@ export default function Layout({ children }) {
 
   const width = collapsed ? "w-16" : "w-60";
   const marginLeft = collapsed ? "lg:ml-16" : "lg:ml-60";
-  const items = navItems.filter((i) => i.roles.includes(user?.role));
+
+  // Effective modules: null = unrestricted (SuperAdmin), [] = locked out,
+  //                    [...] = only these module keys are visible.
+  const effective = user?.effective_modules ?? null;
+  const items = navItems.filter((i) => {
+    if (!i.roles.includes(user?.role)) return false;
+    if (i.module == null) return true; // Dashboard / Users always visible
+    if (effective == null) return true; // SuperAdmin — unrestricted
+    return effective.includes(i.module);
+  });
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">

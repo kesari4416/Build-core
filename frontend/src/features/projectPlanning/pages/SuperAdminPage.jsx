@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import {
   Building2, Plus, Shield, Users, Check, X, ChevronRight, LogOut,
   Pause, Play, Trash2, LogIn, Search, Activity, Layers, Sparkles,
-  BadgeCheck, LayoutGrid, ArrowUpRight,
+  BadgeCheck, LayoutGrid, ArrowUpRight, Download,
 } from "lucide-react";
 import api, { formatApiErrorDetail } from "../../../api/client";
 import { useAuth } from "../../../context/AuthContext";
@@ -34,6 +34,7 @@ export default function SuperAdminPage() {
   const [editingTenant, setEditingTenant] = useState(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [tab, setTab] = useState("overview"); // overview | tenants | users | modules | audit
 
   const { data: modulesData } = useQuery({
     queryKey: ["tenant-modules"],
@@ -62,6 +63,38 @@ export default function SuperAdminPage() {
     onSuccess: () => { qc.invalidateQueries(["tenants"]); toast.success("Tenant deleted"); },
     onError: (e) => toast.error(formatApiErrorDetail(e.response?.data?.detail) || "Delete failed"),
   });
+
+  const downloadBackup = async (t) => {
+    try {
+      const res = await api.get(`/tenants/${t.id}/export`, { responseType: "blob" });
+      const url = URL.createObjectURL(new Blob([res.data], { type: "application/json" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `sitera-tenant-${t.slug}-${t.id}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(`Backup downloaded for ${t.name}`);
+      return true;
+    } catch (e) {
+      toast.error(formatApiErrorDetail(e.response?.data?.detail) || "Backup failed");
+      return false;
+    }
+  };
+
+  const deleteWithBackup = async (t) => {
+    const ok = window.confirm(
+      `Delete "${t.name}" and ALL its data? This cannot be undone.\n\n` +
+      `Click OK to first download a JSON backup, then permanently delete.`
+    );
+    if (!ok) return;
+    const backupOk = await downloadBackup(t);
+    if (!backupOk) {
+      if (!window.confirm("Backup failed. Delete anyway?")) return;
+    }
+    deleteTenant.mutate(t.id);
+  };
   const impersonate = useMutation({
     mutationFn: (id) => api.post(`/tenants/${id}/impersonate`).then((r) => r.data),
     onSuccess: async (data) => {
@@ -109,12 +142,12 @@ export default function SuperAdminPage() {
           </div>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-0.5">
-          <SidebarLink icon={<LayoutGrid size={15} />} label="Overview" active />
-          <SidebarLink icon={<Building2 size={15} />} label="Tenants" count={tenants.length} />
-          <SidebarLink icon={<Users size={15} />}     label="All users" count={totalUsers} />
-          <SidebarLink icon={<Sparkles size={15} />}  label="Modules"   count={modules.length} />
-          <SidebarLink icon={<Activity size={15} />}  label="Audit log" />
+        <nav className="flex-1 px-3 py-4 space-y-0.5" data-testid="superadmin-nav">
+          <SidebarLink icon={<LayoutGrid size={15} />} label="Overview" active={tab === "overview"} onClick={() => setTab("overview")} testid="nav-overview" />
+          <SidebarLink icon={<Building2 size={15} />} label="Tenants" count={tenants.length} active={tab === "tenants"} onClick={() => setTab("tenants")} testid="nav-tenants" />
+          <SidebarLink icon={<Users size={15} />}     label="All users" count={totalUsers} active={tab === "users"} onClick={() => setTab("users")} testid="nav-users" />
+          <SidebarLink icon={<Sparkles size={15} />}  label="Modules"   count={modules.length} active={tab === "modules"} onClick={() => setTab("modules")} testid="nav-modules" />
+          <SidebarLink icon={<Activity size={15} />}  label="Audit log" active={tab === "audit"} onClick={() => setTab("audit")} testid="nav-audit" />
         </nav>
 
         <div className="p-3 border-t border-slate-800/60">
@@ -169,7 +202,7 @@ export default function SuperAdminPage() {
             </button>
           </div>
 
-          {/* KPI cards */}
+          {/* KPI cards — always visible */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8" data-testid="platform-stats">
             <MetricCard icon={<Building2 size={14} />} label="Total tenants" value={tenants.length}
               hint={`${activeShare}% active`} accent="slate" />
@@ -181,64 +214,71 @@ export default function SuperAdminPage() {
               hint={`across ${tenants.length || 0} ${tenants.length === 1 ? "tenant" : "tenants"}`} accent="indigo" />
           </div>
 
-          {/* Toolbar */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5">
-            <div className="relative flex-1 min-w-[220px]">
-              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input data-testid="tenant-search" value={search} onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by company, admin email, or slug…"
-                className="w-full pl-10 pr-3 py-2.5 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/40" />
+          {/* --- Tab: Overview / Tenants --- */}
+          {(tab === "overview" || tab === "tenants") && (<>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5">
+              <div className="relative flex-1 min-w-[220px]">
+                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input data-testid="tenant-search" value={search} onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by company, admin email, or slug…"
+                  className="w-full pl-10 pr-3 py-2.5 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/40" />
+              </div>
+              <div className="inline-flex bg-white dark:bg-slate-900/50 rounded-lg p-1 border border-slate-200 dark:border-slate-800">
+                {[["all", "All"], ["active", "Active"], ["hold", "On hold"]].map(([k, l]) => (
+                  <button key={k} data-testid={`filter-${k}`} onClick={() => setFilter(k)}
+                    className={`px-3 py-1.5 text-[11px] uppercase tracking-[0.15em] font-semibold rounded-md transition-all ${
+                      filter === k
+                        ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}>{l}</button>
+                ))}
+              </div>
             </div>
-            <div className="inline-flex bg-white dark:bg-slate-900/50 rounded-lg p-1 border border-slate-200 dark:border-slate-800">
-              {[["all", "All"], ["active", "Active"], ["hold", "On hold"]].map(([k, l]) => (
-                <button key={k} data-testid={`filter-${k}`} onClick={() => setFilter(k)}
-                  className={`px-3 py-1.5 text-[11px] uppercase tracking-[0.15em] font-semibold rounded-md transition-all ${
-                    filter === k
-                      ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm"
-                      : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                  }`}>{l}</button>
-              ))}
-            </div>
-          </div>
 
-          {/* Tenants list */}
-          {isLoading ? (
-            <div className="rounded-xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-10 text-center text-sm text-slate-500">Loading…</div>
-          ) : filtered.length === 0 ? (
-            <div className="rounded-xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-12 text-center" data-testid="tenants-empty">
-              <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
-                <Building2 size={22} className="text-slate-400" strokeWidth={2.25} />
+            {isLoading ? (
+              <div className="rounded-xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-10 text-center text-sm text-slate-500">Loading…</div>
+            ) : filtered.length === 0 ? (
+              <div className="rounded-xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-12 text-center" data-testid="tenants-empty">
+                <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
+                  <Building2 size={22} className="text-slate-400" strokeWidth={2.25} />
+                </div>
+                <div className="font-semibold text-slate-900 dark:text-slate-100">
+                  {tenants.length === 0 ? "No tenants yet" : "No results"}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {tenants.length === 0 ? "Provision your first company to get started." : "Try a different search term."}
+                </div>
               </div>
-              <div className="font-semibold text-slate-900 dark:text-slate-100">
-                {tenants.length === 0 ? "No tenants yet" : "No results"}
+            ) : (
+              <div className="rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800/60 overflow-hidden" data-testid="tenants-list">
+                <div className="hidden md:grid grid-cols-[minmax(0,1fr)_120px_100px_180px] gap-4 px-6 py-3 bg-slate-50/60 dark:bg-slate-900/60 text-[10px] uppercase tracking-[0.18em] font-semibold text-slate-500 dark:text-slate-500">
+                  <div>Tenant</div>
+                  <div>Modules</div>
+                  <div>Users</div>
+                  <div className="text-right">Actions</div>
+                </div>
+                {filtered.map((t) => (
+                  <TenantRow key={t.id} tenant={t} modules={modules}
+                    onOpen={() => setEditingTenant(t)}
+                    onHold={() => toggleHold.mutate({ id: t.id, active: false })}
+                    onResume={() => toggleHold.mutate({ id: t.id, active: true })}
+                    onBackup={() => downloadBackup(t)}
+                    onDelete={() => deleteWithBackup(t)}
+                    onImpersonate={() => impersonate.mutate(t.id)}
+                    impersonating={impersonate.isPending && impersonate.variables === t.id} />
+                ))}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {tenants.length === 0 ? "Provision your first company to get started." : "Try a different search term."}
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800/60 overflow-hidden" data-testid="tenants-list">
-              <div className="hidden md:grid grid-cols-[minmax(0,1fr)_120px_100px_180px] gap-4 px-6 py-3 bg-slate-50/60 dark:bg-slate-900/60 text-[10px] uppercase tracking-[0.18em] font-semibold text-slate-500 dark:text-slate-500">
-                <div>Tenant</div>
-                <div>Modules</div>
-                <div>Users</div>
-                <div className="text-right">Actions</div>
-              </div>
-              {filtered.map((t) => (
-                <TenantRow key={t.id} tenant={t} modules={modules}
-                  onOpen={() => setEditingTenant(t)}
-                  onHold={() => toggleHold.mutate({ id: t.id, active: false })}
-                  onResume={() => toggleHold.mutate({ id: t.id, active: true })}
-                  onDelete={() => {
-                    if (window.confirm(`Delete "${t.name}" and ALL its data? This cannot be undone.`)) {
-                      deleteTenant.mutate(t.id);
-                    }
-                  }}
-                  onImpersonate={() => impersonate.mutate(t.id)}
-                  impersonating={impersonate.isPending && impersonate.variables === t.id} />
-              ))}
-            </div>
-          )}
+            )}
+          </>)}
+
+          {/* --- Tab: All users --- */}
+          {tab === "users" && <AllUsersTab tenants={tenants} />}
+
+          {/* --- Tab: Modules --- */}
+          {tab === "modules" && <ModulesTab tenants={tenants} modules={modules} moduleLabels={MODULE_LABELS} />}
+
+          {/* --- Tab: Audit --- */}
+          {tab === "audit" && <AuditTab />}
         </div>
       </div>
 
@@ -260,10 +300,11 @@ export default function SuperAdminPage() {
 /* --------------------------------------------------------------------- */
 /* Sidebar link                                                            */
 /* --------------------------------------------------------------------- */
-function SidebarLink({ icon, label, count, active }) {
+function SidebarLink({ icon, label, count, active, onClick, testid }) {
   return (
-    <div
-      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+    <button
+      type="button" data-testid={testid} onClick={onClick}
+      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors text-left ${
         active
           ? "bg-slate-800/80 text-white ring-1 ring-slate-700"
           : "text-slate-400 hover:text-white hover:bg-slate-800/50"
@@ -273,7 +314,7 @@ function SidebarLink({ icon, label, count, active }) {
       {count !== undefined && (
         <span className={`text-[10px] font-mono tabular-nums ${active ? "text-slate-300" : "text-slate-600"}`}>{count}</span>
       )}
-    </div>
+    </button>
   );
 }
 
@@ -318,7 +359,7 @@ const initialsFor = (n = "?") => n.split(/\s+/).slice(0, 2).map((w) => w[0]).joi
 const gradientFor = (id = 0) => AV_PALETTE[id % AV_PALETTE.length];
 
 
-function TenantRow({ tenant: t, modules, onOpen, onHold, onResume, onDelete, onImpersonate, impersonating }) {
+function TenantRow({ tenant: t, modules, onOpen, onHold, onResume, onBackup, onDelete, onImpersonate, impersonating }) {
   const modulePct = Math.round(((t.allowed_modules || []).length * 100) / (modules.length || 1));
   return (
     <div data-testid={`tenant-row-${t.id}`}
@@ -374,8 +415,10 @@ function TenantRow({ tenant: t, modules, onOpen, onHold, onResume, onDelete, onI
           <IconAction testid={`resume-tenant-${t.id}`} title="Resume tenant" onClick={onResume}
             className="hover:text-emerald-600"><Play size={13} strokeWidth={2.5} /></IconAction>
         )}
+        <IconAction testid={`backup-tenant-${t.id}`} title="Download JSON backup" onClick={onBackup}
+          className="hover:text-sky-600"><Download size={13} strokeWidth={2.5} /></IconAction>
         {t.id !== 1 && (
-          <IconAction testid={`delete-tenant-${t.id}`} title="Delete permanently" onClick={onDelete}
+          <IconAction testid={`delete-tenant-${t.id}`} title="Delete (backup first)" onClick={onDelete}
             className="hover:text-rose-600"><Trash2 size={13} strokeWidth={2.5} /></IconAction>
         )}
         <IconAction testid={`open-tenant-${t.id}`} title="Edit tenant" onClick={onOpen}
@@ -611,5 +654,105 @@ function ModuleChip({ module: m, label, active, onToggle, testidPrefix }) {
       <span className="truncate">{label}</span>
       {active ? <Check size={14} strokeWidth={2.75} /> : <X size={14} strokeWidth={2.5} className="opacity-30" />}
     </button>
+  );
+}
+
+
+/* --------------------------------------------------------------------- */
+/* All users tab                                                           */
+/* --------------------------------------------------------------------- */
+function AllUsersTab({ tenants }) {
+  const rows = [];
+  tenants.forEach((t) => {
+    (t.users || []).length === 0 && t.admin_email && rows.push({
+      id: `${t.id}-admin`, tenant_name: t.name, tenant_id: t.id,
+      email: t.admin_email, name: t.admin_name, role: "Admin",
+    });
+  });
+  return (
+    <div className="rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 overflow-hidden" data-testid="all-users-tab">
+      <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div>
+          <div className="font-heading font-semibold text-slate-900 dark:text-white">All users across tenants</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">One row per tenant Admin. Detailed rosters live inside each tenant.</div>
+        </div>
+      </div>
+      <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
+        <div className="hidden md:grid grid-cols-[minmax(0,1fr)_240px_120px_120px] gap-4 px-6 py-3 bg-slate-50/60 dark:bg-slate-900/60 text-[10px] uppercase tracking-[0.18em] font-semibold text-slate-500">
+          <div>Tenant</div><div>Admin email</div><div>Users</div><div>Modules</div>
+        </div>
+        {tenants.map((t) => (
+          <div key={t.id} className="grid md:grid-cols-[minmax(0,1fr)_240px_120px_120px] gap-4 px-6 py-3 items-center text-sm" data-testid={`allusers-row-${t.id}`}>
+            <div className="font-heading font-semibold text-slate-900 dark:text-white truncate">{t.name}</div>
+            <div className="text-slate-500 dark:text-slate-400 font-mono text-xs truncate">{t.admin_email || "—"}</div>
+            <div className="tabular-nums text-slate-900 dark:text-white">{t.user_count}</div>
+            <div className="tabular-nums text-slate-500 dark:text-slate-400">{(t.allowed_modules || []).length}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+/* --------------------------------------------------------------------- */
+/* Modules tab                                                             */
+/* --------------------------------------------------------------------- */
+function ModulesTab({ tenants, modules, moduleLabels }) {
+  return (
+    <div className="rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 overflow-hidden" data-testid="modules-tab">
+      <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="font-heading font-semibold text-slate-900 dark:text-white">Module catalog</div>
+        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Every module Sitera offers and how many tenants have it enabled.</div>
+      </div>
+      <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
+        <div className="hidden md:grid grid-cols-[minmax(0,1fr)_140px_1fr] gap-4 px-6 py-3 bg-slate-50/60 dark:bg-slate-900/60 text-[10px] uppercase tracking-[0.18em] font-semibold text-slate-500">
+          <div>Module</div><div>Adoption</div><div>Tenants using it</div>
+        </div>
+        {modules.map((m) => {
+          const using = tenants.filter((t) => (t.allowed_modules || []).includes(m));
+          const pct = tenants.length ? Math.round((using.length * 100) / tenants.length) : 0;
+          return (
+            <div key={m} className="grid md:grid-cols-[minmax(0,1fr)_140px_1fr] gap-4 px-6 py-3 items-center text-sm" data-testid={`module-row-${m}`}>
+              <div>
+                <div className="font-heading font-semibold text-slate-900 dark:text-white">{moduleLabels[m] || m}</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-500 font-mono mt-0.5">{m}</div>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-slate-900 dark:text-white tabular-nums">{using.length}</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-600">/ {tenants.length}</span>
+                </div>
+                <div className="mt-1.5 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div className={`h-full ${pct === 100 ? "bg-emerald-500" : pct > 0 ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-700"}`} style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {using.length === 0 ? <span className="italic">Not adopted yet</span> :
+                  using.map((t) => t.name).join(" · ")}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
+/* --------------------------------------------------------------------- */
+/* Audit log placeholder                                                   */
+/* --------------------------------------------------------------------- */
+function AuditTab() {
+  return (
+    <div className="rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 p-12 text-center" data-testid="audit-tab">
+      <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
+        <Activity size={22} className="text-slate-400" strokeWidth={2.25} />
+      </div>
+      <div className="font-heading font-semibold text-slate-900 dark:text-white">Audit log — coming soon</div>
+      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+        Every impersonation, tenant update, module change, and destructive action will be logged here with actor + timestamp.
+      </div>
+    </div>
   );
 }

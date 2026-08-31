@@ -18,6 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
+from app.core.email_utils import send_html
 from app.core.security import (get_current_user, hash_password,
                                   create_access_token, create_refresh_token,
                                   set_auth_cookies, user_out)
@@ -167,7 +168,57 @@ def create_tenant(body: TenantCreate, db: Session = Depends(get_db),
     db.add(admin)
     db.commit()
     db.refresh(tenant)
+
+    # Fire welcome email (best-effort, must not break tenant provisioning)
+    _send_welcome_email(admin=admin, tenant=tenant,
+                          temp_password=body.admin_password)
     return _serialize_tenant(tenant, [admin])
+
+
+def _send_welcome_email(admin: User, tenant: Tenant, temp_password: str) -> None:
+    import os
+    base = (os.environ.get("PUBLIC_APP_URL")
+              or os.environ.get("REACT_APP_BACKEND_URL")
+              or "").rstrip("/")
+    login_url = f"{base}/login" if base else "/login"
+    modules_line = ", ".join(tenant.allowed_modules or []) or "no modules yet"
+    html = f"""<div style="font-family:-apple-system,Segoe UI,sans-serif;max-width:560px;margin:0 auto;background:#0a0e17;color:#e2e8f0;padding:0;border-radius:14px;overflow:hidden">
+      <div style="padding:28px 32px;background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);color:#fff">
+        <div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;opacity:.85">Welcome to Sitera</div>
+        <div style="font-size:24px;font-weight:600;margin-top:4px">{tenant.name} is live</div>
+      </div>
+      <div style="padding:28px 32px">
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.55">Hi {admin.name},</p>
+        <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#cbd5e1">
+          Your Sitera Construction Operations workspace is ready. You've been set up as the
+          <b style="color:#fff">Admin</b> of <b style="color:#fff">{tenant.name}</b>. You can invite your
+          site engineers, accountants and vendors once you sign in.
+        </p>
+        <div style="background:#111827;border:1px solid #1f2937;border-radius:10px;padding:18px 20px;margin:22px 0">
+          <div style="font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#94a3b8;font-weight:700">Sign-in credentials</div>
+          <div style="margin-top:10px;font-size:14px">
+            <div style="margin:4px 0"><span style="color:#94a3b8">Email:</span>
+              <b style="color:#fff;font-family:ui-monospace,monospace">{admin.email}</b></div>
+            <div style="margin:4px 0"><span style="color:#94a3b8">Temp password:</span>
+              <b style="color:#f59e0b;font-family:ui-monospace,monospace">{temp_password}</b></div>
+          </div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:12px">Please change this password after your first sign-in.</div>
+        </div>
+        <div style="text-align:center;margin:26px 0">
+          <a href="{login_url}" style="display:inline-block;background:#f59e0b;color:#0a0e17;padding:12px 28px;text-decoration:none;font-weight:700;font-size:12px;letter-spacing:.15em;text-transform:uppercase;border-radius:8px">Sign in to Sitera</a>
+        </div>
+        <div style="border-top:1px solid #1f2937;padding-top:16px;margin-top:8px">
+          <div style="font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#94a3b8;font-weight:700">Modules enabled for {tenant.name}</div>
+          <div style="font-size:12px;color:#cbd5e1;margin-top:6px;line-height:1.6">{modules_line}</div>
+        </div>
+      </div>
+      <div style="padding:16px 32px;font-size:11px;color:#64748b;background:#111827">
+        You're receiving this because your Sitera SuperAdmin provisioned this workspace for you.
+      </div>
+    </div>"""
+    send_html(to=admin.email,
+              subject=f"Welcome to Sitera — {tenant.name}",
+              html=html)
 
 
 @router.get("/tenants/{tid}")
@@ -205,6 +256,70 @@ def update_tenant(tid: int, body: TenantPatch, db: Session = Depends(get_db),
     db.commit()
     db.refresh(t)
     return _serialize_tenant(t)
+
+
+@router.get("/tenants/{tid}/export")
+def export_tenant(tid: int, db: Session = Depends(get_db),
+                     _: User = Depends(_require_super)):
+    """Dump every row belonging to a tenant as a single JSON payload.
+
+    The response streams as a JSON attachment so the SuperAdmin can Ctrl-S
+    the file straight from their browser before deleting the tenant.
+    """
+    from datetime import datetime, timezone, date
+    from decimal import Decimal
+    import json
+    from fastapi.responses import Response
+    from sqlalchemy import text
+    tenant = db.get(Tenant, tid)
+    if not tenant:
+        raise HTTPException(404, "Tenant not found")
+
+    tables = [
+        "users", "projects", "clients", "vendors", "employees",
+        "estimates", "invoices", "payments", "expense_entries",
+        "income_entries", "purchase_orders", "subcontracts",
+        "change_orders", "quotations", "bid_packages", "vendor_quotations",
+        "concept_generations", "model3d_files",
+    ]
+
+    payload: dict = {
+        "tenant": {
+            "id": tenant.id, "name": tenant.name, "slug": tenant.slug,
+            "is_active": tenant.is_active,
+            "allowed_modules": list(tenant.allowed_modules or []),
+            "created_at": tenant.created_at.isoformat() if tenant.created_at else None,
+        },
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "data": {},
+    }
+
+    for tbl in tables:
+        try:
+            # Never leak password hashes even in a backup — replace with a
+            # placeholder that keeps import feasible without exposing secrets.
+            select_cols = ("id, email, name, role, status, tenant_id, "
+                             "client_id, phone, created_at, allowed_modules") if tbl == "users" else "*"
+            rows = db.execute(text(f"SELECT {select_cols} FROM {tbl} WHERE tenant_id = :tid"),
+                                {"tid": tid}).mappings().all()
+            payload["data"][tbl] = [dict(r) for r in rows]
+        except Exception:  # noqa: BLE001
+            payload["data"][tbl] = []
+
+    filename = f"sitera-tenant-{tenant.slug}-{tid}.json"
+
+    def _default(o):
+        if isinstance(o, (datetime, date)):
+            return o.isoformat()
+        if isinstance(o, Decimal):
+            return float(o)
+        return str(o)
+
+    body = json.dumps(payload, default=_default, indent=2)
+    return Response(
+        content=body, media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.delete("/tenants/{tid}")
